@@ -1,0 +1,30 @@
+/* src/index.css */
+
+/* Reset global para remover margens e paddings padrão do navegador */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%; /* Garante que ocupem a altura total da viewport */
+  width: 100%;  /* Garante que ocupem a largura total da viewport */
+  overflow-x: hidden; /* Evita barras de rolagem horizontais indesejadas */
+  /* overflow-y: hidden; */ /* Descomente APENAS se você quiser garantir que NUNCA haja rolagem vertical no nível do body,
+                              e que a rolagem seja gerenciada APENAS pelos Boxes internos com overflow: auto */
+  box-sizing: border-box; /* Inclui padding e border na largura/altura total */
+}
+
+/* Opcional: Aplica box-sizing a todos os elementos para um comportamento consistente */
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* Estilos específicos para remover padding do elemento <main> e margin-bottom do elemento <nav>
+   Se você usa <main> e <nav> HTML ou componentes Material-UI que renderizam como eles */
+main {
+  padding: 0;
+  /* Se por acaso o main ainda tiver um background ou border que não é o do seu Box de gradiente,
+     pode adicionar mais regras aqui para garantir que ele seja transparente ou sem borda */
+}
+
+nav {
+  margin-bottom: 0;
+}

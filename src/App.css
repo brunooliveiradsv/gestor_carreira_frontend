@@ -1,0 +1,18 @@
+/* Este é o CSS global que deve estar em seu arquivo .css principal */
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%; /* Garante que ocupem a altura total */
+  width: 100%;  /* Garante que ocupem a largura total */
+  overflow: hidden; /* **MUITA ATENÇÃO AQUI!** Remove barras de rolagem.
+                      Use 'hidden' se tiver certeza que o conteúdo sempre caberá,
+                      ou 'auto' se o conteúdo puder exceder e você quer rolagem interna.
+                      Se o problema for SÓ a borda, 'hidden' é OK para o HTML/Body. */
+  box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura/altura */
+}
+
+/* Opcional: Se você quer que todos os elementos respeitem o box-sizing */
+*, *::before, *::after {
+  box-sizing: inherit;
+}
