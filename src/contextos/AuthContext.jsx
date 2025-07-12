@@ -41,7 +41,7 @@ export function AuthProvider({ children }) {
   async function login(email, senha) {
     try {
       const resposta = await axios.post(
-        "http://localhost:3000/api/usuarios/login",
+        `${import.meta.env.VITE_API_BASE_URL}/api/usuarios/login`,
         { email, senha }
       );
       const { token } = resposta.data;
