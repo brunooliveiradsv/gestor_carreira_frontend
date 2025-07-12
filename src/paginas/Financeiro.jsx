@@ -35,7 +35,7 @@ function Financeiro() {
   useEffect(() => {
     async function buscarTransacoes() {
       try {
-        const resposta = await axios.get('http://localhost:3000/api/financeiro/transacoes');
+        const resposta = await apiClient.get('/api/financeiro/transacoes');
         setTransacoes(resposta.data);
       } catch (erro) {
         console.error("Erro ao buscar transações:", erro);
@@ -75,7 +75,7 @@ function Financeiro() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
-      const resposta = await axios.post('http://localhost:3000/api/financeiro/transacoes', novaTransacao);
+      const resposta = await apiClient.post('/api/financeiro/transacoes', novaTransacao);
       setTransacoes(transacoesAtuais => [resposta.data, ...transacoesAtuais].sort((a, b) => new Date(b.data) - new Date(a.data)));
       mostrarNotificacao('Transação salva com sucesso!', 'success');
       setMostrarFormulario(false);

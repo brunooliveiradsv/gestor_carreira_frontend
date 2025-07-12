@@ -12,7 +12,7 @@ function FormularioContato({ id, onSave, onCancel }) {
 
   useEffect(() => {
     if (id) {
-      axios.get(`http://localhost:3000/api/contatos/${id}`)
+      apiClient.get(`/api/contatos/${id}`)
         .then(resposta => setDadosForm(resposta.data))
         .catch(erro => console.error("Erro ao buscar contato para edição", erro));
     }
@@ -28,10 +28,10 @@ function FormularioContato({ id, onSave, onCancel }) {
     setCarregando(true);
     try {
       if (id) {
-        await axios.put(`http://localhost:3000/api/contatos/${id}`, dadosForm);
+        await apiClient.put(`/api/contatos/${id}`, dadosForm);
         mostrarNotificacao('Contato atualizado com sucesso!', 'success');
       } else {
-        await axios.post('http://localhost:3000/api/contatos', dadosForm);
+        await apiClient.post('/api/contatos', dadosForm);
         mostrarNotificacao('Contato criado com sucesso!', 'success');
       }
       onSave();

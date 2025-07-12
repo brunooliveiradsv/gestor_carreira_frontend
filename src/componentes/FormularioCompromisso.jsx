@@ -17,7 +17,7 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
 
   useEffect(() => {
     if (id) {
-      axios.get(`http://localhost:3000/api/compromissos/${id}`)
+      apiClient.get(`/api/compromissos/${id}`)
         .then(resposta => {
           const dataFormatada = new Date(resposta.data.data).toISOString().slice(0, 16);
           const despesasSeguro = resposta.data.despesas || [];
@@ -61,11 +61,11 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
 
     try {
       if (id) {
-        await axios.put(`http://localhost:3000/api/compromissos/${id}`, dadosParaEnviar);
+        await apiClient.put(`/api/compromissos/${id}`, dadosParaEnviar);
         // Em vez de alert(), usamos nossa nova função
         mostrarNotificacao('Compromisso atualizado com sucesso!', 'success');
       } else {
-        await axios.post('http://localhost:3000/api/compromissos', dadosParaEnviar);
+        await apiClient.post('/api/compromissos', dadosParaEnviar);
         mostrarNotificacao('Compromisso criado com sucesso!', 'success');
       }
       onSave();

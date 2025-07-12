@@ -16,7 +16,7 @@ function Equipamentos() {
   const buscarEquipamentos = async () => {
     if(modo === 'lista' && !carregando) setCarregando(true);
     try {
-      const resposta = await axios.get('http://localhost:3000/api/equipamentos');
+      const resposta = await apiClient.get('/api/equipamentos');
       setEquipamentos(resposta.data);
     } catch (erro) {
       mostrarNotificacao("Não foi possível carregar os equipamentos.", "error");
@@ -34,7 +34,7 @@ function Equipamentos() {
   const handleApagar = async (id) => {
     if (window.confirm("Tem certeza que deseja apagar este equipamento?")) {
       try {
-        await axios.delete(`http://localhost:3000/api/equipamentos/${id}`);
+        await apiClient.delete(`/api/equipamentos/${id}`);
         mostrarNotificacao("Equipamento apagado com sucesso!", "success");
         buscarEquipamentos();
       } catch (erro) {

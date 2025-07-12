@@ -3,9 +3,9 @@
 import { useState, useContext } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext";
-import axios from "axios";
+import apiClient from "../api"; // <-- MUDANÇA IMPORTANTE
 
-// Imports do Material-UI
+// Imports do Material-UI... (sem alterações aqui)
 import {
   Button,
   TextField,
@@ -20,26 +20,19 @@ import {
   Grid,
   Link as MuiLink,
 } from "@mui/material";
-// Imports dos Ícones
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 function Autenticacao() {
-  // Estado para controlar o modo atual: 'login' ou 'cadastro'
   const [modo, setModo] = useState("login");
-
-  // Estados para os campos do formulário
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-
-  // Estados de controle da UI
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
-
   const { loginComToken, logado } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -47,7 +40,6 @@ function Autenticacao() {
     return <Navigate to="/" replace />;
   }
 
-  // Limpa os campos e troca o modo
   const alternarModo = () => {
     setModo(modo === "login" ? "cadastro" : "login");
     setNome("");
@@ -58,24 +50,23 @@ function Autenticacao() {
 
   const handleSubmit = async (evento) => {
     evento.preventDefault();
-    setErro(""); // Limpa erros antigos
+    setErro("");
 
-    // --- NOVA VALIDAÇÃO NO FRONTEND ---
     if (modo === "cadastro" && senha.length < 8) {
       setErro("A senha deve ter no mínimo 8 caracteres.");
-      return; // Para a execução antes de enviar para a API
+      return;
     }
 
     setCarregando(true);
+    // --- MUDANÇA IMPORTANTE ---
     const endpoint =
-      modo === "login"
-        ? "http://localhost:3000/api/usuarios/login"
-        : "http://localhost:3000/api/usuarios/registrar";
+      modo === "login" ? "/api/usuarios/login" : "/api/usuarios/registrar";
     const payload =
       modo === "login" ? { email, senha } : { nome, email, senha };
 
     try {
-      const resposta = await axios.post(endpoint, payload);
+      // Usa o apiClient que já tem a URL base configurada
+      const resposta = await apiClient.post(endpoint, payload);
       loginComToken(resposta.data.token);
       navigate("/");
     } catch (err) {
@@ -85,8 +76,8 @@ function Autenticacao() {
     }
   };
 
+  // O resto do seu JSX continua exatamente o mesmo...
   return (
-    // Seu design de layout principal (perfeito, mantido 100%)
     <Box
       sx={{
         display: "flex",
@@ -99,7 +90,7 @@ function Autenticacao() {
         alignItems: { xs: "center", md: "stretch" },
       }}
     >
-      {/* Lado Esquerdo - Marketing (Seu design) */}
+      {/* Lado Esquerdo - Marketing */}
       <Box
         sx={{
           flex: { xs: "none", md: 1.2 },

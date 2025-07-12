@@ -25,7 +25,7 @@ function FormularioEquipamento({ id, onSave, onCancel }) {
   useEffect(() => {
     if (id) {
       // No modo de edição, não mostramos os campos de compra para simplificar
-      axios.get(`http://localhost:3000/api/equipamentos/${id}`)
+      apiClient.get(`/api/equipamentos/${id}`)
         .then(resposta => {
             // Garante que a data seja formatada corretamente se existir
             const dados = resposta.data;
@@ -54,10 +54,10 @@ function FormularioEquipamento({ id, onSave, onCancel }) {
 
     try {
       if (id) {
-        await axios.put(`http://localhost:3000/api/equipamentos/${id}`, dadosParaEnviar);
+        await apiClient.put(`/api/equipamentos/${id}`, dadosParaEnviar);
         mostrarNotificacao('Equipamento atualizado com sucesso!', 'success');
       } else {
-        await axios.post('http://localhost:3000/api/equipamentos', dadosParaEnviar);
+        await apiClient.post('/api/equipamentos', dadosParaEnviar);
         mostrarNotificacao('Equipamento criado com sucesso!', 'success');
       }
       onSave();

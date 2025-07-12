@@ -17,7 +17,7 @@ function Repertorios() {
   const buscarRepertorios = async () => {
     if (modo === 'lista' && !carregando) setCarregando(true);
     try {
-      const resposta = await axios.get('http://localhost:3000/api/repertorios');
+      const resposta = await apiClient.get('/api/repertorios');
       setRepertorios(resposta.data);
     } catch (erro) {
       console.error("Erro ao buscar repertórios:", erro);
@@ -35,7 +35,7 @@ function Repertorios() {
   const handleApagar = async (id) => {
     if (window.confirm("Tem certeza que deseja apagar este repertório? Compromissos que usam este repertório perderão o vínculo.")) {
       try {
-        await axios.delete(`http://localhost:3000/api/repertorios/${id}`);
+        await apiClient.delete(`/api/repertorios/${id}`);
         mostrarNotificacao("Repertório apagado com sucesso!", "success");
         buscarRepertorios();
       } catch (erro) {

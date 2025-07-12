@@ -48,7 +48,7 @@ function Configuracoes() {
     setCarregando(true);
     try {
       // CORREÇÃO: Chamando a rota correta /perfil/email
-      await axios.put(`http://localhost:3000/api/usuarios/perfil/email`, {
+      await apiClient.put(`/api/usuarios/perfil/email`, {
         email,
       });
       // CORREÇÃO: Chamando a função correta para atualizar os dados do usuário
@@ -90,7 +90,7 @@ function Configuracoes() {
     setCarregando(true);
     try {
       // CORREÇÃO: Chamando a rota correta /perfil/senha
-      await axios.put(`http://localhost:3000/api/usuarios/perfil/senha`, {
+      await apiClient.put(`/api/usuarios/perfil/senha`, {
         senhaAtual,
         novaSenha,
       });

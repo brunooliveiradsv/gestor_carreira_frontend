@@ -51,9 +51,7 @@ function Navegacao() {
   const buscarNotificacoes = async () => {
     if (!usuario) return;
     try {
-      const resposta = await axios.get(
-        "http://localhost:3000/api/notificacoes"
-      );
+      const resposta = await apiClient.get("/api/notificacoes");
       setNotificacoes(resposta.data);
     } catch (error) {
       console.error("Erro ao buscar notificações", error);
@@ -77,8 +75,8 @@ function Navegacao() {
     const notificacao = notificacoes.find((n) => n.id === notificacaoId);
     if (notificacao && !notificacao.lida) {
       try {
-        await axios.patch(
-          `http://localhost:3000/api/notificacoes/${notificacaoId}/lida`
+        await apiClient.patch(
+          `/api/notificacoes/${notificacaoId}/lida`
         );
         setNotificacoes((notificacoesAtuais) =>
           notificacoesAtuais.map((n) =>
@@ -94,8 +92,8 @@ function Navegacao() {
   const handleApagar = async (e, notificacaoId) => {
     e.stopPropagation();
     try {
-      await axios.delete(
-        `http://localhost:3000/api/notificacoes/${notificacaoId}`
+      await apiClient.delete(
+        `/api/notificacoes/${notificacaoId}`
       );
       setNotificacoes(notificacoes.filter((n) => n.id !== notificacaoId));
     } catch (error) {
@@ -114,7 +112,7 @@ function Navegacao() {
 
   const handleConfirmarLimparTodas = async () => {
     try {
-      await axios.delete("http://localhost:3000/api/notificacoes");
+      await apiClient.delete("/api/notificacoes");
       setNotificacoes([]);
     } catch (error) {
       console.error("Erro ao limpar notificações", error);

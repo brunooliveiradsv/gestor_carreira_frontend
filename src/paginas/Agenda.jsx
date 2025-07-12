@@ -20,7 +20,7 @@ function Agenda() {
    const buscarCompromissos = async () => {
     if (modo === 'lista' && !carregando) setCarregando(true);
     try {
-      const resposta = await axios.get('http://localhost:3000/api/compromissos');
+      const resposta = await apiClient.get('/api/compromissos');
       // --- CORREÇÃO APLICADA AQUI ---
       // Removemos a ordenação .sort() do frontend.
       // Agora usamos os dados exatamente na ordem que o backend nos envia.
@@ -41,7 +41,7 @@ function Agenda() {
   const handleApagar = async (idDoCompromisso) => {
     if (window.confirm("Tem certeza que deseja apagar este compromisso?")) {
       try {
-        await axios.delete(`http://localhost:3000/api/compromissos/${idDoCompromisso}`);
+        await apiClient.delete(`http://localhost:3000/api/compromissos/${idDoCompromisso}`);
         buscarCompromissos();
         alert("Compromisso apagado com sucesso!");
       } catch (erro) {

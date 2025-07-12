@@ -3,6 +3,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import { Box, CircularProgress } from "@mui/material";
+import apiClient from "../api";
 
 export const AuthContext = createContext({});
 
@@ -18,9 +19,9 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${tokenSalvo}`;
-      const resposta = await axios.get(
-            `${import.meta.env.VITE_API_BASE_URL}/api/usuarios/perfil`
+      apiClient.defaults.headers.common["Authorization"] = `Bearer ${tokenSalvo}`;
+      const resposta = await apiClient.get(
+        `/api/usuarios/perfil`
       );
       setUsuario(resposta.data);
     } catch (error) {
@@ -40,8 +41,8 @@ export function AuthProvider({ children }) {
 
   async function login(email, senha) {
     try {
-      const resposta = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/usuarios/login`,
+      const resposta = await apiClient.post(
+        `/api/usuarios/login`,
         { email, senha }
       );
       const { token } = resposta.data;

@@ -71,7 +71,7 @@ function Conquistas() {
     try {
       // Faz uma única requisição para a nova API que já retorna todas as conquistas
       // com status de desbloqueio, data e progresso do usuário.
-      const resposta = await axios.get('http://localhost:3000/api/conquistas');
+      const resposta = await apiClient.get('/api/conquistas');
       
       // Os dados já vêm do backend completamente processados e ordenados
       setConquistas(resposta.data); 
