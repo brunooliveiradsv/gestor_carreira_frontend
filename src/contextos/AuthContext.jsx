@@ -1,7 +1,6 @@
 // src/contextos/AuthContext.jsx
 
 import React, { createContext, useState, useEffect } from "react";
-import axios from "axios";
 import { Box, CircularProgress } from "@mui/material";
 import apiClient from "../api";
 
@@ -63,7 +62,7 @@ export function AuthProvider({ children }) {
   function logout() {
     setUsuario(null);
     localStorage.removeItem("token");
-    axios.defaults.headers.common["Authorization"] = undefined;
+    apiClient.defaults.headers.common["Authorization"] = undefined;
   }
 
   if (carregandoSessao) {
