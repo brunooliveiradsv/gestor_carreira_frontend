@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
     try {
       axios.defaults.headers.common["Authorization"] = `Bearer ${tokenSalvo}`;
       const resposta = await axios.get(
-        "http://localhost:3000/api/usuarios/perfil"
+            `${import.meta.env.VITE_API_BASE_URL}/api/usuarios/perfil`
       );
       setUsuario(resposta.data);
     } catch (error) {
