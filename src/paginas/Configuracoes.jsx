@@ -1,7 +1,7 @@
 // src/paginas/Configuracoes.jsx
 
 import React, { useState, useEffect, useContext } from "react";
-import axios from "axios";
+import apiClient from '../api';
 import { useNotificacao } from "../contextos/NotificationContext";
 import { AuthContext } from "../contextos/AuthContext";
 

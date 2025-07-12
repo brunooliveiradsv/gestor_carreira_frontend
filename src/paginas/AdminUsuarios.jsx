@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../contextos/AuthContext";
 import { useNotificacao } from "../contextos/NotificationContext";
-import axios from "axios";
+import apiClient from '../api';
 
 // Imports do Material-UI
 import {

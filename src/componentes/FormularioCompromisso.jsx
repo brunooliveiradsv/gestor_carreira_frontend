@@ -1,7 +1,7 @@
 // src/componentes/FormularioCompromisso.jsx
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { Box, Button, TextField, Select, MenuItem, FormControl, InputLabel, Typography, Paper, CircularProgress } from '@mui/material';
 // --- IMPORT NOVO ---
 import { useNotificacao } from '../contextos/NotificationContext';

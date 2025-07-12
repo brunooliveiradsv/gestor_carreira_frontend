@@ -1,7 +1,7 @@
 // src/componentes/FormularioRepertorio.jsx
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { Box, Button, TextField, Typography, Paper, CircularProgress } from '@mui/material';
 

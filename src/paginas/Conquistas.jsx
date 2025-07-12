@@ -1,6 +1,6 @@
 // src/paginas/Conquistas.jsx
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { 
   Box, 
   Container, 

@@ -1,7 +1,7 @@
 // src/paginas/Repertorios.jsx
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { Box, Button, Container, Typography, CircularProgress, Card, CardContent, CardActions, IconButton, Paper, Tooltip, Link as MuiLink } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, AddCircleOutline as AddCircleOutlineIcon, LibraryMusic as LibraryMusicIcon, Link as LinkIcon, Notes as NotesIcon } from '@mui/icons-material';

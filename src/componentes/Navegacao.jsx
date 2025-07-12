@@ -3,7 +3,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext";
-import axios from "axios";
+import apiClient from '../api';
 
 // Imports do Material-UI
 import {

@@ -1,7 +1,7 @@
 // src/paginas/Financeiro.jsx
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext'; // Importa o hook de notificação
 
 // Imports do Material-UI

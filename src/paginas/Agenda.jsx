@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../api';
 
 // --- A CORREÇÃO ESTÁ NESTA LINHA DE IMPORT ---
 import { Box, Button, Container, Typography, CircularProgress, Card, CardContent, CardActions, Chip, IconButton, Paper, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip } from '@mui/material';

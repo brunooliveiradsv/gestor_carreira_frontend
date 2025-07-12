@@ -1,6 +1,6 @@
 // src/paginas/Equipamentos.jsx
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { Box, Button, Container, Typography, CircularProgress, Card, CardContent, CardActions, IconButton, Paper, Tooltip } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, AddCircleOutline as AddCircleOutlineIcon, Piano as PianoIcon } from '@mui/icons-material';
