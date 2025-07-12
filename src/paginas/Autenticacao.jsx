@@ -7,18 +7,8 @@ import apiClient from "../api"; // <-- MUDANÇA IMPORTANTE
 
 // Imports do Material-UI... (sem alterações aqui)
 import {
-  Button,
-  TextField,
-  Box,
-  Typography,
-  Paper,
-  CircularProgress,
-  Alert,
-  InputAdornment,
-  IconButton,
-  Avatar,
-  Grid,
-  Link as MuiLink,
+  Button, TextField, Box, Typography, Paper, CircularProgress, Alert,
+  InputAdornment, IconButton, Avatar, Grid, Link as MuiLink,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
@@ -59,10 +49,8 @@ function Autenticacao() {
 
     setCarregando(true);
     // --- MUDANÇA IMPORTANTE ---
-    const endpoint =
-      modo === "login" ? "/api/usuarios/login" : "/api/usuarios/registrar";
-    const payload =
-      modo === "login" ? { email, senha } : { nome, email, senha };
+    const endpoint = modo === "login" ? "/api/usuarios/login" : "/api/usuarios/registrar";
+    const payload = modo === "login" ? { email, senha } : { nome, email, senha };
 
     try {
       // Usa o apiClient que já tem a URL base configurada
