@@ -5,15 +5,15 @@ const darkTheme = createTheme({
   palette: {
     mode: 'dark', // Define o modo escuro
     primary: {
-      main: '#FF7043', // Laranja vibrante (Deep Orange)
-      light: '#FF8A65',
-      dark: '#F4511E',
-      contrastText: '#ffffff', // Texto branco para melhor contraste no laranja
+      main: '#00BCD4', // Azul Ciano Tech
+      light: '#4DD0E1',
+      dark: '#0097A7',
+      contrastText: '#000000', // Texto preto para contraste no ciano
     },
     secondary: {
-      main: '#90A4AE', // Um cinza-azulado para elementos secundários
-      light: '#CFD8DC',
-      dark: '#607D8B',
+      main: '#B0BEC5', // Cinza-azulado claro para elementos secundários
+      light: '#E0E0E0',
+      dark: '#78909C',
       contrastText: '#000000',
     },
     background: {
@@ -21,21 +21,21 @@ const darkTheme = createTheme({
       paper: '#1E1E1E',   // Cor para componentes como Paper, Card
     },
     text: {
-      primary: '#E0E0E0', 
-      secondary: '#A0A0A0', 
+      primary: '#E0E0E0',
+      secondary: '#B0BEC5', // Usando o cinza secundário para textos
       disabled: '#616161',
     },
     error: {
-      main: '#CF6679', 
+      main: '#FF5252', // Vermelho um pouco mais vibrante
     },
     warning: {
-      main: '#FFC107', 
+      main: '#FFAB40', // Ambar para avisos
     },
     info: {
-      main: '#2196F3', 
+      main: '#40C4FF', // Azul claro para informações
     },
     success: {
-      main: '#4CAF50', // Verde padrão para sucesso, para não confundir com o laranja
+      main: '#4CAF50', 
       contrastText: '#ffffff',
     },
   },
@@ -62,7 +62,7 @@ const darkTheme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 12, 
+          borderRadius: 12,
           boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.4)',
         },
       },
@@ -72,12 +72,12 @@ const darkTheme = createTheme({
         root: {
           borderRadius: 8,
         },
-        containedPrimary: { // Estilo para o botão principal com a cor laranja
-          backgroundColor: '#FF7043',
-          color: '#ffffff', // Texto branco no botão laranja
+        containedPrimary: {
+          backgroundColor: '#00BCD4',
+          color: '#000000',
           '&:hover': {
-            backgroundColor: '#F4511E', // Laranja mais escuro no hover
-            boxShadow: '0px 6px 15px rgb(204, 48, 1)', // Sombra alaranjada no hover
+            backgroundColor: '#0097A7',
+            boxShadow: '0px 6px 15px rgba(0, 188, 212, 0.3)', // Sombra azulada no hover
           },
         },
       },
@@ -98,16 +98,16 @@ const darkTheme = createTheme({
                         borderColor: '#505050',
                     },
                     '&:hover fieldset': {
-                        borderColor: '#FF7043', // Borda laranja no hover
+                        borderColor: '#00BCD4', // Borda azul no hover
                     },
                     '&.Mui-focused fieldset': {
-                        borderColor: '#FF7043', // Borda laranja no focus
+                        borderColor: '#00BCD4', // Borda azul no focus
                     },
                 },
                 '& .MuiInputLabel-root': {
                     color: '#A0A0A0',
                     '&.Mui-focused': {
-                        color: '#FF7043', // Label laranja no focus
+                        color: '#00BCD4', // Label azul no focus
                     },
                 },
                 '& .MuiInputBase-input': {
@@ -119,7 +119,7 @@ const darkTheme = createTheme({
     MuiChip: {
         styleOverrides: {
             colorSuccess: {
-                backgroundColor: '#388E3C', // Verde mais escuro para chips de sucesso
+                backgroundColor: '#388E3C',
                 color: '#E0E0E0',
             },
             colorError: {
@@ -127,12 +127,12 @@ const darkTheme = createTheme({
                 color: '#E0E0E0',
             },
             colorInfo: {
-                backgroundColor: '#1976D2', 
+                backgroundColor: '#0288D1', // Azul escuro para info
                 color: '#E0E0E0',
             },
             colorPrimary: { 
-                backgroundColor: '#F4511E', // Usa o laranja escuro para chips primários
-                color: '#ffffff',
+                backgroundColor: '#0097A7', // Usa o azul escuro para chips primários
+                color: '#E0E0E0',
             }
         }
     }
