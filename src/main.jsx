@@ -7,14 +7,15 @@ import './index.css';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './contextos/AuthContext.jsx';
 import { ThemeProvider } from '@mui/material/styles';
-import { tema } from './tema.js';
+import CssBaseline from '@mui/material/CssBaseline'; // <-- Importe CssBaseline
+import darkTheme from './tema';
 
-import { NotificationProvider } from './contextos/NotificationContext.jsx'; // Importa o novo provedor
+import { NotificationProvider } from './contextos/NotificationContext.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ThemeProvider theme={tema}>
-      {/* Envolvemos o AuthProvider com o NotificationProvider */}
+    <ThemeProvider theme={darkTheme}> 
+      <CssBaseline /> {/* <-- Adicione CssBaseline aqui */}
       <NotificationProvider>
         <AuthProvider>
           <BrowserRouter>
