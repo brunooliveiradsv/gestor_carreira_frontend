@@ -3,34 +3,51 @@
 import { useState, useContext } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext";
-import apiClient from "../api"; 
+import axios from "axios";
 
-// Imports do Material-UI... (sem alterações aqui)
+// Imports do Material-UI
 import {
-  Button, TextField, Box, Typography, Paper, CircularProgress, Alert,
-  InputAdornment, IconButton, Avatar, Grid, Link as MuiLink, useTheme
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Paper,
+  CircularProgress,
+  Alert,
+  InputAdornment,
+  IconButton,
+  Avatar,
+  Grid,
+  Link as MuiLink,
 } from "@mui/material";
+// Imports dos Ícones
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 function Autenticacao() {
+  // Estado para controlar o modo atual: 'login' ou 'cadastro'
   const [modo, setModo] = useState("login");
+
+  // Estados para os campos do formulário
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+
+  // Estados de controle da UI
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
+
   const { loginComToken, logado } = useContext(AuthContext);
   const navigate = useNavigate();
-  const theme = useTheme(); // Hook para acessar o tema
 
   if (logado) {
     return <Navigate to="/" replace />;
   }
 
+  // Limpa os campos e troca o modo
   const alternarModo = () => {
     setModo(modo === "login" ? "cadastro" : "login");
     setNome("");
@@ -41,19 +58,24 @@ function Autenticacao() {
 
   const handleSubmit = async (evento) => {
     evento.preventDefault();
-    setErro("");
+    setErro(""); // Limpa erros antigos
 
+    // --- NOVA VALIDAÇÃO NO FRONTEND ---
     if (modo === "cadastro" && senha.length < 8) {
       setErro("A senha deve ter no mínimo 8 caracteres.");
-      return;
+      return; // Para a execução antes de enviar para a API
     }
 
     setCarregando(true);
-    const endpoint = modo === "login" ? "/api/usuarios/login" : "/api/usuarios/registrar";
-    const payload = modo === "login" ? { email, senha } : { nome, email, senha };
+    const endpoint =
+      modo === "login"
+        ? "http://localhost:3000/api/usuarios/login"
+        : "http://localhost:3000/api/usuarios/registrar";
+    const payload =
+      modo === "login" ? { email, senha } : { nome, email, senha };
 
     try {
-      const resposta = await apiClient.post(endpoint, payload);
+      const resposta = await axios.post(endpoint, payload);
       loginComToken(resposta.data.token);
       navigate("/");
     } catch (err) {
@@ -64,22 +86,20 @@ function Autenticacao() {
   };
 
   return (
+    // Seu design de layout principal (perfeito, mantido 100%)
     <Box
       sx={{
         display: "flex",
         minHeight: "100vh",
         width: "100vw",
-        // Removido background fixo. Ele será do tema (palette.background.default)
-        // Você pode adicionar um gradiente aqui se desejar um background diferente do default,
-        // mas é melhor ter uma cor sólida ou um gradiente mais sutil para o tema dark.
-        // Exemplo de gradiente mais escuro e sutil (adapte ao seu gosto):
-        background: `linear-gradient(to right bottom, ${theme.palette.background.default}, ${theme.palette.background.paper})`, 
+        background:
+          "linear-gradient(to right bottom, #4000F0, #2C00A3, #3E00E7)",
         flexDirection: { xs: "column", md: "row" },
         justifyContent: { xs: "center", md: "flex-start" },
         alignItems: { xs: "center", md: "stretch" },
       }}
     >
-      {/* Lado Esquerdo - Marketing */}
+      {/* Lado Esquerdo - Marketing (Seu design) */}
       <Box
         sx={{
           flex: { xs: "none", md: 1.2 },
@@ -88,7 +108,7 @@ function Autenticacao() {
           justifyContent: "center",
           alignItems: "center",
           p: { xs: 2, sm: 3, md: 5, lg: 6 },
-          color: "white", // Manter branco para contraste com o gradiente
+          color: "white",
           textAlign: "center",
         }}
       >
@@ -132,8 +152,7 @@ function Autenticacao() {
         </Box>
         <Box
           sx={{
-            // Removido bgcolor fixo. Poderia usar primary.dark ou um cinza escuro do tema
-            bgcolor: theme.palette.secondary.dark, // Usando um cinza escuro do tema para o rótulo v1.0
+            bgcolor: "#220081",
             px: { xs: 1, sm: 1.5 },
             py: { xs: 0.2, sm: 0.4 },
             borderRadius: 1,
@@ -191,14 +210,14 @@ function Autenticacao() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            // Removido borderRadius fixo para usar o do tema
-            // Removido boxShadow fixo para usar o do tema
-            // Removido backgroundColor fixo para usar o do tema
+            borderRadius: 3,
             width: "100%",
             maxWidth: { xs: "90%", sm: 400, md: 450 },
+            boxShadow: "0px 20px 40px rgba(0, 0, 0, 0.3)",
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
           }}
         >
-          <Avatar sx={{ m: 1, color: "#fff", bgcolor: theme.palette.primary.dark }}> {/* Usando uma cor do tema */}
+          <Avatar sx={{ m: 1, color: "#fff", bgcolor: "#220081" }}>
             {modo === "login" ? <LockOutlinedIcon /> : <PersonAddIcon />}
           </Avatar>
           <Typography component="h1" variant="h5" sx={{ fontWeight: "bold" }}>
@@ -229,7 +248,6 @@ function Autenticacao() {
                 autoFocus
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                // As cores do TextField serão controladas pelo tema
               />
             )}
 
@@ -243,7 +261,6 @@ function Autenticacao() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              // As cores do TextField serão controladas pelo tema
             />
             <TextField
               margin="normal"
@@ -261,14 +278,12 @@ function Autenticacao() {
                     <IconButton
                       onClick={() => setMostrarSenha(!mostrarSenha)}
                       edge="end"
-                      color="inherit" // Cor do ícone será do tema
                     >
                       {mostrarSenha ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
-              // As cores do TextField serão controladas pelo tema
             />
 
             <Box sx={{ position: "relative", mt: 2, mb: 2 }}>
@@ -277,12 +292,11 @@ function Autenticacao() {
                 fullWidth
                 variant="contained"
                 disabled={carregando}
-                color="primary" // Usa a cor primária do tema (verde vibrante)
                 sx={{
                   py: 1.5,
-                  // Removido borderRadius fixo para usar o do tema (MuiButton)
-                  // Removido bgcolor fixo para usar o do tema (MuiButton)
-                  // Removido hover fixo para usar o do tema (MuiButton)
+                  borderRadius: 2,
+                  bgcolor: "#4000F0",
+                  "&:hover": { bgcolor: "#220081" },
                 }}
               >
                 {carregando ? (
