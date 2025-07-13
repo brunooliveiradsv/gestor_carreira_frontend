@@ -35,17 +35,27 @@ import {
   AttachMoney as AttachMoneyIcon,
   People as PeopleIcon,
   Settings as SettingsIcon,
-} from "@mui/icons-material"; // Adicionado SettingsIcon
+  Menu as MenuIcon, // Adicionado para o menu hambúrguer em telas pequenas
+} from "@mui/icons-material";
+
+// Mapeamento de tipos de condição para ícones
+const iconMap = {
+  SHOWS: MusicNoteIcon,
+  RECEITA: AttachMoneyIcon,
+  CONTATO: PeopleIcon,
+};
 
 function Navegacao() {
   const { usuario, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [notificacoes, setNotificacoes] = useState([]);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorElNotificacoes, setAnchorElNotificacoes] = useState(null); // Menu de notificações
+  const [anchorElNav, setAnchorElNav] = useState(null); // Menu de navegação (para responsividade)
   const [dialogoLimparAberto, setDialogoLimparAberto] = useState(false);
 
-  const open = Boolean(anchorEl);
+  const openNotificacoes = Boolean(anchorElNotificacoes);
+  const openNav = Boolean(anchorElNav);
   const naoLidasCount = notificacoes.filter((n) => !n.lida).length;
 
   const buscarNotificacoes = async () => {
@@ -60,15 +70,25 @@ function Navegacao() {
 
   useEffect(() => {
     buscarNotificacoes();
+    // Atualiza a cada 30 segundos
     const intervalId = setInterval(buscarNotificacoes, 30000);
     return () => clearInterval(intervalId);
   }, [usuario]);
 
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleMenuNotificacoesOpen = (event) => {
+    setAnchorElNotificacoes(event.currentTarget);
   };
-  const handleMenuClose = () => {
-    setAnchorEl(null);
+
+  const handleMenuNotificacoesClose = () => {
+    setAnchorElNotificacoes(null);
+  };
+
+  const handleMenuNavOpen = (event) => {
+    setAnchorElNav(event.currentTarget);
+  };
+
+  const handleMenuNavClose = () => {
+    setAnchorElNav(null);
   };
 
   const handleMarcarComoLida = async (notificacaoId) => {
@@ -89,8 +109,20 @@ function Navegacao() {
     }
   };
 
+  const handleMarcarTodasComoLidas = async () => {
+    try {
+      await apiClient.patch("/api/notificacoes/marcar-todas-lidas");
+      setNotificacoes((notificacoesAtuais) =>
+        notificacoesAtuais.map((n) => ({ ...n, lida: true }))
+      );
+      handleMenuNotificacoesClose();
+    } catch (error) {
+      console.error("Erro ao marcar todas as notificações como lidas", error);
+    }
+  };
+
   const handleApagar = async (e, notificacaoId) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Impede que o clique no botão feche o menu ou marque como lida
     try {
       await apiClient.delete(
         `/api/notificacoes/${notificacaoId}`
@@ -102,7 +134,7 @@ function Navegacao() {
   };
 
   const abrirDialogoLimpar = () => {
-    handleMenuClose();
+    handleMenuNotificacoesClose();
     setDialogoLimparAberto(true);
   };
 
@@ -128,18 +160,27 @@ function Navegacao() {
 
   const getConquistaIcon = (tipoCondicao) => {
     if (!tipoCondicao) return <NotificationsIcon fontSize="small" />;
-    if (tipoCondicao.includes("SHOWS"))
-      return <MusicNoteIcon fontSize="small" />;
-    if (tipoCondicao.includes("RECEITA"))
-      return <AttachMoneyIcon fontSize="small" />;
-    if (tipoCondicao.includes("CONTATO"))
-      return <PeopleIcon fontSize="small" />;
-    return <MilitaryTechIcon fontSize="small" />;
+    
+    // Encontra o ícone correspondente ou usa MilitaryTechIcon como padrão para conquistas
+    const IconComponent = Object.keys(iconMap).find(key => tipoCondicao.includes(key))
+                           ? iconMap[Object.keys(iconMap).find(key => tipoCondicao.includes(key))]
+                           : MilitaryTechIcon;
+    
+    return <IconComponent fontSize="small" />;
   };
 
   const activeLinkStyle = {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
   };
+
+  const navLinks = [
+    { to: "/", text: "Agenda" },
+    { to: "/financeiro", text: "Financeiro" },
+    { to: "/repertorios", text: "Repertórios" },
+    { to: "/equipamentos", text: "Equipamentos" },
+    { to: "/contatos", text: "Contatos" },
+    { to: "/conquistas", text: "Conquistas" },
+  ];
 
   return (
     <>
@@ -162,53 +203,69 @@ function Navegacao() {
             GESTOR MUSICAL
           </Typography>
 
+          {/* Botão de Menu para telas pequenas */}
+          <Box sx={{ display: { xs: "block", md: "none" } }}>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={handleMenuNavOpen}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorElNav}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={openNav}
+              onClose={handleMenuNavClose}
+            >
+              {navLinks.map((link) => (
+                <MenuItem 
+                  key={link.to} 
+                  component={RouterLink} 
+                  to={link.to} 
+                  onClick={handleMenuNavClose}
+                  style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+                >
+                  {link.text}
+                </MenuItem>
+              ))}
+              {usuario?.role === "admin" && (
+                <MenuItem
+                  component={RouterLink}
+                  to="/admin/usuarios"
+                  onClick={handleMenuNavClose}
+                  style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+                >
+                  Admin
+                </MenuItem>
+              )}
+            </Menu>
+          </Box>
+
+          {/* Links de navegação para telas médias e grandes */}
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
-            <Button
-              component={RouterLink}
-              to="/"
-              sx={{ color: "white", mx: 1 }}
-              style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-            >
-              Agenda
-            </Button>
-            <Button
-              component={RouterLink}
-              to="/financeiro"
-              sx={{ color: "white", mx: 1 }}
-              style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-            >
-              Financeiro
-            </Button>
-            <Button
-              component={RouterLink}
-              to="/repertorios"
-              sx={{ color: "white", mx: 1 }}
-            >
-              Repertórios
-            </Button>
-            <Button
-              component={RouterLink}
-              to="/equipamentos"
-              sx={{ color: "white", mx: 1 }}
-            >
-              Equipamentos
-            </Button>
-            <Button
-              component={RouterLink}
-              to="/contatos"
-              sx={{ color: "white", mx: 1 }}
-              style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-            >
-              Contatos
-            </Button>
-            <Button
-              component={RouterLink}
-              to="/conquistas"
-              sx={{ color: "white", mx: 1 }}
-              style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-            >
-              Conquistas
-            </Button>
+            {navLinks.map((link) => (
+              <Button
+                key={link.to}
+                component={RouterLink}
+                to={link.to}
+                sx={{ color: "white", mx: 1 }}
+                style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+              >
+                {link.text}
+              </Button>
+            ))}
             {usuario?.role === "admin" && (
               <Button
                 component={RouterLink}
@@ -223,16 +280,17 @@ function Navegacao() {
             )}
           </Box>
 
-          <Box sx={{ flexGrow: 1 }} />
+          <Box sx={{ flexGrow: 1 }} /> {/* Empurra os itens para a direita */}
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Nome do usuário visível em telas maiores */}
             <Typography sx={{ display: { xs: "none", sm: "block" } }}>
               Olá, {usuario?.nome}
             </Typography>
 
             {/* Ícone de Notificações */}
             <Tooltip title="Notificações">
-              <IconButton color="inherit" onClick={handleMenuOpen}>
+              <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}>
                 <Badge badgeContent={naoLidasCount} color="error">
                   <NotificationsIcon />
                 </Badge>
@@ -251,9 +309,9 @@ function Navegacao() {
             </Tooltip>
 
             <Menu
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleMenuClose}
+              anchorEl={anchorElNotificacoes}
+              open={openNotificacoes}
+              onClose={handleMenuNotificacoesClose}
               PaperProps={{ sx: { maxHeight: 400, width: "400px", mt: 1 } }}
             >
               <Box
@@ -268,15 +326,26 @@ function Navegacao() {
                 <Typography variant="subtitle1" fontWeight="bold">
                   Notificações
                 </Typography>
-                {notificacoes.length > 0 && (
-                  <Button
-                    size="small"
-                    onClick={abrirDialogoLimpar}
-                    sx={{ textTransform: "none", color: "error.main" }}
-                  >
-                    Limpar Todas
-                  </Button>
-                )}
+                <Box>
+                  {naoLidasCount > 0 && (
+                    <Button
+                      size="small"
+                      onClick={handleMarcarTodasComoLidas}
+                      sx={{ textTransform: "none", color: "primary.main", mr: 1 }}
+                    >
+                      Marcar todas como lidas
+                    </Button>
+                  )}
+                  {notificacoes.length > 0 && (
+                    <Button
+                      size="small"
+                      onClick={abrirDialogoLimpar}
+                      sx={{ textTransform: "none", color: "error.main" }}
+                    >
+                      Limpar Todas
+                    </Button>
+                  )}
+                </Box>
               </Box>
               <Divider />
               {notificacoes.length > 0 ? (
@@ -324,7 +393,12 @@ function Navegacao() {
                   </MenuItem>
                 ))
               ) : (
-                <MenuItem disabled>Nenhuma notificação nova</MenuItem>
+                <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
+                  <NotificationsIcon sx={{ fontSize: 40, mb: 1 }} />
+                  <Typography variant="body2">
+                    Você não tem nenhuma notificação nova.
+                  </Typography>
+                </Box>
               )}
             </Menu>
 
