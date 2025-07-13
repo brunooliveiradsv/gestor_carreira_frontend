@@ -73,7 +73,7 @@ function Autenticacao() {
   const autofillStyles = {
     '& .MuiInputBase-input:-webkit-autofill': {
       WebkitTextFillColor: theme.palette.text.primary,
-      boxShadow: `0 0 0 100px ${theme.palette.background.paper} inset !important`,
+      boxShadow: `0 0 0 0 ${theme.palette.background.paper} inset !important`,
       transition: 'background-color 5000s ease-in-out 0s',
     },
   };
