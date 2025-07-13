@@ -2,36 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import apiClient from '../api';
-import { useNotificacao } from '../contextos/NotificationContext'; // Importa o hook de notificação
+import { useNotificacao } from '../contextos/NotificationContext';
 
-// Imports do Material-UI
 import { Box, Button, Container, Typography, CircularProgress, Card, CardContent, Paper, Grid, TextField, Select, MenuItem, FormControl, InputLabel, Avatar, ButtonGroup } from '@mui/material';
-// Imports dos Ícones
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 function Financeiro() {
-  // Estados para os dados e UI
   const [transacoes, setTransacoes] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
-
-  // Estados para os filtros
   const [filtroPeriodo, setFiltroPeriodo] = useState('tudo');
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [transacoesFiltradas, setTransacoesFiltradas] = useState([]);
-
-  // Estado para o formulário de nova transação
   const [novaTransacao, setNovaTransacao] = useState({
     descricao: '', valor: '', tipo: 'despesa', data: new Date().toISOString().slice(0, 10),
   });
-
-  // Usa o nosso sistema de notificação
   const { mostrarNotificacao } = useNotificacao();
 
-  // Efeito para buscar os dados iniciais da API
   useEffect(() => {
     async function buscarTransacoes() {
       try {
@@ -47,7 +37,6 @@ function Financeiro() {
     buscarTransacoes();
   }, []);
 
-  // Efeito para aplicar os filtros
   useEffect(() => {
     let transacoesTemporarias = [...transacoes];
     if (filtroTipo !== 'todos') {
@@ -66,7 +55,6 @@ function Financeiro() {
     setTransacoesFiltradas(transacoesTemporarias);
   }, [transacoes, filtroPeriodo, filtroTipo]);
 
-  // Funções para o formulário de nova transação
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setNovaTransacao(dadosAtuais => ({ ...dadosAtuais, [name]: value }));
@@ -86,12 +74,10 @@ function Financeiro() {
     }
   };
 
-  // Cálculos baseados na lista JÁ FILTRADA
   const totalReceitas = transacoesFiltradas.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + parseFloat(t.valor), 0);
   const totalDespesas = transacoesFiltradas.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + parseFloat(t.valor), 0);
   const saldo = totalReceitas - totalDespesas;
 
-  // Estilos reutilizáveis para os botões
   const primaryButtonStyle = {
     borderRadius: 2, bgcolor: "#4000F0", color: 'white', "&:hover": { bgcolor: "#2C00A3" },
   };
@@ -116,11 +102,13 @@ function Financeiro() {
         </Grid>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} lg={8}>
-            <ButtonGroup size="small" sx={{ mr: 2, mb: {xs: 1, md: 0} }}><Button variant={filtroPeriodo === 'mes' ? 'contained' : 'outlined'} sx={filtroPeriodo === 'mes' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroPeriodo('mes')}>Este Mês</Button><Button variant={filtroPeriodo === 'ano' ? 'contained' : 'outlined'} sx={filtroPeriodo === 'ano' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroPeriodo('ano')}>Este Ano</Button><Button variant={filtroPeriodo === 'tudo' ? 'contained' : 'outlined'} sx={filtroPeriodo === 'tudo' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroPeriodo('tudo')}>Tudo</Button></ButtonGroup>
-            <ButtonGroup size="small"><Button variant={filtroTipo === 'todos' ? 'contained' : 'outlined'} sx={filtroTipo === 'todos' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroTipo('todos')}>Todos</Button><Button variant={filtroTipo === 'receita' ? 'contained' : 'outlined'} sx={filtroTipo === 'receita' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroTipo('receita')}>Receitas</Button><Button variant={filtroTipo === 'despesa' ? 'contained' : 'outlined'} sx={filtroTipo === 'despesa' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroTipo('despesa')}>Despesas</Button></ButtonGroup>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <ButtonGroup size="small"><Button variant={filtroPeriodo === 'mes' ? 'contained' : 'outlined'} sx={filtroPeriodo === 'mes' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroPeriodo('mes')}>Este Mês</Button><Button variant={filtroPeriodo === 'ano' ? 'contained' : 'outlined'} sx={filtroPeriodo === 'ano' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroPeriodo('ano')}>Este Ano</Button><Button variant={filtroPeriodo === 'tudo' ? 'contained' : 'outlined'} sx={filtroPeriodo === 'tudo' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroPeriodo('tudo')}>Tudo</Button></ButtonGroup>
+              <ButtonGroup size="small"><Button variant={filtroTipo === 'todos' ? 'contained' : 'outlined'} sx={filtroTipo === 'todos' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroTipo('todos')}>Todos</Button><Button variant={filtroTipo === 'receita' ? 'contained' : 'outlined'} sx={filtroTipo === 'receita' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroTipo('receita')}>Receitas</Button><Button variant={filtroTipo === 'despesa' ? 'contained' : 'outlined'} sx={filtroTipo === 'despesa' ? primaryButtonStyle : outlinedButtonStyle} onClick={() => setFiltroTipo('despesa')}>Despesas</Button></ButtonGroup>
+            </Box>
           </Grid>
           <Grid item xs={12} lg={4} sx={{textAlign: {lg: 'right', xs: 'left'}, mt: {xs: 2, lg: 0}}}>
-            <Button variant="contained" onClick={() => setMostrarFormulario(!mostrarFormulario)} startIcon={<AddCircleOutlineIcon/>} sx={primaryButtonStyle}>
+            <Button variant="contained" onClick={() => setMostrarFormulario(!mostrarFormulario)} startIcon={<AddCircleOutlineIcon/>} sx={{...primaryButtonStyle, width: {xs: '100%', lg: 'auto'}}}>
               {mostrarFormulario ? 'Ocultar Formulário' : 'Nova Transação'}
             </Button>
           </Grid>
@@ -154,8 +142,8 @@ function Financeiro() {
               <Avatar sx={{ bgcolor: t.tipo === 'receita' ? 'success.light' : 'error.light', color: t.tipo === 'receita' ? 'success.dark' : 'error.dark', mr: 2 }}>
                 {t.tipo === 'receita' ? <TrendingUpIcon /> : <TrendingDownIcon />}
               </Avatar>
-              <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="body1" fontWeight="bold">{t.descricao}</Typography>
+              <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                <Typography variant="body1" fontWeight="bold" noWrap>{t.descricao}</Typography>
                 <Typography variant="body2" color="text.secondary">{new Date(t.data).toLocaleDateString('pt-BR')}</Typography>
               </Box>
               <Typography variant="h6" fontWeight="bold" sx={{ color: t.tipo === 'receita' ? 'success.main' : 'error.main', minWidth: '120px', textAlign: 'right' }}>

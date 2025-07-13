@@ -47,11 +47,9 @@ function Configuracoes() {
 
     setCarregando(true);
     try {
-      // CORREÇÃO: Chamando a rota correta /perfil/email
       await apiClient.put(`/api/usuarios/perfil/email`, {
         email,
       });
-      // CORREÇÃO: Chamando a função correta para atualizar os dados do usuário
       await carregarDadosDoUsuario();
       mostrarNotificacao("E-mail atualizado com sucesso!", "success");
     } catch (error) {
@@ -89,7 +87,6 @@ function Configuracoes() {
     fecharDialogoSenha();
     setCarregando(true);
     try {
-      // CORREÇÃO: Chamando a rota correta /perfil/senha
       await apiClient.put(`/api/usuarios/perfil/senha`, {
         senhaAtual,
         novaSenha,
@@ -111,7 +108,7 @@ function Configuracoes() {
 
   if (!usuario) {
     return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="md" sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />
       </Container>
     );
@@ -132,6 +129,7 @@ function Configuracoes() {
         <Box
           component="form"
           noValidate
+          autoComplete="off"
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
           <Typography variant="h6" component="h2">
@@ -160,6 +158,7 @@ function Configuracoes() {
         <Box
           component="form"
           noValidate
+          autoComplete="off"
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
           <Typography variant="h6" component="h2">
@@ -168,6 +167,7 @@ function Configuracoes() {
           <TextField
             label="Senha Atual"
             type="password"
+            autoComplete="current-password"
             value={senhaAtual}
             onChange={(e) => setSenhaAtual(e.target.value)}
             fullWidth
@@ -175,6 +175,7 @@ function Configuracoes() {
           <TextField
             label="Nova Senha"
             type="password"
+            autoComplete="new-password"
             value={novaSenha}
             onChange={(e) => setNovaSenha(e.target.value)}
             fullWidth
@@ -182,6 +183,7 @@ function Configuracoes() {
           <TextField
             label="Confirmar Nova Senha"
             type="password"
+            autoComplete="new-password"
             value={confirmarNovaSenha}
             onChange={(e) => setConfirmarNovaSenha(e.target.value)}
             fullWidth

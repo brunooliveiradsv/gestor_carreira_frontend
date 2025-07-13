@@ -1,10 +1,9 @@
 // src/paginas/Contatos.jsx
 
 import { useState, useEffect } from "react";
-import apiClient from "../api"; // <-- MUDANÇA IMPORTANTE
+import apiClient from "../api";
 import { useNotificacao } from "../contextos/NotificationContext";
 
-// Imports do Material-UI...
 import {
   Box,
   Button,
@@ -47,7 +46,6 @@ function Contatos() {
   const buscarContatos = async () => {
     if (modo === "lista" && !carregando) setCarregando(true);
     try {
-      // --- MUDANÇA IMPORTANTE ---
       const resposta = await apiClient.get("/api/contatos");
       setContatos(resposta.data);
     } catch (erro) {
@@ -77,7 +75,6 @@ function Contatos() {
   const handleConfirmarApagar = async () => {
     if (!contatoParaApagar) return;
     try {
-      // --- MUDANÇA IMPORTANTE ---
       await apiClient.delete(`/api/contatos/${contatoParaApagar.id}`);
       mostrarNotificacao("Contato apagado com sucesso!", "success");
       buscarContatos();
@@ -114,17 +111,18 @@ function Contatos() {
     );
   }
 
-  // O resto do seu JSX continua exatamente o mesmo...
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {modo === "lista" ? (
         <Paper elevation={6} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3 }}>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', sm: 'center' },
               mb: 4,
+              gap: 2,
             }}
           >
             <Typography variant="h4" component="h1" fontWeight="bold">
@@ -134,7 +132,7 @@ function Contatos() {
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               onClick={() => setModo("criar")}
-              sx={primaryButtonStyle}
+              sx={{ ...primaryButtonStyle, alignSelf: { xs: 'stretch', sm: 'auto' } }}
             >
               Novo Contato
             </Button>
@@ -142,7 +140,7 @@ function Contatos() {
           {contatos.length === 0 ? (
             <Box
               sx={{
-                p: 4,
+                p: { xs: 2, md: 4 },
                 textAlign: "center",
                 border: "1px dashed grey",
                 borderRadius: 2,
@@ -159,7 +157,7 @@ function Contatos() {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
                 gap: 3,
               }}
             >
@@ -251,7 +249,6 @@ function Contatos() {
         />
       )}
 
-      {/* Modal de Confirmação para Apagar */}
       <Dialog open={dialogoAberto} onClose={handleFecharConfirmacaoApagar}>
         <DialogTitle>Confirmar Exclusão</DialogTitle>
         <DialogContent>

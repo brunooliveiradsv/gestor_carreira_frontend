@@ -4,9 +4,36 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 
-// --- A CORREÇÃO ESTÁ NESTA LINHA DE IMPORT ---
-import { Box, Button, Container, Typography, CircularProgress, Card, CardContent, CardActions, Chip, IconButton, Paper, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon, Info as InfoIcon, AddCircleOutline as AddCircleOutlineIcon, Event as EventIcon, LocationOn as LocationOnIcon, MusicNote as MusicNoteIcon, Mic as MicIcon, Groups as GroupsIcon, Handshake as HandshakeIcon } from '@mui/icons-material';
+import { 
+  Box, 
+  Button, 
+  Container, 
+  Typography, 
+  CircularProgress, 
+  Card, 
+  CardContent, 
+  CardActions, 
+  Chip, 
+  IconButton, 
+  Paper, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions, 
+  Tooltip 
+} from '@mui/material';
+import { 
+  Edit as EditIcon, 
+  Delete as DeleteIcon, 
+  Info as InfoIcon, 
+  AddCircleOutline as AddCircleOutlineIcon, 
+  Event as EventIcon, 
+  LocationOn as LocationOnIcon, 
+  MusicNote as MusicNoteIcon, 
+  Mic as MicIcon, 
+  Groups as GroupsIcon, 
+  Handshake as HandshakeIcon 
+} from '@mui/icons-material';
 
 import FormularioCompromisso from '../componentes/FormularioCompromisso.jsx';
 
@@ -21,9 +48,6 @@ function Agenda() {
     if (modo === 'lista' && !carregando) setCarregando(true);
     try {
       const resposta = await apiClient.get('/api/compromissos');
-      // --- CORREÇÃO APLICADA AQUI ---
-      // Removemos a ordenação .sort() do frontend.
-      // Agora usamos os dados exatamente na ordem que o backend nos envia.
       setCompromissos(resposta.data);
     } catch (erro) {
       console.error("Erro ao buscar compromissos:", erro);
@@ -32,6 +56,7 @@ function Agenda() {
       setCarregando(false);
     }
   };
+
   useEffect(() => {
     if (modo === 'lista') {
       buscarCompromissos();
@@ -41,7 +66,7 @@ function Agenda() {
   const handleApagar = async (idDoCompromisso) => {
     if (window.confirm("Tem certeza que deseja apagar este compromisso?")) {
       try {
-        await apiClient.delete(`http://localhost:3000/api/compromissos/${idDoCompromisso}`);
+        await apiClient.delete(`/api/compromissos/${idDoCompromisso}`);
         buscarCompromissos();
         alert("Compromisso apagado com sucesso!");
       } catch (erro) {
@@ -95,9 +120,23 @@ function Agenda() {
     
     return (
       <Paper elevation={6} sx={{ p: {xs: 2, sm: 3, md: 4}, borderRadius: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            mb: 4,
+            gap: 2,
+          }}>
           <Typography variant="h4" component="h1" fontWeight="bold">Minha Agenda</Typography>
-          <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleNovo} sx={primaryButtonStyle}>Novo Compromisso</Button>
+          <Button 
+            variant="contained" 
+            startIcon={<AddCircleOutlineIcon />} 
+            onClick={handleNovo} 
+            sx={{ ...primaryButtonStyle, width: { xs: '100%', sm: 'auto' } }}
+          >
+            Novo Compromisso
+          </Button>
         </Box>
         {compromissos.length === 0 ? (
           <Box sx={{p: 4, textAlign: 'center', border: '1px dashed grey', borderRadius: 2}}>

@@ -54,9 +54,24 @@ function Equipamentos() {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {modo === 'lista' ? (
         <Paper elevation={6} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            mb: 4,
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+          }}>
             <Typography variant="h4" component="h1" fontWeight="bold">Meus Equipamentos</Typography>
-            <Button variant="contained" color="primary" startIcon={<AddCircleOutlineIcon />} onClick={() => setModo('criar')}>Novo Equipamento</Button>
+            <Button 
+                variant="contained" 
+                color="primary" 
+                startIcon={<AddCircleOutlineIcon />} 
+                onClick={() => setModo('criar')}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
+                Novo Equipamento
+            </Button>
           </Box>
           {equipamentos.length === 0 ? (
             <Box sx={{ p: 4, textAlign: 'center', border: '1px dashed grey', borderRadius: 2 }}>
