@@ -2,16 +2,34 @@
 
 import { useState, useEffect } from 'react';
 import apiClient from '../api';
-import { Box, Button, TextField, Select, MenuItem, FormControl, InputLabel, Typography, Paper, CircularProgress, useTheme } from '@mui/material'; // Adicionado useTheme
+import { 
+  Box, 
+  Button, 
+  TextField, 
+  Select, 
+  MenuItem, 
+  FormControl, 
+  InputLabel, 
+  Typography, 
+  Paper, 
+  CircularProgress, 
+  useTheme 
+} from '@mui/material'; 
 import { useNotificacao } from '../contextos/NotificationContext';
 
 function FormularioCompromisso({ id, onSave, onCancel }) {
   const [dadosForm, setDadosForm] = useState({
-    tipo: 'Show', nome_evento: '', data: '', local: '', status: 'Agendado', valor_cache: '', despesas: [],
+    tipo: 'Show', 
+    nome_evento: '', 
+    data: '', // Será uma string local 'YYYY-MM-DDTHH:mm'
+    local: '', 
+    status: 'Agendado', 
+    valor_cache: '', 
+    despesas: [],
   });
   const [carregando, setCarregando] = useState(false);
   const { mostrarNotificacao } = useNotificacao();
-  const theme = useTheme(); // Para acessar as cores do tema
+  const theme = useTheme();
 
   useEffect(() => {
     if (id) {
@@ -29,14 +47,18 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
           const dataFormatadaParaInput = dataLocal.toISOString().slice(0, 16);
           
           const despesasSeguro = resposta.data.despesas || [];
-          setDadosForm({ ...resposta.data, data: dataFormatadaParaInput, despesas: despesasSeguro });
+          setDadosForm({ 
+            ...resposta.data, 
+            data: dataFormatadaParaInput, // Usa a data formatada para o input
+            despesas: despesasSeguro 
+          });
         })
         .catch(erro => {
             console.error("Erro ao buscar dados para edição", erro);
             mostrarNotificacao("Não foi possível carregar os dados do compromisso para edição.", "error");
         });
     }
-  }, [id, mostrarNotificacao]); // Adicionado mostrarNotificacao como dependência
+  }, [id, mostrarNotificacao]); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,7 +97,7 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
     if (dadosParaEnviar.data) {
       try {
         // Cria um objeto Date a partir da string local.
-        // O construtor Date() vai interpretar a string como hora local, o que queremos aqui.
+        // O construtor Date() vai interpretar a string como hora local.
         const dataObjLocal = new Date(dadosParaEnviar.data);
         // Converte para ISO string, que é sempre em UTC, e este é o formato que o backend deve esperar.
         dadosParaEnviar.data = dataObjLocal.toISOString();
@@ -135,13 +157,13 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
   };
 
   return (
-    <Paper elevation={6} sx={{ p: { xs: 2, sm: 3, md: 4 } }}> {/* borderRadius removido, usa o do tema */}
+    <Paper elevation={6} sx={{ p: { xs: 2, sm: 3, md: 4 } }}> {/* Sem borderRadius fixo, usa o do tema */}
       <Box
         component="form"
         onSubmit={handleSubmit}
         sx={{ display: "flex", flexDirection: "column", gap: 2 }}
       >
-        <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom sx={{ color: theme.palette.text.primary }}> {/* Cor do tema */}
+        <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom sx={{ color: theme.palette.text.primary }}>
           {id ? "Editar Compromisso" : "Novo Compromisso"}
         </Typography>
 
@@ -152,16 +174,18 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
           onChange={handleChange}
           required
           fullWidth
+          // As cores do TextField serão controladas pelo tema
         />
 
         <FormControl fullWidth>
-          <InputLabel sx={{ color: theme.palette.text.secondary }}>Tipo</InputLabel> {/* Cor do tema */}
+          <InputLabel sx={{ color: theme.palette.text.secondary }}>Tipo</InputLabel>
           <Select
             name="tipo"
             label="Tipo"
             value={dadosForm.tipo}
             onChange={handleChange}
-            sx={{ color: theme.palette.text.primary }} {/* Cor do texto selecionado */}
+            sx={{ color: theme.palette.text.primary }}
+            // As cores do Select (ícone, borda) serão controladas pelo tema
           >
             <MenuItem value="Show">Show</MenuItem>
             <MenuItem value="Ensaio">Ensaio</MenuItem>
@@ -172,14 +196,14 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
 
         {id && (
           <FormControl fullWidth>
-            <InputLabel sx={{ color: theme.palette.text.secondary }}>Status</InputLabel> {/* Cor do tema */}
+            <InputLabel sx={{ color: theme.palette.text.secondary }}>Status</InputLabel>
             <Select
               name="status"
               label="Status"
               value={dadosForm.status}
               onChange={handleChange}
               disabled={isStatusDisabled()}
-              sx={{ color: theme.palette.text.primary }} {/* Cor do texto selecionado */}
+              sx={{ color: theme.palette.text.primary }}
             >
               {getStatusOptions()}
             </Select>
@@ -190,11 +214,12 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
           name="data"
           label="Data e Hora"
           type="datetime-local"
-          value={dadosForm.data} // ESTE É O CAMPO MAIS CRÍTICO PARA FUSO HORÁRIO
+          value={dadosForm.data} 
           onChange={handleChange}
           required
           fullWidth
           InputLabelProps={{ shrink: true }}
+          // As cores do TextField serão controladas pelo tema
         />
         <TextField
           name="local"
@@ -202,6 +227,7 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
           value={dadosForm.local}
           onChange={handleChange}
           fullWidth
+          // As cores do TextField serão controladas pelo tema
         />
         <TextField
           name="valor_cache"
@@ -211,10 +237,11 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
           value={dadosForm.valor_cache || ""}
           onChange={handleChange}
           fullWidth
+          // As cores do TextField serão controladas pelo tema
         />
 
         <Box>
-          <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary }}> {/* Cor do tema */}
+          <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary }}>
             Despesas do Evento
           </Typography>
           {(dadosForm.despesas || []).map((despesa, index) => (
@@ -229,6 +256,7 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
                   handleDespesaChange(index, "descricao", e.target.value)
                 }
                 sx={{ flex: 2 }}
+                // As cores do TextField serão controladas pelo tema
               />
               <TextField
                 label="Valor (R$)"
@@ -239,11 +267,12 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
                   handleDespesaChange(index, "valor", e.target.value)
                 }
                 sx={{ flex: 1 }}
+                // As cores do TextField serão controladas pelo tema
               />
               <Button
                 type="button"
                 onClick={() => removerDespesa(index)}
-                color="error" // Cor do tema
+                color="error" 
                 size="small"
               >
                 Remover
@@ -255,17 +284,17 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
             onClick={adicionarDespesa}
             variant="outlined"
             size="small"
-            color="primary" // Cor do tema
+            color="primary" 
           >
             + Adicionar Despesa
           </Button>
         </Box>
 
         <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-          <Button type="submit" variant="contained" disabled={carregando} color="primary"> {/* Cor do tema */}
+          <Button type="submit" variant="contained" disabled={carregando} color="primary">
             {carregando ? <CircularProgress size={24} /> : "Salvar"}
           </Button>
-          <Button type="button" variant="text" onClick={onCancel} sx={{ color: theme.palette.text.secondary }}> {/* Cor do tema */}
+          <Button type="button" variant="text" onClick={onCancel} sx={{ color: theme.palette.text.secondary }}>
             Cancelar
           </Button>
         </Box>
