@@ -22,8 +22,8 @@ const darkTheme = createTheme({
     },
     text: {
       primary: '#F5F5F5', 
-      secondary: '#BDBDBD', // Cinza um pouco mais claro para textos secundários
-      disabled: '#2B2B2B',
+      secondary: '#BDBDBD',
+      disabled: '#424242',
     },
     error: {
       main: '#EF5350',
@@ -72,20 +72,22 @@ const darkTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+          transition: 'transform 0.2s ease-in-out', // Removida a transição de sombra para focar na do degradê
            '&:hover': {
              transform: 'scale(1.02)',
            }
         },
         containedPrimary: {
           color: '#ffffff',
-          // Degradê entre o lilás e um azul mais profundo
-          background: 'linear-gradient(45deg, #5E35B1 30%, #42A5F5 90%)',
           border: 0,
           boxShadow: '0 3px 5px 2px rgba(94, 53, 177, .3)',
+          // EFEITO DE MOVIMENTO DO DEGRADÊ
+          background: 'linear-gradient(45deg, #5E35B1 30%,rgb(78, 66, 245) 90%)',
+          backgroundSize: '200% auto', // Aumenta o tamanho do degradê
+          transition: 'background-position 0.5s ease-out', // Transição suave para a posição
           '&:hover': {
+            backgroundPosition: 'right center', // Move o degradê para a direita no hover
             boxShadow: '0 3px 5px 2px rgba(66, 165, 245, .3)',
-            filter: 'brightness(1.15)', 
           },
         },
       },
@@ -106,16 +108,16 @@ const darkTheme = createTheme({
               borderColor: '#616161',
             },
             '&:hover fieldset': {
-              borderColor: '#7E57C2', // Borda lilás no hover
+              borderColor: '#7E57C2',
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#7E57C2', // Borda lilás no focus
+              borderColor: '#7E57C2',
             },
           },
           '& .MuiInputLabel-root': {
             color: '#BDBDBD',
             '&.Mui-focused': {
-              color: '#7E57C2', // Label lilás no focus
+              color: '#7E57C2',
             },
           },
           '& .MuiInputBase-input': {
@@ -139,7 +141,7 @@ const darkTheme = createTheme({
           color: '#F5F5F5',
         },
         colorPrimary: { 
-          backgroundColor: '#5E35B1', // Lilás escuro para chips primários
+          backgroundColor: '#5E35B1',
           color: '#ffffff',
         }
       }
