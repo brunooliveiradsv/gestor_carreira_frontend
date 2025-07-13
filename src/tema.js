@@ -5,8 +5,8 @@ const darkTheme = createTheme({
   palette: {
     mode: 'dark', 
     primary: {
-      main: '#7E57C2', // Lilás/Índigo (Deep Purple 400)
-      light: '#9575CD',
+      main: '#5E35B1', // Lilás/Índigo (Deep Purple 400)
+      light: '#5E35B1',
       dark: '#5E35B1',
       contrastText: '#ffffff',
     },
