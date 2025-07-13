@@ -5,38 +5,38 @@ const darkTheme = createTheme({
   palette: {
     mode: 'dark', 
     primary: {
-      main: '#00BCD4', // Azul Ciano Tech (Mantido)
-      light: '#4DD0E1',
-      dark: '#0097A7',
-      contrastText: '#000000',
+      main: '#7E57C2', // Lilás/Índigo (Deep Purple 400)
+      light: '#9575CD',
+      dark: '#5E35B1',
+      contrastText: '#ffffff',
     },
     secondary: {
-      main: '#9E9E9E', // Cinza neutro para elementos secundários
-      light: '#E0E0E0',
-      dark: '#616161',
+      main: '#42A5F5', // Um azul mais claro para contraste e elementos secundários
+      light: '#64B5F6',
+      dark: '#1E88E5',
       contrastText: '#000000',
     },
     background: {
-      default: '#0A0A0A', // Quase preto para o fundo principal
-      paper: '#141414',   // Cinza muito escuro para componentes
+      default: '#0A0A0A', 
+      paper: '#141414',   
     },
     text: {
-      primary: '#F5F5F5',
-      secondary: '#9E9E9E',
-      disabled: '#424242',
+      primary: '#F5F5F5', 
+      secondary: '#BDBDBD', // Cinza um pouco mais claro para textos secundários
+      disabled: '#2B2B2B',
     },
     error: {
-      main: '#FF5252',
+      main: '#EF5350',
     },
     warning: {
-      main: '#FFAB40',
+      main: '#FFA726',
     },
     info: {
-      main: '#40C4FF',
+      main: '#29B6F6',
     },
     success: {
-      main: '#4CAF50',
-      contrastText: '#ffffff',
+      main: '#66BB6A',
+      contrastText: '#000000',
     },
     divider: 'rgba(255, 255, 255, 0.12)',
   },
@@ -72,21 +72,20 @@ const darkTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out', // Adiciona transição suave
+          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
            '&:hover': {
-             transform: 'scale(1.02)', // Leve aumento no hover
+             transform: 'scale(1.02)',
            }
         },
         containedPrimary: {
-          color: '#000000',
-          // AQUI ESTÁ A MÁGICA DO DEGRADÊ
-          background: 'linear-gradient(45deg, #0097A7 30%, #4DD0E1 90%)',
+          color: '#ffffff',
+          // Degradê entre o lilás e um azul mais profundo
+          background: 'linear-gradient(45deg, #5E35B1 30%, #42A5F5 90%)',
           border: 0,
-          boxShadow: '0 3px 5px 2px rgba(0, 151, 167, .3)',
+          boxShadow: '0 3px 5px 2px rgba(94, 53, 177, .3)',
           '&:hover': {
-            boxShadow: '0 3px 5px 2px rgba(0, 188, 212, .3)',
-            // Mantém o degradê e adiciona um brilho para o feedback
-            filter: 'brightness(1.1)', 
+            boxShadow: '0 3px 5px 2px rgba(66, 165, 245, .3)',
+            filter: 'brightness(1.15)', 
           },
         },
       },
@@ -107,16 +106,16 @@ const darkTheme = createTheme({
               borderColor: '#616161',
             },
             '&:hover fieldset': {
-              borderColor: '#00BCD4',
+              borderColor: '#7E57C2', // Borda lilás no hover
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#00BCD4',
+              borderColor: '#7E57C2', // Borda lilás no focus
             },
           },
           '& .MuiInputLabel-root': {
-            color: '#9E9E9E',
+            color: '#BDBDBD',
             '&.Mui-focused': {
-              color: '#00BCD4',
+              color: '#7E57C2', // Label lilás no focus
             },
           },
           '& .MuiInputBase-input': {
@@ -140,8 +139,8 @@ const darkTheme = createTheme({
           color: '#F5F5F5',
         },
         colorPrimary: { 
-          backgroundColor: '#0097A7',
-          color: '#F5F5F5',
+          backgroundColor: '#5E35B1', // Lilás escuro para chips primários
+          color: '#ffffff',
         }
       }
     }
