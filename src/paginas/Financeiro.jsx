@@ -160,8 +160,8 @@ function Financeiro() {
                 borderColor: theme.palette.divider,
               }}
             >
-              <Avatar sx={{ bgcolor: theme.palette.success.light, mr: 2 }}>
-                <TrendingUpIcon sx={{ color: theme.palette.success.dark }} />
+              <Avatar sx={{ bgcolor: "success.light", mr: 2 }}>
+                <TrendingUpIcon sx={{ color: "success.dark" }} />
               </Avatar>
               <Box>
                 <Typography color="text.secondary">
@@ -184,8 +184,8 @@ function Financeiro() {
                 borderColor: theme.palette.divider,
               }}
             >
-              <Avatar sx={{ bgcolor: theme.palette.error.light, mr: 2 }}>
-                <TrendingDownIcon sx={{ color: theme.palette.error.dark }} />
+              <Avatar sx={{ bgcolor: "error.light", mr: 2 }}>
+                <TrendingDownIcon sx={{ color: "error.dark" }} />
               </Avatar>
               <Box>
                 <Typography color="text.secondary">
@@ -198,6 +198,7 @@ function Financeiro() {
             </Paper>
           </Grid>
           <Grid item xs={12} sm={12} md={4}>
+            {/* AQUI ESTÁ A ALTERAÇÃO */}
             <Paper
               variant="outlined"
               sx={{
@@ -210,20 +211,12 @@ function Financeiro() {
             >
               <Avatar
                 sx={{
-                  bgcolor:
-                    saldo >= 0
-                      ? theme.palette.success.light
-                      : theme.palette.error.light,
+                  bgcolor: saldo >= 0 ? "primary.light" : "error.light",
                   mr: 2,
                 }}
               >
                 <AccountBalanceWalletIcon
-                  sx={{
-                    color:
-                      saldo >= 0
-                        ? theme.palette.success.dark
-                        : theme.palette.error.dark,
-                  }}
+                  sx={{ color: saldo >= 0 ? "primary.dark" : "error.dark" }}
                 />
               </Avatar>
               <Box>
@@ -233,12 +226,7 @@ function Financeiro() {
                 <Typography
                   variant="h5"
                   fontWeight="bold"
-                  sx={{
-                    color:
-                      saldo >= 0
-                        ? theme.palette.success.main
-                        : theme.palette.error.main,
-                  }}
+                  sx={{ color: saldo >= 0 ? "primary.main" : "error.main" }}
                 >
                   R$ {saldo.toFixed(2)}
                 </Typography>
@@ -394,20 +382,14 @@ function Financeiro() {
                 <Avatar
                   sx={{
                     bgcolor:
-                      t.tipo === "receita"
-                        ? theme.palette.success.light
-                        : theme.palette.error.light,
+                      t.tipo === "receita" ? "success.light" : "error.light",
                     mr: 2,
                   }}
                 >
                   {t.tipo === "receita" ? (
-                    <TrendingUpIcon
-                      sx={{ color: theme.palette.success.dark }}
-                    />
+                    <TrendingUpIcon sx={{ color: "success.dark" }} />
                   ) : (
-                    <TrendingDownIcon
-                      sx={{ color: theme.palette.error.dark }}
-                    />
+                    <TrendingDownIcon sx={{ color: "error.dark" }} />
                   )}
                 </Avatar>
                 <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
@@ -427,10 +409,7 @@ function Financeiro() {
                   variant="h6"
                   fontWeight="bold"
                   sx={{
-                    color:
-                      t.tipo === "receita"
-                        ? theme.palette.success.main
-                        : theme.palette.error.main,
+                    color: t.tipo === "receita" ? "success.main" : "error.main",
                     minWidth: "120px",
                     textAlign: "right",
                   }}
@@ -441,7 +420,6 @@ function Financeiro() {
               </Card>
             ))
           ) : (
-            // AQUI ESTÁ A NOVA FRASE CONVIDATIVA
             <Box
               sx={{
                 p: { xs: 3, md: 5 },
