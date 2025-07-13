@@ -20,7 +20,8 @@ import {
   DialogTitle, 
   DialogContent, 
   DialogActions, 
-  Tooltip 
+  Tooltip,
+  useTheme // Adicionado para acessar o tema
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -43,6 +44,7 @@ function Agenda() {
   const [modo, setModo] = useState('lista');
   const [compromissoSelecionado, setCompromissoSelecionado] = useState(null);
   const navigate = useNavigate();
+  const theme = useTheme(); // Hook para acessar o tema
 
    const buscarCompromissos = async () => {
     if (modo === 'lista' && !carregando) setCarregando(true);
@@ -51,7 +53,10 @@ function Agenda() {
       setCompromissos(resposta.data);
     } catch (erro) {
       console.error("Erro ao buscar compromissos:", erro);
-      alert("Não foi possível carregar os compromissos.");
+      // Removendo alert() em favor de NotificacaoContext, se estiver usando-o
+      // alert("Não foi possível carregar os compromissos.");
+      // Se você tem useNotificacao, pode usar:
+      // mostrarNotificacao("Não foi possível carregar os compromissos.", "error");
     } finally {
       setCarregando(false);
     }
@@ -68,10 +73,16 @@ function Agenda() {
       try {
         await apiClient.delete(`/api/compromissos/${idDoCompromisso}`);
         buscarCompromissos();
-        alert("Compromisso apagado com sucesso!");
+        // Removendo alert() em favor de NotificacaoContext
+        // alert("Compromisso apagado com sucesso!");
+        // Se você tem useNotificacao, pode usar:
+        // mostrarNotificacao("Compromisso apagado com sucesso!", "success");
       } catch (erro) {
         console.error("Erro ao apagar compromisso:", erro);
-        alert("Falha ao apagar o compromisso.");
+        // Removendo alert() em favor de NotificacaoContext
+        // alert("Falha ao apagar o compromisso.");
+        // Se você tem useNotificacao, pode usar:
+        // mostrarNotificacao("Falha ao apagar o compromisso.", "error");
       }
     }
   };
@@ -84,31 +95,34 @@ function Agenda() {
   const handleCancelarFormulario = () => { setModo('lista'); setCompromissoSelecionado(null); };
 
   const getStatusColor = (status) => {
+    // Usando as cores do tema para os Chips
     switch (status) {
-      case 'Realizado': return 'success';
-      case 'Cancelado': return 'error';
-      default: return 'info';
+      case 'Realizado': return 'success'; // theme.palette.success.main
+      case 'Cancelado': return 'error';   // theme.palette.error.main
+      default: return 'info';             // theme.palette.info.main
     }
   };
 
   const getTipoIcon = (tipo) => {
     switch (tipo) {
-      case 'Show': return <MusicNoteIcon fontSize="small" />;
-      case 'Gravação': return <MicIcon fontSize="small" />;
-      case 'Ensaio': return <GroupsIcon fontSize="small" />;
-      case 'Reunião': return <HandshakeIcon fontSize="small" />;
-      default: return <MusicNoteIcon fontSize="small" />;
+      case 'Show': return <MusicNoteIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />;
+      case 'Gravação': return <MicIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />;
+      case 'Ensaio': return <GroupsIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />;
+      case 'Reunião': return <HandshakeIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />;
+      default: return <MusicNoteIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />;
     }
   };
 
-  const primaryButtonStyle = {
-    borderRadius: 2, bgcolor: "#4000F0", color: 'white', py: 1.2, px: 3, "&:hover": { bgcolor: "#2C00A3" },
-  };
+  // Removendo primaryButtonStyle, pois o botão usará as props do tema
+  // const primaryButtonStyle = {
+  //   borderRadius: 2, bgcolor: "#4000F0", color: 'white', py: 1.2, px: 3, "&:hover": { bgcolor: "#2C00A3" },
+  // };
 
   const renderizarConteudo = () => {
     if (modo === 'criar' || modo === 'editar') {
       return (
-        <Paper elevation={6} sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 3 }}>
+        // Removendo borderRadius e elevation fixos
+        <Paper elevation={6} sx={{ p: { xs: 2, sm: 3, md: 4 } }}> 
           <FormularioCompromisso 
             id={compromissoSelecionado ? compromissoSelecionado.id : null}
             onSave={handleSucessoFormulario}
@@ -119,7 +133,8 @@ function Agenda() {
     }
     
     return (
-      <Paper elevation={6} sx={{ p: {xs: 2, sm: 3, md: 4}, borderRadius: 3 }}>
+      // Removendo borderRadius e elevation fixos
+      <Paper elevation={6} sx={{ p: {xs: 2, sm: 3, md: 4} }}>
         <Box sx={{
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
@@ -133,28 +148,30 @@ function Agenda() {
             variant="contained" 
             startIcon={<AddCircleOutlineIcon />} 
             onClick={handleNovo} 
-            sx={{ ...primaryButtonStyle, width: { xs: '100%', sm: 'auto' } }}
+            color="primary" // Usa a cor primária do tema
+            sx={{ width: { xs: '100%', sm: 'auto' } }} // Mantém apenas o ajuste de largura
           >
             Novo Compromisso
           </Button>
         </Box>
         {compromissos.length === 0 ? (
-          <Box sx={{p: 4, textAlign: 'center', border: '1px dashed grey', borderRadius: 2}}>
-            <Typography variant="h6">Sua agenda está vazia!</Typography>
+          <Box sx={{p: 4, textAlign: 'center', border: `1px dashed ${theme.palette.divider}`, borderRadius: 2}}>
+            <Typography variant="h6" sx={{ color: theme.palette.text.primary }}>Sua agenda está vazia!</Typography>
             <Typography color="text.secondary">Clique em "Novo Compromisso" para começar.</Typography>
           </Box>
         ) : (
           <Box>{compromissos.map(c => (
-            <Card key={c.id} variant="outlined" sx={{ mb: 2 }}>
+            // Removendo variant="outlined" e usando o boxShadow do tema (se você configurou MuiCard no tema)
+            <Card key={c.id} sx={{ mb: 2 }}> 
               <CardContent sx={{ pb: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                  <Typography variant="h6" component="h2" fontWeight="bold">{c.nome_evento}</Typography>
+                  <Typography variant="h6" component="h2" fontWeight="bold" sx={{ color: theme.palette.text.primary }}>{c.nome_evento}</Typography>
                   <Chip label={c.status} color={getStatusColor(c.status)} size="small" />
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mb: 1, gap: 3, flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', color: theme.palette.text.secondary, mb: 1, gap: 3, flexWrap: 'wrap' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>{getTipoIcon(c.tipo)}<Typography variant="body2" sx={{ ml: 1 }}>{c.tipo}</Typography></Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}><EventIcon sx={{ fontSize: '1.1rem', mr: 1 }} /><Typography variant="body2">{new Date(c.data).toLocaleString('pt-BR', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}</Typography></Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}><LocationOnIcon sx={{ fontSize: '1.1rem', mr: 1 }} /><Typography variant="body2">{c.local || 'Não informado'}</Typography></Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}><EventIcon sx={{ fontSize: '1.1rem', mr: 1, color: theme.palette.primary.main }} /><Typography variant="body2">{new Date(c.data).toLocaleString('pt-BR', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}</Typography></Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}><LocationOnIcon sx={{ fontSize: '1.1rem', mr: 1, color: theme.palette.primary.main }} /><Typography variant="body2">{c.local || 'Não informado'}</Typography></Box>
                 </Box>
               </CardContent>
               <CardActions sx={{ justifyContent: 'flex-end' }}>
@@ -165,8 +182,8 @@ function Agenda() {
             </Card>
           ))}
         </Box>
-      )}
-    </Paper>
+        )}
+      </Paper>
     );
   };
 
@@ -178,25 +195,32 @@ function Agenda() {
         renderizarConteudo()
       )}
 
-      <Dialog open={!!compromissoSelecionado && modo === 'lista'} onClose={handleFecharDetalhes} fullWidth maxWidth="sm">
-        <DialogTitle fontWeight="bold">Detalhes: {compromissoSelecionado?.nome_evento}</DialogTitle>
-        <DialogContent dividers>
+      <Dialog open={!!compromissoSelecionado && modo === 'lista'} onClose={handleFecharDetalhes} fullWidth maxWidth="sm"
+        PaperProps={{ // Estiliza o Paper do Dialog
+          sx: {
+            bgcolor: theme.palette.background.paper,
+            boxShadow: theme.shadows[6],
+          }
+        }}
+      >
+        <DialogTitle fontWeight="bold" sx={{ color: theme.palette.text.primary }}>Detalhes: {compromissoSelecionado?.nome_evento}</DialogTitle>
+        <DialogContent dividers sx={{ borderColor: theme.palette.divider }}> {/* Cor do divider */}
           {compromissoSelecionado && (
             <Box sx={{lineHeight: 1.8}}>
-              <Typography><strong>Tipo:</strong> {compromissoSelecionado.tipo}</Typography>
-              <Typography><strong>Data:</strong> {new Date(compromissoSelecionado.data).toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}</Typography>
-              <Typography><strong>Local:</strong> {compromissoSelecionado.local || 'Não informado'}</Typography>
-              <Typography><strong>Status:</strong> {compromissoSelecionado.status}</Typography>
-              {compromissoSelecionado.valor_cache && <Typography><strong>Cachê:</strong> R$ {parseFloat(compromissoSelecionado.valor_cache).toFixed(2)}</Typography>}
-              {compromissoSelecionado.repertorio_id && <Typography><strong>ID do Repertório:</strong> {compromissoSelecionado.repertorio_id}</Typography>}
+              <Typography sx={{ color: theme.palette.text.primary }}><strong>Tipo:</strong> {compromissoSelecionado.tipo}</Typography>
+              <Typography sx={{ color: theme.palette.text.primary }}><strong>Data:</strong> {new Date(compromissoSelecionado.data).toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}</Typography>
+              <Typography sx={{ color: theme.palette.text.primary }}><strong>Local:</strong> {compromissoSelecionado.local || 'Não informado'}</Typography>
+              <Typography sx={{ color: theme.palette.text.primary }}><strong>Status:</strong> {compromissoSelecionado.status}</Typography>
+              {compromissoSelecionado.valor_cache && <Typography sx={{ color: theme.palette.text.primary }}><strong>Cachê:</strong> R$ {parseFloat(compromissoSelecionado.valor_cache).toFixed(2)}</Typography>}
+              {compromissoSelecionado.repertorio_id && <Typography sx={{ color: theme.palette.text.primary }}><strong>ID do Repertório:</strong> {compromissoSelecionado.repertorio_id}</Typography>}
               {compromissoSelecionado.despesas && compromissoSelecionado.despesas.length > 0 && (
-                <Box mt={2}><Typography fontWeight="bold">Despesas Previstas:</Typography><ul style={{paddingLeft: '20px', margin: 0}}>{compromissoSelecionado.despesas.map((d, index) => <li key={index}>{d.descricao}: R$ {parseFloat(d.valor).toFixed(2)}</li>)}</ul></Box>
+                <Box mt={2}><Typography fontWeight="bold" sx={{ color: theme.palette.text.primary }}>Despesas Previstas:</Typography><ul style={{paddingLeft: '20px', margin: 0, color: theme.palette.text.primary}}>{compromissoSelecionado.despesas.map((d, index) => <li key={index}>{d.descricao}: R$ {parseFloat(d.valor).toFixed(2)}</li>)}</ul></Box>
               )}
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleFecharDetalhes}>Fechar</Button>
+          <Button onClick={handleFecharDetalhes} sx={{ color: theme.palette.text.secondary }}>Fechar</Button>
         </DialogActions>
       </Dialog>
     </Container>
