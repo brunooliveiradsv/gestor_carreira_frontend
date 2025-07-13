@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import apiClient from '../api';
-import { Box, Button, TextField, Select, MenuItem, FormControl, InputLabel, Typography, Paper, CircularProgress } from '@mui/material';
-// --- IMPORT NOVO ---
+import { Box, Button, TextField, Select, MenuItem, FormControl, InputLabel, Typography, Paper, CircularProgress, useTheme } from '@mui/material'; // Adicionado useTheme
 import { useNotificacao } from '../contextos/NotificationContext';
 
 function FormularioCompromisso({ id, onSave, onCancel }) {
@@ -11,21 +10,33 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
     tipo: 'Show', nome_evento: '', data: '', local: '', status: 'Agendado', valor_cache: '', despesas: [],
   });
   const [carregando, setCarregando] = useState(false);
-  
-  // --- HOOK NOVO ---
-  const { mostrarNotificacao } = useNotificacao(); // Pega a função do nosso contexto
+  const { mostrarNotificacao } = useNotificacao();
+  const theme = useTheme(); // Para acessar as cores do tema
 
   useEffect(() => {
     if (id) {
       apiClient.get(`/api/compromissos/${id}`)
         .then(resposta => {
-          const dataFormatada = new Date(resposta.data.data).toISOString().slice(0, 16);
+          // --- CORREÇÃO DE FUSO HORÁRIO AO CARREGAR PARA EDIÇÃO ---
+          // A API retorna a data em UTC. Precisamos converter para a data/hora LOCAL do usuário
+          // para preencher o input type="datetime-local" corretamente.
+          const dataUTC = new Date(resposta.data.data);
+          // Calcula o offset do fuso horário local em minutos e converte para milissegundos
+          const offset = dataUTC.getTimezoneOffset() * 60000;
+          // Ajusta a data para o fuso horário local
+          const dataLocal = new Date(dataUTC.getTime() - offset);
+          // Formata para "YYYY-MM-DDTHH:mm", que é o formato esperado pelo input type="datetime-local"
+          const dataFormatadaParaInput = dataLocal.toISOString().slice(0, 16);
+          
           const despesasSeguro = resposta.data.despesas || [];
-          setDadosForm({ ...resposta.data, data: dataFormatada, despesas: despesasSeguro });
+          setDadosForm({ ...resposta.data, data: dataFormatadaParaInput, despesas: despesasSeguro });
         })
-        .catch(erro => console.error("Erro ao buscar dados para edição", erro));
+        .catch(erro => {
+            console.error("Erro ao buscar dados para edição", erro);
+            mostrarNotificacao("Não foi possível carregar os dados do compromisso para edição.", "error");
+        });
     }
-  }, [id]);
+  }, [id, mostrarNotificacao]); // Adicionado mostrarNotificacao como dependência
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,26 +64,41 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
     }
   };
 
-  // --- FUNÇÃO ATUALIZADA ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setCarregando(true);
     const dadosParaEnviar = { ...dadosForm };
 
+    // --- CORREÇÃO DE FUSO HORÁRIO AO SALVAR ---
+    // O input type="datetime-local" retorna uma string no formato local ("YYYY-MM-DDTHH:mm").
+    // Precisamos converter esta string local para UTC antes de enviar para a API.
+    if (dadosParaEnviar.data) {
+      try {
+        // Cria um objeto Date a partir da string local.
+        // O construtor Date() vai interpretar a string como hora local, o que queremos aqui.
+        const dataObjLocal = new Date(dadosParaEnviar.data);
+        // Converte para ISO string, que é sempre em UTC, e este é o formato que o backend deve esperar.
+        dadosParaEnviar.data = dataObjLocal.toISOString();
+      } catch (error) {
+        console.error("Erro ao converter data para UTC:", error);
+        mostrarNotificacao("Erro na data. Por favor, verifique o formato.", "error");
+        setCarregando(false);
+        return; // Impede o envio se a data for inválida
+      }
+    }
+
     try {
       if (id) {
         await apiClient.put(`/api/compromissos/${id}`, dadosParaEnviar);
-        // Em vez de alert(), usamos nossa nova função
         mostrarNotificacao('Compromisso atualizado com sucesso!', 'success');
       } else {
         await apiClient.post('/api/compromissos', dadosParaEnviar);
         mostrarNotificacao('Compromisso criado com sucesso!', 'success');
       }
-      onSave();
+      onSave(); // Retorna para a lista de compromissos
     } catch (erro) {
       console.error("Erro ao salvar:", erro);
-      // Usamos a severidade 'error' para a notificação de falha
-      mostrarNotificacao('Falha ao salvar o compromisso.', 'error');
+      mostrarNotificacao(erro.response?.data?.mensagem || 'Falha ao salvar o compromisso.', 'error');
     } finally {
       setCarregando(false);
     }
@@ -109,13 +135,13 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
   };
 
   return (
-    <Paper elevation={6} sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 3 }}>
+    <Paper elevation={6} sx={{ p: { xs: 2, sm: 3, md: 4 } }}> {/* borderRadius removido, usa o do tema */}
       <Box
         component="form"
         onSubmit={handleSubmit}
         sx={{ display: "flex", flexDirection: "column", gap: 2 }}
       >
-        <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom>
+        <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom sx={{ color: theme.palette.text.primary }}> {/* Cor do tema */}
           {id ? "Editar Compromisso" : "Novo Compromisso"}
         </Typography>
 
@@ -129,12 +155,13 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
         />
 
         <FormControl fullWidth>
-          <InputLabel>Tipo</InputLabel>
+          <InputLabel sx={{ color: theme.palette.text.secondary }}>Tipo</InputLabel> {/* Cor do tema */}
           <Select
             name="tipo"
             label="Tipo"
             value={dadosForm.tipo}
             onChange={handleChange}
+            sx={{ color: theme.palette.text.primary }} {/* Cor do texto selecionado */}
           >
             <MenuItem value="Show">Show</MenuItem>
             <MenuItem value="Ensaio">Ensaio</MenuItem>
@@ -145,13 +172,14 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
 
         {id && (
           <FormControl fullWidth>
-            <InputLabel>Status</InputLabel>
+            <InputLabel sx={{ color: theme.palette.text.secondary }}>Status</InputLabel> {/* Cor do tema */}
             <Select
               name="status"
               label="Status"
               value={dadosForm.status}
               onChange={handleChange}
               disabled={isStatusDisabled()}
+              sx={{ color: theme.palette.text.primary }} {/* Cor do texto selecionado */}
             >
               {getStatusOptions()}
             </Select>
@@ -162,7 +190,7 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
           name="data"
           label="Data e Hora"
           type="datetime-local"
-          value={dadosForm.data}
+          value={dadosForm.data} // ESTE É O CAMPO MAIS CRÍTICO PARA FUSO HORÁRIO
           onChange={handleChange}
           required
           fullWidth
@@ -186,7 +214,7 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
         />
 
         <Box>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary }}> {/* Cor do tema */}
             Despesas do Evento
           </Typography>
           {(dadosForm.despesas || []).map((despesa, index) => (
@@ -215,7 +243,7 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
               <Button
                 type="button"
                 onClick={() => removerDespesa(index)}
-                color="error"
+                color="error" // Cor do tema
                 size="small"
               >
                 Remover
@@ -227,16 +255,17 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
             onClick={adicionarDespesa}
             variant="outlined"
             size="small"
+            color="primary" // Cor do tema
           >
             + Adicionar Despesa
           </Button>
         </Box>
 
         <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-          <Button type="submit" variant="contained" disabled={carregando}>
+          <Button type="submit" variant="contained" disabled={carregando} color="primary"> {/* Cor do tema */}
             {carregando ? <CircularProgress size={24} /> : "Salvar"}
           </Button>
-          <Button type="button" variant="text" onClick={onCancel}>
+          <Button type="button" variant="text" onClick={onCancel} sx={{ color: theme.palette.text.secondary }}> {/* Cor do tema */}
             Cancelar
           </Button>
         </Box>
