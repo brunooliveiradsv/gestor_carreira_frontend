@@ -87,7 +87,7 @@ const darkTheme = createTheme({
           transition: 'background-position 0.5s ease-out', // Transição suave para a posição
           '&:hover': {
             backgroundPosition: 'right center', // Move o degradê para a direita no hover
-            boxShadow: '0 3px 5px 2px rgba(66, 165, 245, .3)',
+            boxShadow: '0 3px 5px 2px rgba(177, 177, 177, 0.09)',
           },
         },
       },
