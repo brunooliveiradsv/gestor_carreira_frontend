@@ -4,7 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 
 // Importando nossas páginas e componentes de layout
 import Autenticacao from './paginas/Autenticacao.jsx';
-import Dashboard from './paginas/Dashboard.jsx'; // <<< IMPORTADO
+import Dashboard from './paginas/Dashboard.jsx';
 import Agenda from './paginas/Agenda.jsx';
 import Financeiro from './paginas/Financeiro.jsx';
 import Conquistas from './paginas/Conquistas.jsx';
@@ -15,12 +15,18 @@ import Contatos from './paginas/Contatos.jsx';
 import Configuracoes from './paginas/Configuracoes.jsx';
 import Repertorios from './paginas/Repertorios.jsx';
 import Equipamentos from './paginas/Equipamentos.jsx';
+import RecuperarSenha from './paginas/RecuperarSenha.jsx';
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Autenticacao />} />
       <Route path="/cadastro" element={<Autenticacao />} />
+      {/* Apenas a rota para solicitar a recuperação é necessária */}
+      <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+      
+      {/* Rota com token foi REMOVIDA */}
+      {/* <Route path="/redefinir-senha/:token" element={<RecuperarSenha />} /> */}
 
       <Route 
         element={
@@ -29,10 +35,7 @@ function App() {
           </RotaProtegida>
         }
       >
-        {/* ROTA PRINCIPAL AGORA É O DASHBOARD */}
         <Route path="/" element={<Dashboard />} /> 
-        
-        {/* OUTRAS ROTAS */}
         <Route path="/agenda" element={<Agenda />} />
         <Route path="/financeiro" element={<Financeiro />} />
         <Route path="/conquistas" element={<Conquistas />} />
@@ -46,4 +49,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

@@ -1,7 +1,7 @@
 // src/paginas/Autenticacao.jsx
 
 import { useState, useContext } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, Link as RouterLink } from "react-router-dom"; // <<< Adicionado Link
 import { AuthContext } from "../contextos/AuthContext";
 import apiClient from "../api"; 
 
@@ -295,7 +295,12 @@ function Autenticacao() {
               </Button>
             </Box>
 
-            <Grid container justifyContent="center">
+            <Grid container>
+              <Grid item xs>
+                <MuiLink component={RouterLink} to="/recuperar-senha" variant="body2">
+                  Esqueceu a senha?
+                </MuiLink>
+              </Grid>
               <Grid item>
                 <MuiLink
                   component="button"
