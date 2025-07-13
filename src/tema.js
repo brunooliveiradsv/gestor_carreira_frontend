@@ -77,7 +77,7 @@ const darkTheme = createTheme({
           color: '#ffffff', // Texto branco no botão laranja
           '&:hover': {
             backgroundColor: '#F4511E', // Laranja mais escuro no hover
-            boxShadow: '0px 6px 15px rgba(255, 112, 67, 0.3)', // Sombra alaranjada no hover
+            boxShadow: '0px 6px 15px rgb(204, 48, 1)', // Sombra alaranjada no hover
           },
         },
       },
