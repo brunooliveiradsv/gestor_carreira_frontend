@@ -2,7 +2,7 @@
 
 import { useState, useContext } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { AuthContext } from "../contextos/AuthContext"; // Ajustei o caminho
+import { AuthContext } from "../contextos/AuthContext";
 import apiClient from "../api"; 
 
 // Imports do Material-UI... (sem alterações aqui)
