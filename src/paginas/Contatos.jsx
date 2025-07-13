@@ -21,7 +21,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  useTheme, // Adicionado para acessar o tema
+  useTheme,
+  Grid,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -43,7 +44,7 @@ function Contatos() {
   const { mostrarNotificacao } = useNotificacao();
   const [dialogoAberto, setDialogoAberto] = useState(false);
   const [contatoParaApagar, setContatoParaApagar] = useState(null);
-  const theme = useTheme(); // Hook para acessar o tema
+  const theme = useTheme();
 
   const buscarContatos = async () => {
     if (modo === "lista" && !carregando) setCarregando(true);
@@ -96,16 +97,6 @@ function Contatos() {
     setContatoSelecionadoId(null);
   };
 
-  // Removendo primaryButtonStyle, pois o botão usará as props do tema
-  // const primaryButtonStyle = {
-  //   borderRadius: 2,
-  //   bgcolor: "#4000F0",
-  //   color: "white",
-  //   py: 1.2,
-  //   px: 3,
-  //   "&:hover": { bgcolor: "#2C00A3" },
-  // };
-
   if (carregando && modo === "lista") {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -117,7 +108,6 @@ function Contatos() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {modo === "lista" ? (
-        // Removendo borderRadius e elevation fixos. Eles serão do tema
         <Paper elevation={6} sx={{ p: { xs: 2, md: 4 } }}>
           <Box
             sx={{
@@ -129,15 +119,15 @@ function Contatos() {
               gap: 2,
             }}
           >
-            <Typography variant="h4" component="h1" fontWeight="bold" sx={{ color: theme.palette.text.primary }}> {/* Usa a cor de texto primária do tema */}
+            <Typography variant="h4" component="h1" fontWeight="bold" sx={{ color: theme.palette.text.primary }}>
               Meus Contatos
             </Typography>
             <Button
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               onClick={() => setModo("criar")}
-              color="primary" // Usa a cor primária do tema
-              sx={{ alignSelf: { xs: 'stretch', sm: 'auto' } }} // Mantém apenas o ajuste de alinhamento
+              color="primary"
+              sx={{ alignSelf: { xs: 'stretch', sm: 'auto' } }}
             >
               Novo Contato
             </Button>
@@ -147,11 +137,11 @@ function Contatos() {
               sx={{
                 p: { xs: 2, md: 4 },
                 textAlign: "center",
-                border: `1px dashed ${theme.palette.divider}`, // Usa a cor do divider do tema
+                border: `1px dashed ${theme.palette.divider}`,
                 borderRadius: 2,
               }}
             >
-              <Typography variant="h6" sx={{ color: theme.palette.text.primary }}> {/* Usa a cor de texto primária do tema */}
+              <Typography variant="h6" sx={{ color: theme.palette.text.primary }}>
                 Nenhum contato na sua agenda.
               </Typography>
               <Typography color="text.secondary">
@@ -159,89 +149,53 @@ function Contatos() {
               </Typography>
             </Box>
           ) : (
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-                gap: 3,
-              }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {contatos.map((contato) => (
-                // Removendo variant="outlined" e usando o boxShadow do tema (se você configurou MuiCard no tema)
-                <Card key={contato.id} sx={{ display: 'flex', flexDirection: 'column' }}>
-                  <CardContent>
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", mb: 1.5 }}
-                    >
-                      <PersonIcon sx={{ mr: 1.5, color: theme.palette.primary.main }} /> {/* Usa a cor primária do tema */}
-                      <Typography variant="h6" component="h2" fontWeight="bold" sx={{ color: theme.palette.text.primary }}> {/* Usa a cor de texto primária do tema */}
-                        {contato.nome}
-                      </Typography>
-                    </Box>
-                    {contato.funcao && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          color: theme.palette.text.secondary, // Usa a cor de texto secundária do tema
-                          mb: 1,
-                        }}
-                      >
-                        <WorkIcon sx={{ fontSize: "1rem", mr: 1, color: theme.palette.primary.main }} /> {/* Usa a cor primária do tema */}
-                        <Typography variant="body2">
-                          {contato.funcao}
-                        </Typography>
-                      </Box>
-                    )}
-                    {contato.email && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          color: theme.palette.text.secondary, // Usa a cor de texto secundária do tema
-                          mb: 1,
-                        }}
-                      >
-                        <EmailIcon sx={{ fontSize: "1rem", mr: 1, color: theme.palette.primary.main }} /> {/* Usa a cor primária do tema */}
-                        <Typography variant="body2">{contato.email}</Typography>
-                      </Box>
-                    )}
-                    {contato.telefone && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          color: theme.palette.text.secondary, // Usa a cor de texto secundária do tema
-                        }}
-                      >
-                        <PhoneIcon sx={{ fontSize: "1rem", mr: 1, color: theme.palette.primary.main }} /> {/* Usa a cor primária do tema */}
-                        <Typography variant="body2">
-                          {contato.telefone}
-                        </Typography>
-                      </Box>
-                    )}
-                  </CardContent>
-                  <CardActions sx={{ justifyContent: "flex-end" }}>
-                    <Tooltip title="Editar">
-                      <IconButton
-                        onClick={() => {
-                          setContatoSelecionadoId(contato.id);
-                          setModo("editar");
-                        }}
-                        color="primary" // Usa a cor primária do tema
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Excluir">
-                      <IconButton
-                        onClick={() => handleAbrirConfirmacaoApagar(contato)}
-                        color="error" // Usa a cor de erro do tema
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </CardActions>
+                <Card key={contato.id} variant="outlined">
+                  <Grid container alignItems="center">
+                    <Grid item xs={12} sm={8}>
+                      <CardContent>
+                        <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                          <PersonIcon sx={{ mr: 1.5, color: 'primary.main' }} />
+                          <Typography variant="h6" component="h2" fontWeight="bold">
+                            {contato.nome}
+                          </Typography>
+                        </Box>
+                        {contato.funcao && (
+                          <Box sx={{ display: "flex", alignItems: "center", color: 'text.secondary', mb: 1, pl: 0.5 }}>
+                            <WorkIcon sx={{ fontSize: "1rem", mr: 1.5, color: 'primary.main' }} />
+                            <Typography variant="body2">{contato.funcao}</Typography>
+                          </Box>
+                        )}
+                        {contato.email && (
+                          <Box sx={{ display: "flex", alignItems: "center", color: 'text.secondary', mb: 1, pl: 0.5 }}>
+                            <EmailIcon sx={{ fontSize: "1rem", mr: 1.5, color: 'primary.main' }} />
+                            <Typography variant="body2">{contato.email}</Typography>
+                          </Box>
+                        )}
+                        {contato.telefone && (
+                          <Box sx={{ display: "flex", alignItems: "center", color: 'text.secondary', pl: 0.5 }}>
+                            <PhoneIcon sx={{ fontSize: "1rem", mr: 1.5, color: 'primary.main' }} />
+                            <Typography variant="body2">{contato.telefone}</Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <CardActions sx={{ justifyContent: {xs: 'flex-start', sm: 'flex-end'}, p: 2 }}>
+                        <Tooltip title="Editar">
+                          <IconButton onClick={() => { setContatoSelecionadoId(contato.id); setModo("editar"); }} color="primary">
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Excluir">
+                          <IconButton onClick={() => handleAbrirConfirmacaoApagar(contato)} color="error">
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </CardActions>
+                    </Grid>
+                  </Grid>
                 </Card>
               ))}
             </Box>
@@ -255,25 +209,16 @@ function Contatos() {
         />
       )}
 
-      <Dialog 
-        open={dialogoAberto} 
-        onClose={handleFecharConfirmacaoApagar}
-        PaperProps={{ // Estiliza o Paper do Dialog
-          sx: {
-            bgcolor: theme.palette.background.paper, // Fundo do dialog como paper
-            boxShadow: theme.shadows[6], // Sombra do tema
-          }
-        }}
-      >
-        <DialogTitle sx={{ color: theme.palette.text.primary }}>Confirmar Exclusão</DialogTitle> {/* Usa a cor de texto primária do tema */}
+      <Dialog open={dialogoAberto} onClose={handleFecharConfirmacaoApagar}>
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: theme.palette.text.secondary }}> {/* Usa a cor de texto secundária do tema */}
+          <DialogContentText>
             Tem certeza que deseja apagar o contato "{contatoParaApagar?.nome}"?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleFecharConfirmacaoApagar} sx={{ color: theme.palette.text.secondary }}>Cancelar</Button> {/* Usa a cor de texto secundária do tema */}
-          <Button onClick={handleConfirmarApagar} color="error"> {/* Usa a cor de erro do tema */}
+          <Button onClick={handleFecharConfirmacaoApagar}>Cancelar</Button>
+          <Button onClick={handleConfirmarApagar} color="error">
             Apagar
           </Button>
         </DialogActions>
