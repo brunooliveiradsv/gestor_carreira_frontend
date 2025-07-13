@@ -72,7 +72,7 @@ const darkTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          transition: 'transform 0.2s ease-in-out', // Removida a transição de sombra para focar na do degradê
+          transition: 'transform 0.2s ease-in-out',
            '&:hover': {
              transform: 'scale(1.02)',
            }
@@ -80,14 +80,12 @@ const darkTheme = createTheme({
         containedPrimary: {
           color: '#ffffff',
           border: 0,
-          boxShadow: '0 3px 5px 2px rgba(94, 53, 177, .3)',
-          // EFEITO DE MOVIMENTO DO DEGRADÊ
-          background: 'linear-gradient(45deg, #5E35B1 30%,rgb(78, 66, 245) 90%)',
-          backgroundSize: '200% auto', // Aumenta o tamanho do degradê
-          transition: 'background-position 0.5s ease-out', // Transição suave para a posição
+          // EFEITO DE MOVIMENTO DO DEGRADÊ (SEM SOMBRA)
+          background: 'linear-gradient(45deg, #5E35B1 30%,rgb(66, 93, 245) 90%)',
+          backgroundSize: '200% auto',
+          transition: 'background-position 0.5s ease-out',
           '&:hover': {
-            backgroundPosition: 'right center', // Move o degradê para a direita no hover
-            boxShadow: '0 3px 5px 2px rgba(177, 177, 177, 0.09)',
+            backgroundPosition: 'right center',
           },
         },
       },
