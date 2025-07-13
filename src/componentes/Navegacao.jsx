@@ -3,7 +3,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext.jsx";
-import apiClient from '../api';
+import apiClient from "../api";
 
 // Imports do Material-UI
 import {
@@ -26,11 +26,11 @@ import {
   DialogContentText,
   DialogTitle,
   useTheme,
-  Drawer, // <<< Adicionado Drawer
-  List,   // <<< Adicionado List
-  ListItem, // <<< Adicionado ListItem
-  ListItemButton, // <<< Adicionado ListItemButton
-  Avatar, // <<< Adicionado Avatar
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  Avatar,
 } from "@mui/material";
 
 // Imports dos Ícones
@@ -68,7 +68,7 @@ function Navegacao() {
   const [notificacoes, setNotificacoes] = useState([]);
   const [anchorElNotificacoes, setAnchorElNotificacoes] = useState(null);
   const [dialogoLimparAberto, setDialogoLimparAberto] = useState(false);
-  const [drawerAberto, setDrawerAberto] = useState(false); // <<< Estado para o Drawer
+  const [drawerAberto, setDrawerAberto] = useState(false);
 
   const openNotificacoes = Boolean(anchorElNotificacoes);
   const naoLidasCount = notificacoes.filter((n) => !n.lida).length;
@@ -88,17 +88,19 @@ function Navegacao() {
     const intervalId = setInterval(buscarNotificacoes, 30000);
     return () => clearInterval(intervalId);
   }, [usuario]);
-  
-  // Handlers para o Drawer
+
   const toggleDrawer = (aberto) => (event) => {
-    if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
+    if (
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
       return;
     }
     setDrawerAberto(aberto);
   };
-  
-  // Handlers para o menu de notificações (sem alteração)
-  const handleMenuNotificacoesOpen = (event) => setAnchorElNotificacoes(event.currentTarget);
+
+  const handleMenuNotificacoesOpen = (event) =>
+    setAnchorElNotificacoes(event.currentTarget);
   const handleMenuNotificacoesClose = () => setAnchorElNotificacoes(null);
 
   const handleMarcarComoLida = async (notificacaoId) => {
@@ -107,7 +109,9 @@ function Navegacao() {
       try {
         await apiClient.patch(`/api/notificacoes/${notificacaoId}/lida`);
         setNotificacoes((notificacoesAtuais) =>
-          notificacoesAtuais.map((n) => (n.id === notificacaoId ? { ...n, lida: true } : n))
+          notificacoesAtuais.map((n) =>
+            n.id === notificacaoId ? { ...n, lida: true } : n
+          )
         );
       } catch (error) {
         console.error("Erro ao marcar notificação como lida", error);
@@ -118,7 +122,9 @@ function Navegacao() {
   const handleMarcarTodasComoLidas = async () => {
     try {
       await apiClient.patch("/api/notificacoes/marcar-todas-lidas");
-      setNotificacoes((notificacoesAtuais) => notificacoesAtuais.map((n) => ({ ...n, lida: true })));
+      setNotificacoes((notificacoesAtuais) =>
+        notificacoesAtuais.map((n) => ({ ...n, lida: true }))
+      );
       handleMenuNotificacoesClose();
     } catch (error) {
       console.error("Erro ao marcar todas as notificações como lidas", error);
@@ -160,10 +166,15 @@ function Navegacao() {
 
   const getConquistaIcon = (tipoCondicao) => {
     if (!tipoCondicao) return <NotificationsIcon fontSize="small" />;
-    const IconComponent =
-      Object.keys(iconMapNotificacao).find((key) => tipoCondicao.includes(key))
-        ? iconMapNotificacao[Object.keys(iconMapNotificacao).find((key) => tipoCondicao.includes(key))]
-        : MilitaryTechIcon;
+    const IconComponent = Object.keys(iconMapNotificacao).find((key) =>
+      tipoCondicao.includes(key)
+    )
+      ? iconMapNotificacao[
+          Object.keys(iconMapNotificacao).find((key) =>
+            tipoCondicao.includes(key)
+          )
+        ]
+      : MilitaryTechIcon;
     return <IconComponent fontSize="small" />;
   };
 
@@ -179,157 +190,212 @@ function Navegacao() {
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
-  
-  // Conteúdo do Drawer (menu lateral)
+
   const drawerContent = (
     <Box
-      sx={{ width: 270, bgcolor: 'background.paper', height: '100%', display: 'flex', flexDirection: 'column' }}
+      sx={{
+        width: 270,
+        bgcolor: "background.paper",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
       role="presentation"
       onClick={toggleDrawer(false)}
       onKeyDown={toggleDrawer(false)}
     >
-        <Box sx={{ p: 2, textAlign: 'center', borderBottom: `1px solid ${theme.palette.divider}` }}>
-            <Avatar sx={{ width: 80, height: 80, margin: '0 auto 16px', bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-                {usuario?.nome?.charAt(0).toUpperCase()}
-            </Avatar>
-            <Typography variant="h6">{usuario?.nome}</Typography>
-            <Typography variant="body2" color="text.secondary">{usuario?.email}</Typography>
-        </Box>
+      <Box
+        sx={{
+          p: 2,
+          textAlign: "center",
+          borderBottom: `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        <Avatar
+          sx={{
+            width: 80,
+            height: 80,
+            margin: "0 auto 16px",
+            bgcolor: "primary.main",
+            color: "primary.contrastText",
+          }}
+        >
+          {usuario?.nome?.charAt(0).toUpperCase()}
+        </Avatar>
+        <Typography variant="h6">{usuario?.nome}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          {usuario?.email}
+        </Typography>
+      </Box>
       <List sx={{ flexGrow: 1 }}>
         {navLinks.map((link) => (
           <ListItem key={link.text} disablePadding>
-            <ListItemButton component={RouterLink} to={link.to} style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}>
-              <ListItemIcon sx={{color: 'inherit'}}>{link.icon}</ListItemIcon>
+            <ListItemButton
+              component={RouterLink}
+              to={link.to}
+              style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+            >
+              <ListItemIcon sx={{ color: "inherit" }}>{link.icon}</ListItemIcon>
               <ListItemText primary={link.text} />
             </ListItemButton>
           </ListItem>
         ))}
         {usuario?.role === "admin" && (
-            <ListItem disablePadding>
-                <ListItemButton component={RouterLink} to="/admin/usuarios" style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}>
-                    <ListItemIcon sx={{color: 'inherit'}}><AdminPanelSettingsIcon /></ListItemIcon>
-                    <ListItemText primary="Admin" />
-                </ListItemButton>
-            </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              component={RouterLink}
+              to="/admin/usuarios"
+              style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+            >
+              <ListItemIcon sx={{ color: "inherit" }}>
+                <AdminPanelSettingsIcon />
+              </ListItemIcon>
+              <ListItemText primary="Admin" />
+            </ListItemButton>
+          </ListItem>
         )}
       </List>
       <Divider />
       <List>
-          <ListItem disablePadding>
-            <ListItemButton component={RouterLink} to="/configuracoes">
-              <ListItemIcon sx={{color: 'inherit'}}><SettingsIcon /></ListItemIcon>
-              <ListItemText primary="Configurações" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton onClick={handleLogout}>
-              <ListItemIcon sx={{color: 'inherit'}}><LogoutIcon /></ListItemIcon>
-              <ListItemText primary="Sair" />
-            </ListItemButton>
-          </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton component={RouterLink} to="/configuracoes">
+            <ListItemIcon sx={{ color: "inherit" }}>
+              <SettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Configurações" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleLogout}>
+            <ListItemIcon sx={{ color: "inherit" }}>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText primary="Sair" />
+          </ListItemButton>
+        </ListItem>
       </List>
     </Box>
   );
-
 
   return (
     <>
       <AppBar
         position="static"
-        sx={{ background: theme.palette.background.paper, boxShadow: theme.shadows[3] }}
+        sx={{
+          background: theme.palette.background.paper,
+          boxShadow: theme.shadows[3],
+        }}
       >
         <Toolbar>
-            {/* Ícone de Menu Hamburguer para telas pequenas */}
-            <Box sx={{ display: { xs: "block", md: "none" }, mr: 1 }}>
-                <IconButton
-                    size="large"
-                    edge="start"
-                    color="inherit"
-                    aria-label="menu"
-                    onClick={toggleDrawer(true)}
-                >
-                    <MenuIcon />
-                </IconButton>
-            </Box>
-
-            <Typography
-                variant="h6"
-                component={RouterLink}
-                to="/"
-                sx={{
-                fontWeight: "bold",
-                color: 'primary.main',
-                textDecoration: "none",
-                }}
+          <Box sx={{ display: { xs: "block", md: "none" }, mr: 1 }}>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={toggleDrawer(true)}
             >
-                GESTOR MUSICAL
+              <MenuIcon />
+            </IconButton>
+          </Box>
+
+          <Typography
+            variant="h6"
+            component={RouterLink}
+            to="/"
+            sx={{
+              fontWeight: "bold",
+              color: "primary.main",
+              textDecoration: "none",
+            }}
+          >
+            GESTOR MUSICAL
+          </Typography>
+
+          {/* Links de navegação para telas médias e grandes */}
+          <Box sx={{ display: { xs: "none", md: "flex" }, ml: 4 }}>
+            {navLinks.map((link) => (
+              <Button
+                key={link.to}
+                component={RouterLink}
+                to={link.to}
+                sx={{ color: "text.primary", mx: 1 }}
+                style={({ isActive }) =>
+                  isActive ? activeLinkStyle : undefined
+                }
+              >
+                {link.text}
+              </Button>
+            ))}
+            {usuario?.role === "admin" && (
+              <Button
+                component={RouterLink}
+                to="/admin/usuarios"
+                sx={{ color: "text.primary", mx: 1 }}
+                style={({ isActive }) =>
+                  isActive ? activeLinkStyle : undefined
+                }
+              >
+                Admin
+              </Button>
+            )}
+          </Box>
+
+          {/* O espaçador agora fica AQUI, empurrando o que vem depois para a direita */}
+          <Box sx={{ flexGrow: 1 }} />
+
+          {/* Ícones do lado direito */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 0.5, sm: 1 },
+            }}
+          >
+            <Typography
+              sx={{
+                display: { xs: "none", sm: "block" },
+                color: "text.primary",
+                mr: 1,
+              }}
+            >
+              Olá, {usuario?.nome}
             </Typography>
 
-            <Box sx={{ flexGrow: 1 }} />
-            
-            {/* Links de navegação para telas médias e grandes */}
-            <Box sx={{ display: { xs: "none", md: "flex" } }}>
-                {navLinks.map((link) => (
-                <Button
-                    key={link.to}
-                    component={RouterLink}
-                    to={link.to}
-                    sx={{ color: "text.primary", mx: 1 }}
-                    style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-                >
-                    {link.text}
-                </Button>
-                ))}
-                {usuario?.role === "admin" && (
-                <Button
-                    component={RouterLink}
-                    to="/admin/usuarios"
-                    sx={{ color: "text.primary", mx: 1 }}
-                    style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-                >
-                    Admin
-                </Button>
-                )}
-            </Box>
+            <Tooltip title="Notificações">
+              <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}>
+                <Badge badgeContent={naoLidasCount} color="error">
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
 
-            {/* Ícones do lado direito */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: {xs: 0.5, sm: 1} }}>
-                <Typography sx={{ display: { xs: "none", sm: "block" }, color: "text.primary", mr: 1 }}>
-                Olá, {usuario?.nome}
-                </Typography>
+            <Tooltip title="Configurações">
+              <IconButton
+                color="inherit"
+                component={RouterLink}
+                to="/configuracoes"
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
 
-                <Tooltip title="Notificações">
-                <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}>
-                    <Badge badgeContent={naoLidasCount} color="error">
-                    <NotificationsIcon />
-                    </Badge>
-                </IconButton>
-                </Tooltip>
-
-                <Tooltip title="Configurações">
-                <IconButton color="inherit" component={RouterLink} to="/configuracoes">
-                    <SettingsIcon />
-                </IconButton>
-                </Tooltip>
-
-                <Button
-                    variant="outlined"
-                    onClick={handleLogout}
-                    color="primary"
-                    sx={{ display: { xs: "none", md: "flex" } }}
-                >
-                    Sair
-                </Button>
-            </Box>
+            <Button
+              variant="outlined"
+              onClick={handleLogout}
+              color="primary"
+              sx={{ display: { xs: "none", md: "flex" } }}
+            >
+              Sair
+            </Button>
+          </Box>
         </Toolbar>
       </AppBar>
-      
-      {/* Componente Drawer para o menu lateral */}
+
       <Drawer anchor="left" open={drawerAberto} onClose={toggleDrawer(false)}>
         {drawerContent}
       </Drawer>
 
-      {/* Menu de Notificações (inalterado) */}
       <Menu
         anchorEl={anchorElNotificacoes}
         open={openNotificacoes}
@@ -337,25 +403,45 @@ function Navegacao() {
         PaperProps={{
           sx: {
             maxHeight: 400,
-            width: { xs: 'calc(100vw - 32px)', sm: '400px' },
+            width: { xs: "calc(100vw - 32px)", sm: "400px" },
             mt: 1,
-            bgcolor: 'background.paper',
+            bgcolor: "background.paper",
             boxShadow: theme.shadows[6],
           },
         }}
       >
-        <Box sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="subtitle1" fontWeight="bold" sx={{ color: "text.primary" }}>
+        <Box
+          sx={{
+            px: 2,
+            py: 1,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            fontWeight="bold"
+            sx={{ color: "text.primary" }}
+          >
             Notificações
           </Typography>
           <Box>
             {naoLidasCount > 0 && (
-              <Button size="small" onClick={handleMarcarTodasComoLidas} sx={{ textTransform: "none", color: "primary.main", mr: 1 }}>
+              <Button
+                size="small"
+                onClick={handleMarcarTodasComoLidas}
+                sx={{ textTransform: "none", color: "primary.main", mr: 1 }}
+              >
                 Marcar todas como lidas
               </Button>
             )}
             {notificacoes.length > 0 && (
-              <Button size="small" onClick={abrirDialogoLimpar} sx={{ textTransform: "none", color: "error.main" }}>
+              <Button
+                size="small"
+                onClick={abrirDialogoLimpar}
+                sx={{ textTransform: "none", color: "error.main" }}
+              >
                 Limpar Todas
               </Button>
             )}
@@ -368,21 +454,40 @@ function Navegacao() {
               key={notificacao.id}
               onClick={() => handleMarcarComoLida(notificacao.id)}
               sx={{
-                backgroundColor: notificacao.lida ? "transparent" : 'action.hover',
+                backgroundColor: notificacao.lida
+                  ? "transparent"
+                  : "action.hover",
                 whiteSpace: "normal",
                 py: 1.5,
                 borderBottom: `1px solid ${theme.palette.divider}`,
               }}
             >
-              <ListItemIcon sx={{ minWidth: "36px", mr: 1, alignSelf: "flex-start", mt: "4px", color: "text.secondary" }}>
+              <ListItemIcon
+                sx={{
+                  minWidth: "36px",
+                  mr: 1,
+                  alignSelf: "flex-start",
+                  mt: "4px",
+                  color: "text.secondary",
+                }}
+              >
                 {getConquistaIcon(notificacao.conquista?.tipo_condicao)}
               </ListItemIcon>
               <ListItemText
                 primary={notificacao.mensagem}
-                primaryTypographyProps={{ sx: { fontWeight: notificacao.lida ? "normal" : "bold", color: "text.primary" } }}
+                primaryTypographyProps={{
+                  sx: {
+                    fontWeight: notificacao.lida ? "normal" : "bold",
+                    color: "text.primary",
+                  },
+                }}
               />
               <Tooltip title="Remover notificação">
-                <IconButton size="small" onClick={(e) => handleApagar(e, notificacao.id)} sx={{ ml: 1, alignSelf: "center", color: "action.active" }}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => handleApagar(e, notificacao.id)}
+                  sx={{ ml: 1, alignSelf: "center", color: "action.active" }}
+                >
                   <CloseIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
@@ -391,21 +496,36 @@ function Navegacao() {
         ) : (
           <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
             <NotificationsIcon sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="body2">Você não tem nenhuma notificação nova.</Typography>
+            <Typography variant="body2">
+              Você não tem nenhuma notificação nova.
+            </Typography>
           </Box>
         )}
       </Menu>
 
-      {/* Diálogo de confirmação para limpar notificações (inalterado) */}
-      <Dialog open={dialogoLimparAberto} onClose={fecharDialogoLimpar} PaperProps={{ sx: { bgcolor: 'background.paper', boxShadow: theme.shadows[6] } }}>
-        <DialogTitle sx={{ color: "text.primary" }}>Limpar Todas as Notificações?</DialogTitle>
+      <Dialog
+        open={dialogoLimparAberto}
+        onClose={fecharDialogoLimpar}
+        PaperProps={{
+          sx: { bgcolor: "background.paper", boxShadow: theme.shadows[6] },
+        }}
+      >
+        <DialogTitle sx={{ color: "text.primary" }}>
+          Limpar Todas as Notificações?
+        </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ color: "text.secondary" }}>
-            Esta ação é irreversível. Você tem certeza que deseja apagar todas as suas notificações?
+            Esta ação é irreversível. Você tem certeza que deseja apagar todas
+            as suas notificações?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={fecharDialogoLimpar} sx={{ color: "text.secondary" }}>Cancelar</Button>
+          <Button
+            onClick={fecharDialogoLimpar}
+            sx={{ color: "text.secondary" }}
+          >
+            Cancelar
+          </Button>
           <Button onClick={handleConfirmarLimparTodas} color="error" autoFocus>
             Confirmar e Apagar
           </Button>
