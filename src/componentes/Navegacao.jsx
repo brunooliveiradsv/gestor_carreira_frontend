@@ -301,18 +301,39 @@ function Navegacao() {
             </IconButton>
           </Box>
 
-          <Typography
-            variant="h6"
+          <Box
             component={RouterLink}
             to="/"
             sx={{
-              fontWeight: "bold",
-              color: "primary.main",
-              textDecoration: "none",
+              display: 'flex',
+              alignItems: 'center',
+              textDecoration: 'none',
+              color: 'inherit'
             }}
           >
-            GESTOR MUSICAL
-          </Typography>
+            <Typography
+              variant="h6"
+              component="span"
+              sx={{
+                mr: 0.5,
+                fontWeight: 'bold',
+                color: 'primary.main',
+              }}
+            >
+              GESTOR
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              component="span"
+               sx={{
+                fontWeight: 'normal',
+                color: 'text.primary',
+              }}
+            >
+              MUSICAL
+            </Typography>
+          </Box>
+
 
           {/* Links de navegação para telas médias e grandes */}
           <Box sx={{ display: { xs: "none", md: "flex" }, ml: 4 }}>
@@ -377,6 +398,7 @@ function Navegacao() {
                 color="inherit"
                 component={RouterLink}
                 to="/configuracoes"
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               >
                 <SettingsIcon />
               </IconButton>
