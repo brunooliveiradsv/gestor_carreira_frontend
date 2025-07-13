@@ -2,7 +2,7 @@
 
 import React, { useContext, useState, useEffect } from "react";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
-import { AuthContext } from "../contextos/AuthContext";
+import { AuthContext } from "../contextos/AuthContext.jsx"; // Caminho original correto
 import apiClient from '../api';
 
 // Imports do Material-UI
@@ -25,6 +25,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  useTheme, // Adicionado para acessar o tema
 } from "@mui/material";
 // Imports dos Ícones
 import {
@@ -35,7 +36,7 @@ import {
   AttachMoney as AttachMoneyIcon,
   People as PeopleIcon,
   Settings as SettingsIcon,
-  Menu as MenuIcon, // Adicionado para o menu hambúrguer em telas pequenas
+  Menu as MenuIcon,
 } from "@mui/icons-material";
 
 // Mapeamento de tipos de condição para ícones
@@ -48,10 +49,11 @@ const iconMap = {
 function Navegacao() {
   const { usuario, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const theme = useTheme(); // Hook para acessar o tema
 
   const [notificacoes, setNotificacoes] = useState([]);
-  const [anchorElNotificacoes, setAnchorElNotificacoes] = useState(null); // Menu de notificações
-  const [anchorElNav, setAnchorElNav] = useState(null); // Menu de navegação (para responsividade)
+  const [anchorElNotificacoes, setAnchorElNotificacoes] = useState(null);
+  const [anchorElNav, setAnchorElNav] = useState(null);
   const [dialogoLimparAberto, setDialogoLimparAberto] = useState(false);
 
   const openNotificacoes = Boolean(anchorElNotificacoes);
@@ -70,7 +72,6 @@ function Navegacao() {
 
   useEffect(() => {
     buscarNotificacoes();
-    // Atualiza a cada 30 segundos
     const intervalId = setInterval(buscarNotificacoes, 30000);
     return () => clearInterval(intervalId);
   }, [usuario]);
@@ -122,7 +123,7 @@ function Navegacao() {
   };
 
   const handleApagar = async (e, notificacaoId) => {
-    e.stopPropagation(); // Impede que o clique no botão feche o menu ou marque como lida
+    e.stopPropagation();
     try {
       await apiClient.delete(
         `/api/notificacoes/${notificacaoId}`
@@ -161,7 +162,6 @@ function Navegacao() {
   const getConquistaIcon = (tipoCondicao) => {
     if (!tipoCondicao) return <NotificationsIcon fontSize="small" />;
     
-    // Encontra o ícone correspondente ou usa MilitaryTechIcon como padrão para conquistas
     const IconComponent = Object.keys(iconMap).find(key => tipoCondicao.includes(key))
                            ? iconMap[Object.keys(iconMap).find(key => tipoCondicao.includes(key))]
                            : MilitaryTechIcon;
@@ -169,8 +169,9 @@ function Navegacao() {
     return <IconComponent fontSize="small" />;
   };
 
+  // Ajustado para usar as cores do tema
   const activeLinkStyle = {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: theme.palette.action.selected, // Usa a cor de seleção do tema
   };
 
   const navLinks = [
@@ -186,7 +187,8 @@ function Navegacao() {
     <>
       <AppBar
         position="static"
-        sx={{ background: "rgba(0, 0, 0, 0.3)", boxShadow: "none" }}
+        // Removendo background fixo. Usa a cor de fundo do Paper do tema para o AppBar
+        sx={{ background: theme.palette.background.paper, boxShadow: theme.shadows[3] }} 
       >
         <Toolbar>
           <Typography
@@ -196,7 +198,8 @@ function Navegacao() {
             sx={{
               flexGrow: 1,
               fontWeight: "bold",
-              color: "white",
+              // Cor do texto será herdada do tema (text.primary ou uma cor customizada para AppBar)
+              color: theme.palette.primary.main, // Usando o verde vibrante para o título
               textDecoration: "none",
             }}
           >
@@ -208,7 +211,7 @@ function Navegacao() {
             <IconButton
               size="large"
               edge="start"
-              color="inherit"
+              color="inherit" // Usa a cor de texto padrão do AppBar (do tema)
               aria-label="menu"
               onClick={handleMenuNavOpen}
             >
@@ -228,6 +231,12 @@ function Navegacao() {
               }}
               open={openNav}
               onClose={handleMenuNavClose}
+              PaperProps={{ // Estiliza o Paper do Menu
+                sx: {
+                  bgcolor: theme.palette.background.paper, // Fundo do menu como paper
+                  boxShadow: theme.shadows[6],
+                }
+              }}
             >
               {navLinks.map((link) => (
                 <MenuItem 
@@ -236,6 +245,7 @@ function Navegacao() {
                   to={link.to} 
                   onClick={handleMenuNavClose}
                   style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+                  sx={{ color: theme.palette.text.primary }} // Cor do texto do MenuItem
                 >
                   {link.text}
                 </MenuItem>
@@ -246,10 +256,16 @@ function Navegacao() {
                   to="/admin/usuarios"
                   onClick={handleMenuNavClose}
                   style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+                  sx={{ color: theme.palette.text.primary }}
                 >
                   Admin
                 </MenuItem>
               )}
+               <Divider sx={{ my: 0.5 }} />
+              <MenuItem onClick={handleLogout} sx={{ color: theme.palette.text.primary }}>
+                <ListItemIcon><NotificationsIcon sx={{ color: theme.palette.text.secondary }} /></ListItemIcon> {/* Apenas para um exemplo de ícone */}
+                Sair
+              </MenuItem>
             </Menu>
           </Box>
 
@@ -260,7 +276,7 @@ function Navegacao() {
                 key={link.to}
                 component={RouterLink}
                 to={link.to}
-                sx={{ color: "white", mx: 1 }}
+                sx={{ color: theme.palette.text.primary, mx: 1 }} // Usa a cor de texto principal do tema
                 style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
               >
                 {link.text}
@@ -270,7 +286,7 @@ function Navegacao() {
               <Button
                 component={RouterLink}
                 to="/admin/usuarios"
-                sx={{ color: "white", mx: 1 }}
+                sx={{ color: theme.palette.text.primary, mx: 1 }}
                 style={({ isActive }) =>
                   isActive ? activeLinkStyle : undefined
                 }
@@ -280,17 +296,17 @@ function Navegacao() {
             )}
           </Box>
 
-          <Box sx={{ flexGrow: 1 }} /> {/* Empurra os itens para a direita */}
+          <Box sx={{ flexGrow: 1 }} />
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {/* Nome do usuário visível em telas maiores */}
-            <Typography sx={{ display: { xs: "none", sm: "block" } }}>
+            <Typography sx={{ display: { xs: "none", sm: "block" }, color: theme.palette.text.primary }}>
               Olá, {usuario?.nome}
             </Typography>
 
             {/* Ícone de Notificações */}
             <Tooltip title="Notificações">
-              <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}>
+              <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}> {/* Cor do ícone será herdada do tema */}
                 <Badge badgeContent={naoLidasCount} color="error">
                   <NotificationsIcon />
                 </Badge>
@@ -300,7 +316,7 @@ function Navegacao() {
             {/* Ícone de Configurações */}
             <Tooltip title="Configurações">
               <IconButton
-                color="inherit"
+                color="inherit" // Cor do ícone será herdada do tema
                 component={RouterLink}
                 to="/configuracoes"
               >
@@ -312,7 +328,15 @@ function Navegacao() {
               anchorEl={anchorElNotificacoes}
               open={openNotificacoes}
               onClose={handleMenuNotificacoesClose}
-              PaperProps={{ sx: { maxHeight: 400, width: "400px", mt: 1 } }}
+              PaperProps={{ 
+                sx: { 
+                  maxHeight: 400, 
+                  width: { xs: 'calc(100vw - 32px)', sm: '400px' }, // Responsividade para mobile
+                  mt: 1,
+                  bgcolor: theme.palette.background.paper, // Fundo do menu como paper
+                  boxShadow: theme.shadows[6],
+                } 
+              }}
             >
               <Box
                 sx={{
@@ -323,7 +347,7 @@ function Navegacao() {
                   alignItems: "center",
                 }}
               >
-                <Typography variant="subtitle1" fontWeight="bold">
+                <Typography variant="subtitle1" fontWeight="bold" sx={{ color: theme.palette.text.primary }}>
                   Notificações
                 </Typography>
                 <Box>
@@ -331,7 +355,7 @@ function Navegacao() {
                     <Button
                       size="small"
                       onClick={handleMarcarTodasComoLidas}
-                      sx={{ textTransform: "none", color: "primary.main", mr: 1 }}
+                      sx={{ textTransform: "none", color: theme.palette.primary.main, mr: 1 }} // Cor do tema
                     >
                       Marcar todas como lidas
                     </Button>
@@ -340,14 +364,14 @@ function Navegacao() {
                     <Button
                       size="small"
                       onClick={abrirDialogoLimpar}
-                      sx={{ textTransform: "none", color: "error.main" }}
+                      sx={{ textTransform: "none", color: theme.palette.error.main }} // Cor do tema
                     >
                       Limpar Todas
                     </Button>
                   )}
                 </Box>
               </Box>
-              <Divider />
+              <Divider sx={{ borderColor: theme.palette.divider }} /> {/* Cor do divider do tema */}
               {notificacoes.length > 0 ? (
                 notificacoes.map((notificacao) => (
                   <MenuItem
@@ -356,10 +380,10 @@ function Navegacao() {
                     sx={{
                       backgroundColor: notificacao.lida
                         ? "transparent"
-                        : "rgba(0, 100, 255, 0.08)",
+                        : theme.palette.action.hover, // Cor do tema para notificação não lida
                       whiteSpace: "normal",
                       py: 1.5,
-                      borderBottom: "1px solid #f0f0f0",
+                      borderBottom: `1px solid ${theme.palette.divider}`, // Cor do divider do tema
                     }}
                   >
                     <ListItemIcon
@@ -368,7 +392,7 @@ function Navegacao() {
                         mr: 1,
                         alignSelf: "flex-start",
                         mt: "4px",
-                        color: "text.secondary",
+                        color: theme.palette.text.secondary,
                       }}
                     >
                       {getConquistaIcon(notificacao.conquista?.tipo_condicao)}
@@ -378,6 +402,7 @@ function Navegacao() {
                       primaryTypographyProps={{
                         sx: {
                           fontWeight: notificacao.lida ? "normal" : "bold",
+                          color: theme.palette.text.primary // Cor do texto da notificação
                         },
                       }}
                     />
@@ -385,7 +410,7 @@ function Navegacao() {
                       <IconButton
                         size="small"
                         onClick={(e) => handleApagar(e, notificacao.id)}
-                        sx={{ ml: 1, alignSelf: "center" }}
+                        sx={{ ml: 1, alignSelf: "center", color: theme.palette.action.active }} // Cor do ícone de remover
                       >
                         <CloseIcon fontSize="small" />
                       </IconButton>
@@ -393,7 +418,7 @@ function Navegacao() {
                   </MenuItem>
                 ))
               ) : (
-                <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
+                <Box sx={{ p: 2, textAlign: "center", color: theme.palette.text.secondary }}>
                   <NotificationsIcon sx={{ fontSize: 40, mb: 1 }} />
                   <Typography variant="body2">
                     Você não tem nenhuma notificação nova.
@@ -403,15 +428,11 @@ function Navegacao() {
             </Menu>
 
             <Button
-              color="inherit"
               variant="outlined"
               onClick={handleLogout}
+              color="primary" // Usa a cor primária do tema para o botão "Sair"
               sx={{
-                borderColor: "rgba(255, 255, 255, 0.5)",
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  borderColor: "white",
-                },
+                // Removidas as cores de borda e hover fixas, pois 'color="primary"' já cuida disso para botões outlined
               }}
             >
               Sair
@@ -420,16 +441,16 @@ function Navegacao() {
         </Toolbar>
       </AppBar>
 
-      <Dialog open={dialogoLimparAberto} onClose={fecharDialogoLimpar}>
-        <DialogTitle>Limpar Todas as Notificações?</DialogTitle>
+      <Dialog open={dialogoLimparAberto} onClose={fecharDialogoLimpar} PaperProps={{ sx: { bgcolor: theme.palette.background.paper, boxShadow: theme.shadows[6] } }}>
+        <DialogTitle sx={{ color: theme.palette.text.primary }}>Limpar Todas as Notificações?</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ color: theme.palette.text.secondary }}>
             Esta ação é irreversível. Você tem certeza que deseja apagar todas
             as suas notificações?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={fecharDialogoLimpar}>Cancelar</Button>
+          <Button onClick={fecharDialogoLimpar} sx={{ color: theme.palette.text.secondary }}>Cancelar</Button>
           <Button onClick={handleConfirmarLimparTodas} color="error" autoFocus>
             Confirmar e Apagar
           </Button>

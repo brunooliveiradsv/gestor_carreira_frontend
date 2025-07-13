@@ -3,19 +3,24 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navegacao from './Navegacao';
-import { Box, CssBaseline } from '@mui/material';
+import { Box, CssBaseline, useTheme } from '@mui/material'; // Adicionado useTheme
 
 function LayoutPrincipal() {
+  const theme = useTheme(); // Para acessar as cores do tema
+
   return (
-    // Aplicando o SEU fundo em degradê aqui
+    // Removendo o background fixo. O CssBaseline já cuida do background.
+    // Se você *ainda* quiser um gradiente específico AQUI no layout, use as cores do tema.
     <Box sx={{ 
       display: 'flex', 
       flexDirection: 'column', 
       minHeight: '100vh',
-      // O mesmo degradê da sua tela de login
-      background: 'linear-gradient(to right bottom, #4000F0, #2C00A3, #3E00E7)',
+      // Exemplo para manter o gradiente usando cores do tema:
+      background: `linear-gradient(to right bottom, ${theme.palette.background.default}, ${theme.palette.background.paper})`,
+      // Ou simplesmente remova a linha acima para usar a cor sólida do tema (theme.palette.background.default)
     }}>
-      <CssBaseline />
+      {/* CssBaseline já está no main.jsx, mas não custa ter aqui também se houver outros resets específicos */}
+      <CssBaseline /> 
       <Navegacao />
 
       {/* O 'main' agora conterá nossas páginas, já com o fundo correto */}
