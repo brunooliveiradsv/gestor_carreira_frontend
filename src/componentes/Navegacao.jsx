@@ -45,6 +45,7 @@ import {
   Menu as MenuIcon,
   Logout as LogoutIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
+  Dashboard as DashboardIcon, 
   CalendarMonth as CalendarMonthIcon,
   MonetizationOn as MonetizationOnIcon,
   LibraryMusic as LibraryMusicIcon,
@@ -183,7 +184,8 @@ function Navegacao() {
   };
 
   const navLinks = [
-    { to: "/", text: "Agenda", icon: <CalendarMonthIcon /> },
+    { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
+    { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorios", text: "Repertórios", icon: <LibraryMusicIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },

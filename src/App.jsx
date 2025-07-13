@@ -3,7 +3,8 @@
 import { Routes, Route } from 'react-router-dom';
 
 // Importando nossas páginas e componentes de layout
-import Autenticacao from './paginas/Autenticacao.jsx'; // A nova página unificada
+import Autenticacao from './paginas/Autenticacao.jsx';
+import Dashboard from './paginas/Dashboard.jsx'; // <<< IMPORTADO
 import Agenda from './paginas/Agenda.jsx';
 import Financeiro from './paginas/Financeiro.jsx';
 import Conquistas from './paginas/Conquistas.jsx';
@@ -18,11 +19,9 @@ import Equipamentos from './paginas/Equipamentos.jsx';
 function App() {
   return (
     <Routes>
-      {/* Rotas Públicas: Login e Cadastro apontam para o mesmo componente */}
       <Route path="/login" element={<Autenticacao />} />
       <Route path="/cadastro" element={<Autenticacao />} />
 
-      {/* Rota "Pai" que aplica o Layout e a Proteção a todas as rotas "filhas" */}
       <Route 
         element={
           <RotaProtegida>
@@ -30,16 +29,18 @@ function App() {
           </RotaProtegida>
         }
       >
-        {/* As rotas abaixo são as páginas internas da aplicação */}
-        <Route path="/" element={<Agenda />} />
+        {/* ROTA PRINCIPAL AGORA É O DASHBOARD */}
+        <Route path="/" element={<Dashboard />} /> 
+        
+        {/* OUTRAS ROTAS */}
+        <Route path="/agenda" element={<Agenda />} />
         <Route path="/financeiro" element={<Financeiro />} />
         <Route path="/conquistas" element={<Conquistas />} />
-         <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-         <Route path="/contatos" element={<Contatos />} />
-         <Route path="/configuracoes" element={<Configuracoes />} />
-         <Route path="/repertorios" element={<Repertorios />} />
-         <Route path="/equipamentos" element={<Equipamentos />} />
-        {/* Aqui entrarão as futuras rotas para Contatos, Repertório, etc. */}
+        <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+        <Route path="/contatos" element={<Contatos />} />
+        <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/repertorios" element={<Repertorios />} />
+        <Route path="/equipamentos" element={<Equipamentos />} />
       </Route>
     </Routes>
   )
