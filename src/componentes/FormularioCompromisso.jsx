@@ -16,6 +16,7 @@ import {
   useTheme 
 } from '@mui/material'; 
 import { useNotificacao } from '../contextos/NotificationContext';
+import Autocomplete from 'react-google-autocomplete';
 
 function FormularioCompromisso({ id, onSave, onCancel }) {
   const [dadosForm, setDadosForm] = useState({
@@ -221,13 +222,26 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
           InputLabelProps={{ shrink: true }}
           // As cores do TextField serão controladas pelo tema
         />
-        <TextField
-          name="local"
-          label="Local"
-          value={dadosForm.local}
-          onChange={handleChange}
-          fullWidth
-          // As cores do TextField serão controladas pelo tema
+               <Autocomplete
+            apiKey="AIzaSyBW9LJRPX7DPHlSiYxtFUO8VuZew-Q7KD8" // Use a mesma chave que colocou no index.html
+            onPlaceSelected={(place) => {
+                // Quando um local é selecionado, atualizamos o estado do formulário
+                setDadosForm(dadosAtuais => ({ ...dadosAtuais, local: place.formatted_address }));
+            }}
+            options={{
+                types: ['(cities)'], // Restringe a busca para cidades
+            }}
+            // Usamos um componente TextField do Material-UI para manter a aparência
+            renderInput={(params) => (
+                <TextField
+                    {...params}
+                    label="Local"
+                    variant="outlined"
+                    fullWidth
+                    // Se estiver editando, o valor inicial será o do estado
+                    defaultValue={dadosForm.local}
+                />
+            )}
         />
         <TextField
           name="valor_cache"
