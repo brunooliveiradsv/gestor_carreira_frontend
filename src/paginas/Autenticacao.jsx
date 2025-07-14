@@ -124,7 +124,7 @@ function Autenticacao() {
               },
             }}
           >
-            GESTOR
+            VOX
           </Typography>
           <Typography
             variant="h5"
@@ -138,7 +138,7 @@ function Autenticacao() {
               },
             }}
           >
-            MUSICAL
+            Gest
           </Typography>
         </Box>
         <Box
