@@ -3,7 +3,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navegacao from './Navegacao';
-import { Box, CssBaseline, useTheme } from '@mui/material'; // Adicionado useTheme
+import { Box, CssBaseline, useTheme, Toolbar } from '@mui/material'; // Adicionado useTheme
 
 function LayoutPrincipal() {
   const theme = useTheme(); // Para acessar as cores do tema
@@ -22,7 +22,7 @@ function LayoutPrincipal() {
       {/* CssBaseline já está no main.jsx, mas não custa ter aqui também se houver outros resets específicos */}
       <CssBaseline /> 
       <Navegacao />
-
+      <Toolbar />
       {/* O 'main' agora conterá nossas páginas, já com o fundo correto */}
       <main style={{ padding: '20px', flexGrow: 1 }}>
         <Outlet />
