@@ -3,10 +3,6 @@ import axios from 'axios';
 // Lê a URL base da API a partir das variáveis de ambiente
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-// --- LINHA DE DEBUG ADICIONADA ---
-console.log('[DEBUG] URL Base da API usada pelo cliente:', API_URL);
-// ---------------------------------
-
 // Cria uma instância do Axios com a URL base pré-configurada
 const apiClient = axios.create({
   baseURL: API_URL,

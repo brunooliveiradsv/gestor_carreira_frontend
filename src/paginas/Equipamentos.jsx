@@ -2,7 +2,21 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
-import { Box, Button, Container, Typography, CircularProgress, Card, CardContent, CardActions, IconButton, Paper, Tooltip } from '@mui/material';
+import { 
+    Box, 
+    Button, 
+    Container, 
+    Typography, 
+    CircularProgress, 
+    Card, 
+    CardContent, 
+    CardActions, 
+    IconButton, 
+    Paper, 
+    Tooltip,
+    Grid,
+    useTheme
+} from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, AddCircleOutline as AddCircleOutlineIcon, Piano as PianoIcon } from '@mui/icons-material';
 import FormularioEquipamento from '../componentes/FormularioEquipamento.jsx';
 
@@ -12,6 +26,7 @@ function Equipamentos() {
   const [modo, setModo] = useState('lista');
   const [equipamentoSelecionadoId, setEquipamentoSelecionadoId] = useState(null);
   const { mostrarNotificacao } = useNotificacao();
+  const theme = useTheme();
 
   const buscarEquipamentos = async () => {
     if(modo === 'lista' && !carregando) setCarregando(true);
@@ -74,27 +89,33 @@ function Equipamentos() {
             </Button>
           </Box>
           {equipamentos.length === 0 ? (
-            <Box sx={{ p: 4, textAlign: 'center', border: '1px dashed grey', borderRadius: 2 }}>
+            <Box sx={{ p: 4, textAlign: 'center', border: `1px dashed ${theme.palette.divider}`, borderRadius: 2 }}>
               <Typography variant="h6">Nenhum equipamento cadastrado.</Typography>
             </Box>
           ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {equipamentos.map(eq => (
                 <Card key={eq.id} variant="outlined">
-                  <CardContent>
-                    <Box sx={{display: 'flex', alignItems: 'center', mb: 1.5}}>
-                      <PianoIcon sx={{mr: 1.5, color: 'primary.main'}}/>
-                      <Typography variant="h6" component="h2" fontWeight="bold">{eq.nome}</Typography>
-                    </Box>
-                    <Typography color="text.secondary">Marca: {eq.marca || 'N/A'}</Typography>
-                    <Typography color="text.secondary">Modelo: {eq.modelo || 'N/A'}</Typography>
-                    <Typography color="text.secondary">Tipo: {eq.tipo || 'N/A'}</Typography>
-                    {eq.notas && <Typography variant="body2" sx={{mt: 1}}>Notas: {eq.notas}</Typography>}
-                  </CardContent>
-                  <CardActions sx={{ justifyContent: 'flex-end' }}>
-                    <Tooltip title="Editar"><IconButton onClick={() => { setEquipamentoSelecionadoId(eq.id); setModo('editar'); }} color="secondary"><EditIcon /></IconButton></Tooltip>
-                    <Tooltip title="Excluir"><IconButton onClick={() => handleApagar(eq.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
-                  </CardActions>
+                   <Grid container alignItems="center">
+                        <Grid item xs={12} sm={8}>
+                            <CardContent>
+                                <Box sx={{display: 'flex', alignItems: 'center', mb: 1.5}}>
+                                <PianoIcon sx={{mr: 1.5, color: 'primary.main'}}/>
+                                <Typography variant="h6" component="h2" fontWeight="bold">{eq.nome}</Typography>
+                                </Box>
+                                <Typography color="text.secondary">Marca: {eq.marca || 'N/A'}</Typography>
+                                <Typography color="text.secondary">Modelo: {eq.modelo || 'N/A'}</Typography>
+                                <Typography color="text.secondary">Tipo: {eq.tipo || 'N/A'}</Typography>
+                                {eq.notas && <Typography variant="body2" sx={{mt: 2, whiteSpace: 'pre-wrap'}}><b>Notas:</b> {eq.notas}</Typography>}
+                            </CardContent>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <CardActions sx={{ justifyContent: {xs: 'flex-start', sm: 'flex-end'}, p: 2 }}>
+                                <Tooltip title="Editar"><IconButton onClick={() => { setEquipamentoSelecionadoId(eq.id); setModo('editar'); }} color="secondary"><EditIcon /></IconButton></Tooltip>
+                                <Tooltip title="Excluir"><IconButton onClick={() => handleApagar(eq.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
+                            </CardActions>
+                        </Grid>
+                  </Grid>
                 </Card>
               ))}
             </Box>

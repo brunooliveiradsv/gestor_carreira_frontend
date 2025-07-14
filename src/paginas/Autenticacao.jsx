@@ -1,11 +1,11 @@
 // src/paginas/Autenticacao.jsx
 
 import { useState, useContext } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, Link as RouterLink } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext";
-import apiClient from "../api"; 
+import apiClient from "../api";
 
-// Imports do Material-UI... (sem alterações aqui)
+// Imports do Material-UI e Ícones
 import {
   Button, TextField, Box, Typography, Paper, CircularProgress, Alert,
   InputAdornment, IconButton, Avatar, Grid, Link as MuiLink, useTheme
@@ -14,6 +14,12 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
+import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
+
 
 function Autenticacao() {
   const [modo, setModo] = useState("login");
@@ -25,7 +31,7 @@ function Autenticacao() {
   const [erro, setErro] = useState("");
   const { loginComToken, logado } = useContext(AuthContext);
   const navigate = useNavigate();
-  const theme = useTheme(); // Hook para acessar o tema
+  const theme = useTheme();
 
   if (logado) {
     return <Navigate to="/" replace />;
@@ -63,17 +69,22 @@ function Autenticacao() {
     }
   };
 
+  // Objeto de estilo para sobrescrever o autofill do navegador
+  const autofillStyles = {
+    '& .MuiInputBase-input:-webkit-autofill': {
+      WebkitTextFillColor: theme.palette.text.primary,
+      boxShadow: `0 0 0 100px #333333 inset !important`,
+      transition: 'background-color 5000s ease-in-out 0s',
+    },
+  };
+
   return (
     <Box
       sx={{
         display: "flex",
         minHeight: "100vh",
         width: "100vw",
-        // Removido background fixo. Ele será do tema (palette.background.default)
-        // Você pode adicionar um gradiente aqui se desejar um background diferente do default,
-        // mas é melhor ter uma cor sólida ou um gradiente mais sutil para o tema dark.
-        // Exemplo de gradiente mais escuro e sutil (adapte ao seu gosto):
-        background: `linear-gradient(to right bottom, ${theme.palette.background.default}, ${theme.palette.background.paper})`, 
+        background: `linear-gradient(to right bottom, ${theme.palette.background.default}, ${theme.palette.background.paper})`,
         flexDirection: { xs: "column", md: "row" },
         justifyContent: { xs: "center", md: "flex-start" },
         alignItems: { xs: "center", md: "stretch" },
@@ -88,7 +99,7 @@ function Autenticacao() {
           justifyContent: "center",
           alignItems: "center",
           p: { xs: 2, sm: 3, md: 5, lg: 6 },
-          color: "white", // Manter branco para contraste com o gradiente
+          color: "white",
           textAlign: "center",
         }}
       >
@@ -132,8 +143,7 @@ function Autenticacao() {
         </Box>
         <Box
           sx={{
-            // Removido bgcolor fixo. Poderia usar primary.dark ou um cinza escuro do tema
-            bgcolor: theme.palette.secondary.dark, // Usando um cinza escuro do tema para o rótulo v1.0
+            bgcolor: theme.palette.secondary.dark,
             px: { xs: 1, sm: 1.5 },
             py: { xs: 0.2, sm: 0.4 },
             borderRadius: 1,
@@ -191,14 +201,11 @@ function Autenticacao() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            // Removido borderRadius fixo para usar o do tema
-            // Removido boxShadow fixo para usar o do tema
-            // Removido backgroundColor fixo para usar o do tema
             width: "100%",
             maxWidth: { xs: "90%", sm: 400, md: 450 },
           }}
         >
-          <Avatar sx={{ m: 1, color: "#fff", bgcolor: theme.palette.primary.dark }}> {/* Usando uma cor do tema */}
+          <Avatar sx={{ m: 1, color: "#fff", bgcolor: theme.palette.primary.dark }}>
             {modo === "login" ? <LockOutlinedIcon /> : <PersonAddIcon />}
           </Avatar>
           <Typography component="h1" variant="h5" sx={{ fontWeight: "bold" }}>
@@ -223,13 +230,20 @@ function Autenticacao() {
                 required
                 fullWidth
                 id="nome"
-                label="Seu Nome Completo"
+                label="Seu Nome Artístico"
                 name="nome"
                 autoComplete="name"
                 autoFocus
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                // As cores do TextField serão controladas pelo tema
+                sx={autofillStyles}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonOutlineIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
               />
             )}
 
@@ -243,7 +257,14 @@ function Autenticacao() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              // As cores do TextField serão controladas pelo tema
+              sx={autofillStyles}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <MailOutlineIcon color="action" />
+                  </InputAdornment>
+                ),
+              }}
             />
             <TextField
               margin="normal"
@@ -255,20 +276,25 @@ function Autenticacao() {
               id="senha"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
+              sx={autofillStyles}
               InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockOutlinedIcon color="action" />
+                  </InputAdornment>
+                ),
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
                       onClick={() => setMostrarSenha(!mostrarSenha)}
                       edge="end"
-                      color="inherit" // Cor do ícone será do tema
+                      color="inherit"
                     >
                       {mostrarSenha ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
-              // As cores do TextField serão controladas pelo tema
             />
 
             <Box sx={{ position: "relative", mt: 2, mb: 2 }}>
@@ -277,13 +303,8 @@ function Autenticacao() {
                 fullWidth
                 variant="contained"
                 disabled={carregando}
-                color="primary" // Usa a cor primária do tema (verde vibrante)
-                sx={{
-                  py: 1.5,
-                  // Removido borderRadius fixo para usar o do tema (MuiButton)
-                  // Removido bgcolor fixo para usar o do tema (MuiButton)
-                  // Removido hover fixo para usar o do tema (MuiButton)
-                }}
+                color="primary"
+                sx={{ py: 1.5 }}
               >
                 {carregando ? (
                   <CircularProgress size={24} color="inherit" />
@@ -295,18 +316,37 @@ function Autenticacao() {
               </Button>
             </Box>
 
-            <Grid container justifyContent="center">
+            <Grid container justifyContent="space-between" alignItems="center">
+              <Grid item>
+                <MuiLink
+                  component={RouterLink}
+                  to="/recuperar-senha"
+                  variant="body2"
+                  sx={{ display: 'flex', alignItems: 'center' }}
+                >
+                  <HelpOutlineIcon color="action" sx={{ mr: 0.5, fontSize: '1rem' }} />
+                  Esqueceu a senha?
+                </MuiLink>
+              </Grid>
               <Grid item>
                 <MuiLink
                   component="button"
                   type="button"
                   variant="body2"
                   onClick={alternarModo}
-                  sx={{ cursor: "pointer" }}
+                  sx={{ cursor: "pointer", display: 'flex', alignItems: 'center' }}
                 >
-                  {modo === "login"
-                    ? "Não tem uma conta? Cadastre-se"
-                    : "Já tem uma conta? Faça o login"}
+                  {modo === 'login' ? (
+                    <>
+                      <PersonAddOutlinedIcon color="action" sx={{ mr: 0.5, fontSize: '1rem' }} />
+                      Não tem uma conta? Cadastre-se
+                    </>
+                  ) : (
+                    <>
+                      <AccountCircleOutlinedIcon color="action" sx={{ mr: 0.5, fontSize: '1rem' }} />
+                      Já tem uma conta? Faça o login
+                    </>
+                  )}
                 </MuiLink>
               </Grid>
             </Grid>

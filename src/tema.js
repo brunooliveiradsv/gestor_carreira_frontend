@@ -3,45 +3,46 @@ import { createTheme } from '@mui/material/styles';
 
 const darkTheme = createTheme({
   palette: {
-    mode: 'dark', // Define o modo escuro
+    mode: 'dark', 
     primary: {
-      main: '#00FF41', // Verde vibrante da imagem
-      light: '#33FF66',
-      dark: '#00B32E',
-      contrastText: '#000000', // Texto preto para contraste no verde vibrante
-    },
-    secondary: {
-      main: '#787878', // Um cinza médio para elementos secundários
-      light: '#A0A0A0',
-      dark: '#505050',
+      main: '#5E35B1', // Lilás/Índigo (Deep Purple 400)
+      light: '#5E35B1',
+      dark: '#5E35B1',
       contrastText: '#ffffff',
     },
+    secondary: {
+      main: '#42A5F5', // Um azul mais claro para contraste e elementos secundários
+      light: '#64B5F6',
+      dark: '#1E88E5',
+      contrastText: '#000000',
+    },
     background: {
-      default: '#121212', // Fundo bem escuro
-      paper: '#1E1E1E',   // Cor para componentes como Paper, Card
+      default: '#0A0A0A', 
+      paper: '#141414',   
     },
     text: {
-      primary: '#E0E0E0', // Cor de texto principal (clara no fundo escuro)
-      secondary: '#A0A0A0', // Cor de texto secundário
-      disabled: '#616161',
+      primary: '#F5F5F5', 
+      secondary: '#BDBDBD',
+      disabled: '#424242',
     },
     error: {
-      main: '#CF6679', // Vermelho para erros
+      main: '#EF5350',
     },
     warning: {
-      main: '#FFC107', // Amarelo para avisos
+      main: '#FFA726',
     },
     info: {
-      main: '#2196F3', // Azul para informações
+      main: '#29B6F6',
     },
     success: {
-      main: '#00FF41', // Pode usar o mesmo verde para sucesso
+      main: '#66BB6A',
+      contrastText: '#000000',
     },
-    // Adicione outras customizações se desejar
+    divider: 'rgba(255, 255, 255, 0.12)',
   },
   typography: {
     fontFamily: [
-      'Inter', // Supondo que você queira usar Inter, ou outra fonte de sua escolha
+      'Inter', 
       'sans-serif',
     ].join(','),
     h1: {
@@ -51,90 +52,97 @@ const darkTheme = createTheme({
         fontSize: '3rem',
       },
     },
-    h4: { // Adapta o h4 que você usa bastante nas suas páginas
+    h4: { 
       fontWeight: 700,
     },
     button: {
-      textTransform: 'none', // Botões sem caixa alta por padrão, como na referência
+      textTransform: 'none', 
     },
   },
   components: {
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 12, // Bordas mais arredondadas para um visual moderno
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.4)', // Sombra mais proeminente no modo dark
+          borderRadius: 12,
+          boxShadow: '0px 4px 24px rgba(0, 0, 0, 0.5)',
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8, // Ajuste do border-radius dos botões
+          borderRadius: 8,
+          transition: 'transform 0.2s ease-in-out',
+           '&:hover': {
+             transform: 'scale(1.02)',
+           }
         },
-        containedPrimary: { // Estilo para o botão principal com a cor verde vibrante
-          backgroundColor: '#00FF41',
-          color: '#000000', // Texto preto no botão verde
+        containedPrimary: {
+          color: '#ffffff',
+          border: 0,
+          // EFEITO DE MOVIMENTO DO DEGRADÊ (SEM SOMBRA)
+          background: 'linear-gradient(45deg, #5E35B1 30%,rgb(66, 93, 245) 90%)',
+          backgroundSize: '200% auto',
+          transition: 'background-position 0.5s ease-out',
           '&:hover': {
-            backgroundColor: '#00B32E', // Verde mais escuro no hover
-            boxShadow: '0px 6px 15px rgba(0, 255, 65, 0.4)', // Sombra esverdeada no hover
+            backgroundPosition: 'right center',
           },
         },
       },
     },
     MuiCard: {
-        styleOverrides: {
-            root: {
-                borderRadius: 10,
-                borderColor: 'rgba(255, 255, 255, 0.12)', // Borda sutil para cartões
-            },
+      styleOverrides: {
+        root: {
+          borderRadius: 10,
+          border: '1px solid rgba(255, 255, 255, 0.12)',
         },
+      },
     },
     MuiTextField: {
-        styleOverrides: {
-            root: {
-                '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                        borderColor: '#505050', // Borda mais clara para campos de texto
-                    },
-                    '&:hover fieldset': {
-                        borderColor: '#00FF41', // Borda verde no hover
-                    },
-                    '&.Mui-focused fieldset': {
-                        borderColor: '#00FF41', // Borda verde no focus
-                    },
-                },
-                '& .MuiInputLabel-root': {
-                    color: '#A0A0A0', // Label em cinza secundário
-                    '&.Mui-focused': {
-                        color: '#00FF41', // Label verde no focus
-                    },
-                },
-                '& .MuiInputBase-input': {
-                    color: '#E0E0E0', // Cor do texto digitado
-                },
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            '& fieldset': {
+              borderColor: '#616161',
             },
+            '&:hover fieldset': {
+              borderColor: '#7E57C2',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#7E57C2',
+            },
+          },
+          '& .MuiInputLabel-root': {
+            color: '#BDBDBD',
+            '&.Mui-focused': {
+              color: '#7E57C2',
+            },
+          },
+          '& .MuiInputBase-input': {
+            color: '#F5F5F5',
+          },
         },
+      },
     },
-    MuiChip: { // Ajuste para os Chips, como os de status na Agenda
-        styleOverrides: {
-            colorSuccess: {
-                backgroundColor: '#00B32E', // Verde para chips de sucesso
-                color: '#E0E0E0',
-            },
-            colorError: {
-                backgroundColor: '#A30000', // Vermelho escuro para chips de erro
-                color: '#E0E0E0',
-            },
-            colorInfo: {
-                backgroundColor: '#2196F3', // Azul para chips de informação
-                color: '#E0E0E0',
-            },
-            colorPrimary: { // Para chips de Admin
-                backgroundColor: '#00B32E',
-                color: '#E0E0E0',
-            }
+    MuiChip: {
+      styleOverrides: {
+        colorSuccess: {
+          backgroundColor: '#388E3C',
+          color: '#F5F5F5',
+        },
+        colorError: {
+          backgroundColor: '#D32F2F', 
+          color: '#F5F5F5',
+        },
+        colorInfo: {
+          backgroundColor: '#0288D1',
+          color: '#F5F5F5',
+        },
+        colorPrimary: { 
+          backgroundColor: '#5E35B1',
+          color: '#ffffff',
         }
+      }
     }
   },
 });
