@@ -320,7 +320,7 @@ function Navegacao() {
                 color: 'primary.main',
               }}
             >
-              GESTOR
+              VOX
             </Typography>
             <Typography
               variant="subtitle1"
@@ -330,7 +330,7 @@ function Navegacao() {
                 color: 'text.primary',
               }}
             >
-              MUSICAL
+              Gest
             </Typography>
           </Box>
 
