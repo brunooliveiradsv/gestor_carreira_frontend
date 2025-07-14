@@ -282,7 +282,7 @@ function Navegacao() {
   return (
     <>
       <AppBar
-        position="static"
+        position="fixed"
         sx={{
           background: theme.palette.background.paper,
           boxShadow: theme.shadows[3],
