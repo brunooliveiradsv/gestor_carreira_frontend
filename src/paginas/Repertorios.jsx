@@ -1,147 +1,196 @@
 // src/paginas/Repertorios.jsx
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
-import { 
-  Box, 
-  Button, 
-  Container, 
-  Typography, 
-  CircularProgress, 
-  Card, 
-  CardContent, 
-  CardActions, 
-  IconButton, 
-  Paper, 
-  Tooltip, 
-  Link as MuiLink,
-  Grid,
-  useTheme
+import {
+    Box, Button, Container, Typography, CircularProgress, Paper, Tooltip,
+    Grid, TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel, Chip, OutlinedInput
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon, AddCircleOutline as AddCircleOutlineIcon, LibraryMusic as LibraryMusicIcon, Link as LinkIcon, Notes as NotesIcon } from '@mui/icons-material';
-import FormularioRepertorio from '../componentes/FormularioRepertorio.jsx';
+import {
+    AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon,
+    Edit as EditIcon, Delete as DeleteIcon
+} from '@mui/icons-material';
+import FormularioMusica from '../componentes/FormularioMusica'; // Importe o formulário
 
 function Repertorios() {
-  const [repertorios, setRepertorios] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [modo, setModo] = useState('lista');
-  const [repertorioSelecionadoId, setRepertorioSelecionadoId] = useState(null);
-  const { mostrarNotificacao } = useNotificacao();
-  const theme = useTheme();
+    const [musicas, setMusicas] = useState([]);
+    const [tags, setTags] = useState([]);
+    const [carregando, setCarregando] = useState(true);
+    const [modo, setModo] = useState('lista'); // 'lista', 'criar', 'editar'
+    const [musicaSelecionadaId, setMusicaSelecionadaId] = useState(null);
 
-  const buscarRepertorios = async () => {
-    if (modo === 'lista' && !carregando) setCarregando(true);
-    try {
-      const resposta = await apiClient.get('/api/repertorios');
-      setRepertorios(resposta.data);
-    } catch (erro) {
-      console.error("Erro ao buscar repertórios:", erro);
-      mostrarNotificacao("Não foi possível carregar os repertórios.", "error");
-    } finally {
-      setCarregando(false);
+    const [filtros, setFiltros] = useState({
+        termoBusca: '',
+        tags: [],
+        semTocarDesde: false,
+    });
+
+    const { mostrarNotificacao } = useNotificacao();
+
+    const buscarTags = useCallback(async () => {
+        try {
+            const resposta = await apiClient.get('/api/tags');
+            setTags(resposta.data);
+        } catch (erro) {
+            mostrarNotificacao("Não foi possível carregar as tags para filtro.", "error");
+        }
+    }, [mostrarNotificacao]);
+
+    const buscarMusicas = useCallback(async () => {
+        setCarregando(true);
+        try {
+            const params = new URLSearchParams();
+            if (filtros.termoBusca) params.append('termoBusca', filtros.termoBusca);
+            if (filtros.tags.length > 0) params.append('tags', filtros.tags.join(','));
+            if (filtros.semTocarDesde) {
+                const doisMesesAtras = new Date();
+                doisMesesAtras.setMonth(doisMesesAtras.getMonth() - 2);
+                params.append('semTocarDesde', doisMesesAtras.toISOString());
+            }
+
+            const resposta = await apiClient.get('/api/musicas', { params });
+            setMusicas(resposta.data);
+        } catch (erro) {
+            mostrarNotificacao("Não foi possível carregar as músicas do repertório.", "error");
+        } finally {
+            setCarregando(false);
+        }
+    }, [mostrarNotificacao, filtros]);
+
+    useEffect(() => {
+        if (modo === 'lista') {
+            buscarMusicas();
+        }
+    }, [modo, buscarMusicas]);
+
+    useEffect(() => {
+        buscarTags();
+    }, [buscarTags]);
+
+    const handleFiltroChange = (event) => {
+        const { name, value, type, checked } = event.target;
+        setFiltros(f => ({
+            ...f,
+            [name]: type === 'checkbox' ? checked : value,
+        }));
+    };
+
+    const handleApagar = async (id) => {
+        if (window.confirm("Tem certeza que deseja apagar esta música do seu repertório geral?")) {
+            try {
+                await apiClient.delete(`/api/musicas/${id}`);
+                mostrarNotificacao("Música apagada com sucesso!", "success");
+                buscarMusicas();
+            } catch (erro) {
+                mostrarNotificacao("Falha ao apagar a música.", "error");
+            }
+        }
+    };
+
+    const handleSucessoFormulario = () => { setModo('lista'); setMusicaSelecionadaId(null); };
+    const handleCancelarFormulario = () => { setModo('lista'); setMusicaSelecionadaId(null); };
+
+    if (carregando && modo === 'lista') {
+        return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress color="inherit" /></Box>;
     }
-  };
 
-  useEffect(() => {
-    if (modo === 'lista') {
-      buscarRepertorios();
-    }
-  }, [modo]);
-
-  const handleApagar = async (id) => {
-    if (window.confirm("Tem certeza que deseja apagar este repertório? Compromissos que usam este repertório perderão o vínculo.")) {
-      try {
-        await apiClient.delete(`/api/repertorios/${id}`);
-        mostrarNotificacao("Repertório apagado com sucesso!", "success");
-        buscarRepertorios();
-      } catch (erro) {
-        mostrarNotificacao("Falha ao apagar o repertório.", "error");
-      }
-    }
-  };
-
-  const handleSucessoFormulario = () => { setModo('lista'); setRepertorioSelecionadoId(null); };
-  const handleCancelarFormulario = () => { setModo('lista'); setRepertorioSelecionadoId(null); };
-
-  if (carregando) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress color="inherit" /></Box>;
-  }
-
-  return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      {modo === 'lista' ? (
+    const renderLista = () => (
         <Paper elevation={6} sx={{ p: { xs: 2, md: 4 } }}>
-          <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              mb: 4,
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 2,
-            }}>
-            <Typography variant="h4" component="h1" fontWeight="bold" sx={{ color: theme.palette.text.primary }}>Meus Repertórios</Typography>
-            <Button 
-                variant="contained" 
-                startIcon={<AddCircleOutlineIcon />} 
-                onClick={() => setModo('criar')} 
-                color="primary"
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
-                Novo Repertório
-            </Button>
-          </Box>
-          {repertorios.length === 0 ? (
-            <Box sx={{ p: 4, textAlign: 'center', border: `1px dashed ${theme.palette.divider}`, borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ color: theme.palette.text.primary }}>Nenhum repertório cadastrado.</Typography>
-              <Typography color="text.secondary">Adicione suas setlists para organizá-las.</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+                <Typography variant="h4" component="h1" fontWeight="bold">Repertório Geral</Typography>
+                <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => setModo('criar')}>
+                    Adicionar Música
+                </Button>
             </Box>
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {repertorios.map(repertorio => (
-                <Card key={repertorio.id} variant="outlined">
-                  <Grid container alignItems="center">
-                    <Grid item xs={12} sm={8}>
-                        <CardContent>
-                            <Box sx={{display: 'flex', alignItems: 'center', mb: 1.5}}>
-                            <LibraryMusicIcon sx={{mr: 1.5, color: 'primary.main'}}/>
-                            <Typography variant="h6" component="h2" fontWeight="bold">{repertorio.nome}</Typography>
-                            </Box>
-                            {repertorio.link_cifraclub && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mb: 1, pl: 0.5 }}>
-                                <LinkIcon sx={{ fontSize: '1rem', mr: 1.5, color: 'primary.main' }} />
-                                <MuiLink href={repertorio.link_cifraclub} target="_blank" rel="noopener noreferrer" color="primary">Acessar no CifraClub</MuiLink>
-                            </Box>
+
+            <Grid container spacing={2} sx={{ mb: 4 }}>
+                <Grid item xs={12} md={6}>
+                    <TextField
+                        fullWidth
+                        name="termoBusca"
+                        label="Buscar por nome ou artista..."
+                        value={filtros.termoBusca}
+                        onChange={handleFiltroChange}
+                        InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
+                    />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <FormControl fullWidth>
+                        <InputLabel>Filtrar por Tags</InputLabel>
+                        <Select
+                            multiple
+                            name="tags"
+                            value={filtros.tags}
+                            onChange={handleFiltroChange}
+                            input={<OutlinedInput label="Filtrar por Tags" />}
+                            renderValue={(selectedIds) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selectedIds.map(id => {
+                                        const tag = tags.find(t => t.id === id);
+                                        return <Chip key={id} label={tag ? tag.nome : id} size="small" />;
+                                    })}
+                                </Box>
                             )}
-                            {repertorio.notas_adicionais && (
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', color: 'text.secondary', mt: 2, pl: 0.5 }}>
-                                <NotesIcon sx={{ fontSize: '1rem', mr: 1.5, mt: 0.5, color: 'primary.main' }} />
-                                <Typography variant="body2" sx={{whiteSpace: 'pre-wrap'}}>{repertorio.notas_adicionais}</Typography>
+                        >
+                            {tags.map((tag) => (
+                                <MenuItem key={tag.id} value={tag.id}>{tag.nome}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
+                <Grid item xs={12} md={2} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Button fullWidth variant={filtros.semTocarDesde ? "contained" : "outlined"} onClick={() => setFiltros(f => ({ ...f, semTocarDesde: !f.semTocarDesde }))}>
+                        Praticar
+                    </Button>
+                </Grid>
+            </Grid>
+
+            <Grid container spacing={2}>
+                {musicas.length > 0 ? musicas.map(musica => (
+                    <Grid item xs={12} key={musica.id}>
+                        <Paper variant="outlined" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box>
+                                <Typography variant="h6">{musica.nome}</Typography>
+                                <Typography color="text.secondary">{musica.artista} - Tom: {musica.tom || 'N/A'}</Typography>
+                                <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {musica.tags.map(tag => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
+                                </Box>
                             </Box>
-                            )}
-                        </CardContent>
+                            <Box>
+                                <Tooltip title="Editar Música">
+                                    <IconButton onClick={() => { setMusicaSelecionadaId(musica.id); setModo('editar'); }}>
+                                        <EditIcon />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Apagar Música">
+                                    <IconButton onClick={() => handleApagar(musica.id)} color="error">
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
+                        </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={4}>
-                        <CardActions sx={{ justifyContent: {xs: 'flex-start', sm: 'flex-end'}, p: 2 }}>
-                            <Tooltip title="Editar"><IconButton onClick={() => { setRepertorioSelecionadoId(repertorio.id); setModo('editar'); }} color="secondary"><EditIcon /></IconButton></Tooltip>
-                            <Tooltip title="Excluir"><IconButton onClick={() => handleApagar(repertorio.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
-                        </CardActions>
+                )) : (
+                     <Grid item xs={12}>
+                        <Typography sx={{ textAlign: 'center', p: 4 }}>Nenhuma música encontrada com os filtros atuais. Que tal adicionar uma nova?</Typography>
                     </Grid>
-                  </Grid>
-                </Card>
-              ))}
-            </Box>
-          )}
+                )}
+            </Grid>
         </Paper>
-      ) : (
-        <FormularioRepertorio
-          id={repertorioSelecionadoId}
-          onSave={handleSucessoFormulario}
-          onCancel={handleCancelarFormulario}
-        />
-      )}
-    </Container>
-  );
+    );
+
+    return (
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+            {modo === 'lista' ? renderLista() : (
+                <FormularioMusica
+                    id={musicaSelecionadaId}
+                    onSave={handleSucessoFormulario}
+                    onCancel={handleCancelarFormulario}
+                />
+            )}
+        </Container>
+    );
 }
 
 export default Repertorios;
