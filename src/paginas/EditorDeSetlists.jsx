@@ -3,8 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import {
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
     Box, Typography, Paper, CircularProgress, Grid,
     List, ListItem, ListItemText, IconButton, Tooltip, TextField, InputAdornment, Button
 } from '@mui/material';
