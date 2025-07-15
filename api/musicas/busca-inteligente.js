@@ -1,9 +1,10 @@
-// Função Serverless para Busca Inteligente de Músicas - v2
 // ficheiro: /api/musicas/busca-inteligente.js
+
 import axios from "axios";
 import * as cheerio from "cheerio";
 
 export default async function handler(req, res) {
+  // Configuração do CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -27,29 +28,43 @@ export default async function handler(req, res) {
   try {
     const termoBusca = encodeURIComponent(`${nomeMusica} ${nomeArtista}`);
     const urlBusca = `https://www.cifraclub.com.br/search/?q=${termoBusca}`;
+    console.log(`[Busca Inteligente V3] Buscando URL: ${urlBusca}`);
+
     const { data: dataBusca } = await axios.get(urlBusca);
     const $busca = cheerio.load(dataBusca);
     let linkEncontrado = null;
 
-    $busca(".gsc-webResult.gsc-result a.gs-title").each((i, el) => {
+    // LÓGICA DE BUSCA MELHORADA: Procura por um link que contenha o nome do artista no URL
+    $busca("a.gs-title").each((i, el) => {
       const href = $(el).attr("href");
+      const artistaFormatado = nomeArtista.toLowerCase().replace(/\s+/g, "-");
+
+      // Procura o primeiro link que contenha o nome do artista e não seja de videoaulas
       if (
         href &&
-        href.includes("cifraclub.com.br") &&
+        href.includes(artistaFormatado) &&
         !href.includes("/videoaulas/")
       ) {
         linkEncontrado = href;
-        return false;
+        return false; // Interrompe o loop
       }
     });
 
+    // Se a primeira tentativa falhar, tenta uma abordagem mais genérica
     if (!linkEncontrado) {
+      linkEncontrado = $busca(".gsc-webResult.gsc-result a.gs-title")
+        .first()
+        .attr("href");
+    }
+
+    if (!linkEncontrado) {
+      console.log("[Busca Inteligente V3] Nenhum resultado válido encontrado.");
       return res
         .status(404)
-        .json({
-          message: "Nenhuma cifra encontrada para esta música no Cifra Club.",
-        });
+        .json({ message: "Nenhuma cifra encontrada para esta música." });
     }
+
+    console.log(`[Busca Inteligente V3] Link encontrado: ${linkEncontrado}`);
 
     const { data: dataCifra } = await axios.get(linkEncontrado);
     const $cifra = cheerio.load(dataCifra);
@@ -74,11 +89,12 @@ export default async function handler(req, res) {
     const $temp = cheerio.load(cifraComQuebrasDeLinha);
     const cifraLimpa = $temp.text();
 
+    console.log("[Busca Inteligente V3] Sucesso! Devolvendo dados.");
     return res
       .status(200)
       .json({ nome, artista, tom, notas_adicionais: cifraLimpa });
   } catch (error) {
-    console.error("[Busca Inteligente] ERRO CRÍTICO:", error);
+    console.error("[Busca Inteligente V3] ERRO CRÍTICO:", error);
     return res
       .status(500)
       .json({ message: "Ocorreu um erro interno ao processar a sua busca." });
