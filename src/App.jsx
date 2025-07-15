@@ -47,7 +47,7 @@ function App() {
         <Route path="/repertorios" element={<Repertorios />} />
         <Route path="/equipamentos" element={<Equipamentos />} />
         <Route path="/setlists" element={<Setlists />} /> {/* Nova lista de Setlists */}
-        <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} /> {/* Novo editor */}
+        <Route path="/setlists/editar/:id" element={<EditorDeSetlists />} /> {/* Novo editor */}
       </Route>
     </Routes>
   )

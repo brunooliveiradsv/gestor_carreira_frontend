@@ -4,9 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-    Box, Typography, Paper, CircularProgress, Grid,
-    List, ListItem, ListItemText, IconButton, Tooltip, TextField, InputAdornment, Button
-} from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Grid,
+    List, ListItem, ListItemText, IconButton, Tooltip, TextField, InputAdornment, Button } from '@mui/material';
 import {
     Save as SaveIcon, ArrowBack as ArrowBackIcon,
     Search as SearchIcon, PlaylistAdd as PlaylistAddIcon,
