@@ -7,7 +7,7 @@ import {
     Box, Button, TextField, Typography, Paper, CircularProgress,
     Autocomplete, Chip, Grid
 } from '@mui/material';
-import { Sync as SyncIcon } from '@mui/icons-material';
+import { Search as SearchIcon } from '@mui/icons-material';
 
 function FormularioMusica({ id, onSave, onCancel }) {
     const [dadosForm, setDadosForm] = useState({
@@ -21,18 +21,20 @@ function FormularioMusica({ id, onSave, onCancel }) {
     const [tagsSelecionadas, setTagsSelecionadas] = useState([]);
     const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
     const [carregando, setCarregando] = useState(false);
-    const [linkCifraClub, setLinkCifraClub] = useState('');
-    const [raspando, setRaspando] = useState(false);
+    
+    // --- NOVOS ESTADOS PARA A BUSCA INTELIGENTE ---
+    const [nomeMusicaBusca, setNomeMusicaBusca] = useState('');
+    const [nomeArtistaBusca, setNomeArtistaBusca] = useState('');
+    const [buscando, setBuscando] = useState(false);
+
     const { mostrarNotificacao } = useNotificacao();
 
-    // Busca todas as tags existentes do usuário para popular o Autocomplete
     useEffect(() => {
         apiClient.get('/api/tags')
             .then(resposta => setTagsDisponiveis(resposta.data.map(tag => tag.nome)))
             .catch(() => mostrarNotificacao("Erro ao carregar sugestões de tags.", "error"));
     }, [mostrarNotificacao]);
 
-    // Se um 'id' foi passado, estamos no modo de edição. Busca os dados da música.
     useEffect(() => {
         if (id) {
             setCarregando(true);
@@ -71,16 +73,27 @@ function FormularioMusica({ id, onSave, onCancel }) {
             setCarregando(false);
         }
     };
-    
-    const handleRasparCifra = async () => {
-        if (!linkCifraClub) {
-            mostrarNotificacao("Por favor, insira um URL do Cifra Club.", "warning");
+
+    // --- NOVA FUNÇÃO DE BUSCA INTELIGENTE ---
+    const handleBuscaInteligente = async () => {
+        if (!nomeMusicaBusca || !nomeArtistaBusca) {
+            mostrarNotificacao("Preencha o nome da música e do artista para buscar.", "warning");
             return;
         }
-        setRaspando(true);
+        setBuscando(true);
         try {
-            const resposta = await apiClient.post('/api/musicas/raspar-cifra', { url: linkCifraClub });
-            const { nome, artista, tom, notas_adicionais } = resposta.data;
+            // Etapa 1: Encontrar o URL
+            const respostaBusca = await apiClient.post('/api/musicas/busca-inteligente', { 
+                nomeMusica: nomeMusicaBusca, 
+                nomeArtista: nomeArtistaBusca 
+            });
+            
+            const { url } = respostaBusca.data;
+            mostrarNotificacao("Link encontrado! Buscando dados da cifra...", "info");
+
+            // Etapa 2: Raspar os dados usando o URL encontrado
+            const respostaRaspagem = await apiClient.post('/api/musicas/raspar-cifra', { url });
+            const { nome, artista, tom, notas_adicionais } = respostaRaspagem.data;
 
             setDadosForm(atuais => ({
                 ...atuais,
@@ -92,13 +105,12 @@ function FormularioMusica({ id, onSave, onCancel }) {
             mostrarNotificacao("Dados importados com sucesso!", "success");
 
         } catch (erro) {
-            mostrarNotificacao(erro.response?.data?.mensagem || "Falha ao importar dados.", "error");
+            mostrarNotificacao(erro.response?.data?.mensagem || "Falha na busca inteligente.", "error");
         } finally {
-            setRaspando(false);
+            setBuscando(false);
         }
     };
-    
-    // Mostra um spinner enquanto carrega os dados para edição
+
     if (carregando && id) {
         return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress color="inherit" /></Box>;
     }
@@ -110,17 +122,25 @@ function FormularioMusica({ id, onSave, onCancel }) {
                     {id ? 'Editar Música' : 'Adicionar Nova Música'}
                 </Typography>
 
-                {/* Secção de Importação do Cifra Club (Apenas no modo de criação) */}
                 {!id && (
                     <Paper variant="outlined" sx={{ p: 2, borderColor: 'primary.main', bgcolor: 'rgba(94, 53, 177, 0.05)' }}>
-                        <Typography variant="h6" gutterBottom>Importar do Cifra Club</Typography>
-                        <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} sm={9}>
+                        <Typography variant="h6" gutterBottom>Busca Inteligente</Typography>
+                        <Grid container spacing={2} alignItems="flex-end">
+                            <Grid item xs={12} sm={5}>
                                 <TextField
                                     fullWidth
-                                    label="Cole o link do Cifra Club aqui"
-                                    value={linkCifraClub}
-                                    onChange={(e) => setLinkCifraClub(e.target.value)}
+                                    label="Nome da Música"
+                                    value={nomeMusicaBusca}
+                                    onChange={(e) => setNomeMusicaBusca(e.target.value)}
+                                    size="small"
+                                />
+                            </Grid>
+                             <Grid item xs={12} sm={4}>
+                                <TextField
+                                    fullWidth
+                                    label="Nome do Artista"
+                                    value={nomeArtistaBusca}
+                                    onChange={(e) => setNomeArtistaBusca(e.target.value)}
                                     size="small"
                                 />
                             </Grid>
@@ -128,9 +148,9 @@ function FormularioMusica({ id, onSave, onCancel }) {
                                 <Button
                                     fullWidth
                                     variant="contained"
-                                    onClick={handleRasparCifra}
-                                    disabled={raspando}
-                                    startIcon={raspando ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />}
+                                    onClick={handleBuscaInteligente}
+                                    disabled={buscando}
+                                    startIcon={buscando ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
                                 >
                                     Buscar
                                 </Button>
