@@ -1,9 +1,8 @@
 // ficheiro: /api/musicas/busca-inteligente.js
 
 import axios from 'axios';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio'; // <-- AQUI ESTÁ A CORREÇÃO
 
-// Esta é a nova forma, mais robusta, de escrever a função para a Vercel
 export default async function handler(req, res) {
     // Configuração do CORS para permitir pedidos de qualquer origem
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -67,7 +66,6 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        // Registo de erro detalhado para a Vercel
         console.error("[Busca Inteligente] ERRO CRÍTICO:", error);
         return res.status(500).json({ message: "Ocorreu um erro interno ao processar a sua busca." });
     }
