@@ -109,7 +109,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
     setBuscando(true);
     try {
       // AQUI ESTÁ A CORREÇÃO: Usamos 'fetch' para chamar a rota relativa da API da Vercel.
-      const response = await fetch("/api/musicas/busca-inteligente", {
+       const response = await fetch('/api/busca-inteligente', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
