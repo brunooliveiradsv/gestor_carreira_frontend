@@ -29,43 +29,47 @@ export default async function handler(req, res) {
     const termoBusca = encodeURIComponent(`${nomeMusica} ${nomeArtista}`);
     const urlBusca = `https://www.cifraclub.com.br/search/?q=${termoBusca}`;
 
-    console.log(`[Detetive V5] Buscando em: ${urlBusca}`);
-    const { data: dataBusca } = await axios.get(urlBusca);
-    const $busca = cheerio.load(dataBusca);
+    // --- INÍCIO DA CORREÇÃO ---
+    // Adiciona um cabeçalho de User-Agent para simular um navegador real
+    const headers = {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+    };
 
+    console.log(`[Busca Final] Buscando em: ${urlBusca}`);
+    const { data: dataBusca } = await axios.get(urlBusca, { headers });
+    // --- FIM DA CORREÇÃO ---
+
+    const $busca = cheerio.load(dataBusca);
     let linkEncontrado = null;
 
-    // --- LÓGICA DE BUSCA MAIS ROBUSTA ---
-    // 1. Procura por todos os links dentro da área de resultados.
-    const links = $busca(".gsc-results a.gs-title");
-    console.log(
-      `[Detetive V5] Encontrados ${links.length} links de resultado.`
-    );
-
-    // 2. Itera sobre os links para encontrar o melhor.
-    links.each((i, el) => {
+    $busca("a.gs-title").each((i, el) => {
       const href = $(el).attr("href");
-      // 3. Critérios: O link deve ser de cifraclub.com.br e não ser uma videoaula.
+      const artistaFormatado = nomeArtista.toLowerCase().replace(/\s+/g, "-");
       if (
         href &&
-        href.includes("cifraclub.com.br") &&
+        href.includes(artistaFormatado) &&
         !href.includes("/videoaulas/")
       ) {
         linkEncontrado = href;
-        return false; // Interrompe o loop, pois encontrámos o nosso alvo.
+        return false;
       }
     });
 
     if (!linkEncontrado) {
-      console.log("[Detetive V5] Nenhum link de cifra válido foi encontrado.");
+      linkEncontrado = $busca("a.gs-title").first().attr("href");
+    }
+
+    if (!linkEncontrado) {
       return res
         .status(404)
         .json({ message: "Nenhuma cifra encontrada para esta música." });
     }
 
-    console.log(`[Detetive V5] Link final selecionado: ${linkEncontrado}`);
+    console.log(`[Busca Final] Link encontrado: ${linkEncontrado}`);
 
-    const { data: dataCifra } = await axios.get(linkEncontrado);
+    // Também usamos os headers para o segundo pedido
+    const { data: dataCifra } = await axios.get(linkEncontrado, { headers });
     const $cifra = cheerio.load(dataCifra);
 
     const nome =
@@ -88,12 +92,12 @@ export default async function handler(req, res) {
     const $temp = cheerio.load(cifraComQuebrasDeLinha);
     const cifraLimpa = $temp.text();
 
-    console.log("[Detetive V5] Sucesso! Devolvendo dados.");
+    console.log("[Busca Final] Sucesso! Devolvendo dados.");
     return res
       .status(200)
       .json({ nome, artista, tom, notas_adicionais: cifraLimpa });
   } catch (error) {
-    console.error("[Detetive V5] ERRO CRÍTICO:", error);
+    console.error("[Busca Final] ERRO CRÍTICO:", error);
     return res
       .status(500)
       .json({ message: "Ocorreu um erro interno ao processar a sua busca." });
