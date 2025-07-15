@@ -17,7 +17,7 @@ import Repertorios from './paginas/Repertorios.jsx';
 import Equipamentos from './paginas/Equipamentos.jsx';
 import RecuperarSenha from './paginas/RecuperarSenha.jsx';
 import Setlists from './paginas/Setlists.jsx'; // Novo
-import EditorDeSetlist from './paginas/EditorDeSetlist.jsx'; // Novo
+import EditorDeSetlists from './paginas/EditorDeSetlists.jsx'; // Novo
 
 function App() {
   return (
