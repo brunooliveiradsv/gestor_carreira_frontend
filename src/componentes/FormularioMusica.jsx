@@ -111,23 +111,21 @@ function FormularioMusica({ id, onSave, onCancel }) {
     }
     setBuscando(true);
     try {
-      // Chama o novo endpoint que faz todo o trabalho no backend
+      // AQUI ESTÁ A MUDANÇA: Usamos o apiClient do frontend para chamar a nossa nova rota.
+      // A Vercel irá redirecionar este pedido para a nossa função serverless.
       const resposta = await apiClient.post("/api/musicas/busca-inteligente", {
         nomeMusica: nomeMusicaBusca,
         nomeArtista: nomeArtistaBusca,
       });
 
-      const { nome, artista, tom, notas_adicionais, duracao_segundos } =
-        resposta.data;
+      const { nome, artista, tom, notas_adicionais } = resposta.data;
 
-      // Preenche o formulário com todos os dados recebidos
       setDadosForm((atuais) => ({
         ...atuais,
         nome: nome || atuais.nome,
         artista: artista || atuais.artista,
         tom: tom || atuais.tom,
         notas_adicionais: notas_adicionais || atuais.notas_adicionais,
-        duracao_segundos: duracao_segundos || atuais.duracao_segundos,
       }));
 
       mostrarNotificacao("Dados importados com sucesso!", "success");
