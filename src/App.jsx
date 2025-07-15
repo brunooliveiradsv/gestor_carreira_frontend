@@ -16,6 +16,8 @@ import Configuracoes from './paginas/Configuracoes.jsx';
 import Repertorios from './paginas/Repertorios.jsx';
 import Equipamentos from './paginas/Equipamentos.jsx';
 import RecuperarSenha from './paginas/RecuperarSenha.jsx';
+import Setlists from './paginas/Setlists.jsx'; // Novo
+import EditorDeSetlist from './paginas/EditorDeSetlist.jsx'; // Novo
 
 function App() {
   return (
@@ -44,6 +46,8 @@ function App() {
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/repertorios" element={<Repertorios />} />
         <Route path="/equipamentos" element={<Equipamentos />} />
+        <Route path="/setlists" element={<Setlists />} /> {/* Nova lista de Setlists */}
+        <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} /> {/* Novo editor */}
       </Route>
     </Routes>
   )
