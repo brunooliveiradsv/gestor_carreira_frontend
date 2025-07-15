@@ -1,3 +1,4 @@
+// Função Serverless para Busca Inteligente de Músicas - v2
 // ficheiro: /api/musicas/busca-inteligente.js
 import axios from "axios";
 import * as cheerio from "cheerio";
