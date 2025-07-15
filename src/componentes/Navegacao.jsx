@@ -52,6 +52,19 @@ import {
   Piano as PianoIcon,
   Contacts as ContactsIcon,
   EmojiEvents as EmojiEventsIcon,
+  ArrowForward as ArrowForwardIcon,
+  Search as SearchIcon,
+  PlaylistAdd as PlaylistAddIcon,
+  MusicNote as MusicNoteIcon,
+  AddCircleOutline as AddCircleOutlineIcon,
+  Settings as SettingsIcon,
+  ArrowBack as ArrowBackIcon,
+  Close as CloseIcon,
+  Notifications as NotificationsIcon,
+  MilitaryTech as MilitaryTechIcon,
+  AttachMoney as AttachMoneyIcon,
+  People as PeopleIcon,
+  Contacts as ContactsIcon,
 } from "@mui/icons-material";
 
 // Mapeamento de tipos de condição para ícones de notificação
@@ -188,6 +201,7 @@ function Navegacao() {
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorios", text: "Repertórios", icon: <LibraryMusicIcon /> },
+    { to: "/setlists", text: "Setlists", icon: <MusicNoteIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
