@@ -187,7 +187,7 @@ function Navegacao() {
     { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
-    { to: "/repertorios", text: "Repertórios", icon: <LibraryMusicIcon /> },
+    { to: "/repertorios", text: "Músicas", icon: <LibraryMusicIcon /> },
     { to: "/setlists", text: "Setlists", icon: <MusicNoteIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
