@@ -29,14 +29,12 @@ function FormularioMusica({ id, onSave, onCancel }) {
   const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
   const [carregando, setCarregando] = useState(false);
 
-  // Estados para a nova busca inteligente
   const [nomeMusicaBusca, setNomeMusicaBusca] = useState("");
   const [nomeArtistaBusca, setNomeArtistaBusca] = useState("");
   const [buscando, setBuscando] = useState(false);
 
   const { mostrarNotificacao } = useNotificacao();
 
-  // Busca todas as tags existentes do usuário para popular o Autocomplete
   useEffect(() => {
     apiClient
       .get("/api/tags")
@@ -48,7 +46,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
       );
   }, [mostrarNotificacao]);
 
-  // Se um 'id' foi passado, estamos no modo de edição. Busca os dados da música.
   useEffect(() => {
     if (id) {
       setCarregando(true);
@@ -100,7 +97,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
     }
   };
 
-  // Função que aciona a busca inteligente no backend
+  // --- FUNÇÃO DE BUSCA INTELIGENTE CORRIGIDA ---
   const handleBuscaInteligente = async () => {
     if (!nomeMusicaBusca || !nomeArtistaBusca) {
       mostrarNotificacao(
@@ -111,14 +108,23 @@ function FormularioMusica({ id, onSave, onCancel }) {
     }
     setBuscando(true);
     try {
-      // AQUI ESTÁ A MUDANÇA: Usamos o apiClient do frontend para chamar a nossa nova rota.
-      // A Vercel irá redirecionar este pedido para a nossa função serverless.
-      const resposta = await apiClient.post("/api/musicas/busca-inteligente", {
-        nomeMusica: nomeMusicaBusca,
-        nomeArtista: nomeArtistaBusca,
+      // AQUI ESTÁ A CORREÇÃO: Usamos 'fetch' para chamar a rota relativa da API da Vercel.
+      const response = await fetch("/api/musicas/busca-inteligente", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nomeMusica: nomeMusicaBusca,
+          nomeArtista: nomeArtistaBusca,
+        }),
       });
 
-      const { nome, artista, tom, notas_adicionais } = resposta.data;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.mensagem || "Erro na busca.");
+      }
+
+      const { nome, artista, tom, notas_adicionais } = data;
 
       setDadosForm((atuais) => ({
         ...atuais,
@@ -131,7 +137,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
       mostrarNotificacao("Dados importados com sucesso!", "success");
     } catch (erro) {
       mostrarNotificacao(
-        erro.response?.data?.mensagem || "Falha na busca inteligente.",
+        erro.message || "Falha na busca inteligente.",
         "error"
       );
     } finally {
@@ -139,7 +145,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
     }
   };
 
-  // Mostra um spinner de carregamento geral se estiver a carregar uma música para edição
   if (carregando && id) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -159,7 +164,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
           {id ? "Editar Música" : "Adicionar Nova Música"}
         </Typography>
 
-        {/* Secção da Busca Inteligente (só aparece no modo 'criar') */}
         {!id && (
           <Paper
             variant="outlined"
