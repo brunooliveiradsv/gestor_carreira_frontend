@@ -22,7 +22,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
     artista: "",
     tom: "",
     duracao_segundos: "",
-    bpm: "", // Campo BPM adicionado ao estado
+    bpm: "",
     link_cifra: "",
     notas_adicionais: "",
   });
@@ -107,41 +107,68 @@ function FormularioMusica({ id, onSave, onCancel }) {
       return;
     }
     setBuscando(true);
+
     try {
-      const response = await fetch('/api/busca-inteligente', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nomeMusica: nomeMusicaBusca,
-          nomeArtista: nomeArtistaBusca,
-        }),
+      mostrarNotificacao("Buscando no seu repertório...", "info");
+      const params = new URLSearchParams({
+        nome: nomeMusicaBusca,
+        artista: nomeArtistaBusca,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.mensagem || "Erro na busca.");
-      }
-
-      // Desestrutura todos os dados, incluindo o BPM
-      const { nome, artista, tom, notas_adicionais, bpm, duracao_segundos } = data;
-
-      setDadosForm((atuais) => ({
-        ...atuais,
-        nome: nome || atuais.nome,
-        artista: artista || atuais.artista,
-        tom: tom || atuais.tom,
-        notas_adicionais: notas_adicionais || atuais.notas_adicionais,
-        bpm: bpm || atuais.bpm, // Define o BPM
-        duracao_segundos: duracao_segundos || atuais.duracao_segundos,
-      }));
-
-      mostrarNotificacao("Dados importados com sucesso!", "success");
-    } catch (erro) {
-      mostrarNotificacao(
-        erro.message || "Falha na busca inteligente.",
-        "error"
+      const respostaInterna = await apiClient.get(
+        `/api/musicas/busca-interna?${params.toString()}`
       );
+
+      mostrarNotificacao("Música encontrada no seu repertório!", "success");
+      setDadosForm(respostaInterna.data);
+      setTagsSelecionadas(respostaInterna.data.tags?.map((t) => t.nome) || []);
+    } catch (erroInterno) {
+      if (erroInterno.response && erroInterno.response.status === 404) {
+        mostrarNotificacao(
+          "Música não encontrada no seu repertório. Buscando na internet...",
+          "info"
+        );
+
+        try {
+          const responseExterna = await fetch("/api/busca-inteligente", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              nomeMusica: nomeMusicaBusca,
+              nomeArtista: nomeArtistaBusca,
+            }),
+          });
+
+          const dataExterna = await responseExterna.json();
+          if (!responseExterna.ok) {
+            throw new Error(
+              dataExterna.message || "Erro na busca na internet."
+            );
+          }
+
+          mostrarNotificacao(
+            "Dados encontrados! Preencha o resto e salve.",
+            "success"
+          );
+          setDadosForm((atuais) => ({
+            ...atuais,
+            nome: dataExterna.nome || atuais.nome,
+            artista: dataExterna.artista || atuais.artista,
+            tom: dataExterna.tom || atuais.tom,
+            notas_adicionais:
+              dataExterna.notas_adicionais || atuais.notas_adicionais,
+            bpm: dataExterna.bpm || atuais.bpm,
+            duracao_segundos:
+              dataExterna.duracao_segundos || atuais.duracao_segundos,
+          }));
+        } catch (erroExterno) {
+          mostrarNotificacao(
+            erroExterno.message || "Falha na busca inteligente na internet.",
+            "error"
+          );
+        }
+      } else {
+        mostrarNotificacao("Erro ao buscar no seu repertório.", "error");
+      }
     } finally {
       setBuscando(false);
     }
@@ -240,38 +267,39 @@ function FormularioMusica({ id, onSave, onCancel }) {
           fullWidth
           InputLabelProps={{ shrink: !!dadosForm.artista }}
         />
-        {/* --- GRID PARA ORGANIZAR TOM, DURAÇÃO E BPM --- */}
         <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
-                 <TextField
-                    name="tom"
-                    label="Tom"
-                    value={dadosForm.tom || ""}
-                    onChange={handleChange}
-                    fullWidth
-                    InputLabelProps={{ shrink: !!dadosForm.tom }}
-                />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-                <TextField
-                    name="duracao_segundos"
-                    label="Duração (segundos)"
-                    type="number"
-                    value={dadosForm.duracao_segundos || ""}
-                    onChange={handleChange}
-                    fullWidth
-                />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-                <TextField
-                    name="bpm"
-                    label="BPM"
-                    type="number"
-                    value={dadosForm.bpm || ""}
-                    onChange={handleChange}
-                    fullWidth
-                />
-            </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              name="tom"
+              label="Tom"
+              value={dadosForm.tom || ""}
+              onChange={handleChange}
+              fullWidth
+              InputLabelProps={{ shrink: !!dadosForm.tom }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              name="bpm"
+              label="BPM"
+              type="number"
+              value={dadosForm.bpm || ""}
+              onChange={handleChange}
+              fullWidth
+              InputLabelProps={{ shrink: !!dadosForm.bpm }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              name="duracao_segundos"
+              label="Duração (segundos)"
+              type="number"
+              value={dadosForm.duracao_segundos || ""}
+              onChange={handleChange}
+              fullWidth
+              InputLabelProps={{ shrink: !!dadosForm.duracao_segundos }}
+            />
+          </Grid>
         </Grid>
 
         <Autocomplete
