@@ -20,10 +20,11 @@ import {
   Settings as SettingsIcon, Menu as MenuIcon, Logout as LogoutIcon,
   AdminPanelSettings as AdminPanelSettingsIcon, Dashboard as DashboardIcon, CalendarMonth as CalendarMonthIcon,
   MonetizationOn as MonetizationOnIcon, LibraryMusic as LibraryMusicIcon, Piano as PianoIcon,
-  Contacts as ContactsIcon, PlaylistAddCheck as SuggestionIcon,
+  Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon, // Ícone importado corretamente
+  EmojiEvents as EmojiEventsIcon, // Mantido como exemplo de outro ícone
 } from "@mui/icons-material";
 
-// Mapeamento de ícones para notificações
+// Mapeamento de ícones para notificações (usando o nome correto do ícone)
 const iconMapNotificacao = {
   SHOWS: MusicNoteIcon,
   RECEITA: AttachMoneyIcon,
@@ -55,7 +56,7 @@ function Navegacao() {
 
   useEffect(() => {
     buscarNotificacoes();
-    const intervalId = setInterval(buscarNotificacoes, 30000); // Busca a cada 30s
+    const intervalId = setInterval(buscarNotificacoes, 30000);
     return () => clearInterval(intervalId);
   }, [usuario]);
 
@@ -145,7 +146,7 @@ function Navegacao() {
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
-    { to: "/conquistas", text: "Conquistas", icon: <SuggestionIcon /> },
+    { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
 
   const drawerContent = (
