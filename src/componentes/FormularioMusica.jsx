@@ -55,7 +55,10 @@ function FormularioMusica({ id, onSave, onCancel }) {
           setTagsSelecionadas(tags?.map((tag) => tag.nome) || []);
         })
         .catch(() =>
-          mostrarNotificacao("Erro ao buscar dados da música para edição.", "error")
+          mostrarNotificacao(
+            "Erro ao buscar dados da música para edição.",
+            "error"
+          )
         )
         .finally(() => setCarregando(false));
     }
@@ -94,7 +97,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
       setCarregando(false);
     }
   };
-  
+
   // Se estiver a carregar os dados para edição, mostra um spinner
   if (carregando && id) {
     return (
@@ -212,11 +215,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
         />
 
         <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={carregando}
-          >
+          <Button type="submit" variant="contained" disabled={carregando}>
             {carregando ? <CircularProgress size={24} /> : "Salvar Música"}
           </Button>
           <Button type="button" variant="text" onClick={onCancel}>
