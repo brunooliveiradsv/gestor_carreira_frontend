@@ -1,6 +1,6 @@
 // src/componentes/FormularioMusica.jsx
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import apiClient from "../api";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
@@ -15,8 +15,8 @@ import {
   Grid,
 } from "@mui/material";
 
-// Define o estado inicial do formulário para reutilização
-const initialState = {
+// Define um estado inicial limpo para reutilização
+const estadoInicialFormulario = {
   nome: "",
   artista: "",
   tom: "",
@@ -27,51 +27,61 @@ const initialState = {
 };
 
 function FormularioMusica({ id, onSave, onCancel }) {
-  const [dadosForm, setDadosForm] = useState(initialState);
-  const [tagsSelecionadas, setTagsSelecionadas] = useState([]);
+  // Estados separados para os dados do formulário e para as tags
+  const [form, setForm] = useState(estadoInicialFormulario);
+  const [tags, setTags] = useState([]);
+  
+  // Estado para as sugestões de tags do Autocomplete
   const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
+  
   const [carregando, setCarregando] = useState(false);
   const { mostrarNotificacao } = useNotificacao();
 
-  // Efeito para buscar as tags disponíveis para o Autocomplete
+  // Função para carregar os dados da música para edição
+  const carregarMusicaParaEdicao = useCallback(async () => {
+    if (!id) return;
+    setCarregando(true);
+    try {
+      const { data } = await apiClient.get(`/api/musicas/${id}`);
+      const { tags: tagsDaApi, ...dadosMusica } = data;
+      setForm(dadosMusica);
+      setTags(tagsDaApi?.map(t => t.nome) || []);
+    } catch (error) {
+      mostrarNotificacao("Erro ao carregar os dados da música.", "error");
+      onCancel(); // Fecha o formulário em caso de erro
+    } finally {
+      setCarregando(false);
+    }
+  }, [id, mostrarNotificacao, onCancel]);
+
+  // Efeito para carregar as sugestões de tags uma vez
   useEffect(() => {
-    apiClient
-      .get("/api/tags")
-      .then((resposta) => setTagsDisponiveis(resposta.data.map((tag) => tag.nome)))
-      .catch(() => mostrarNotificacao("Erro ao carregar sugestões de tags.", "error"));
+    apiClient.get("/api/tags")
+      .then(res => setTagsDisponiveis(res.data.map(t => t.nome)))
+      .catch(() => mostrarNotificacao("Não foi possível carregar as tags.", "error"));
   }, [mostrarNotificacao]);
 
-  // Efeito para carregar os dados da música em modo de edição
+  // Efeito principal que decide se carrega para edição ou limpa para criação
   useEffect(() => {
     if (id) {
-      setCarregando(true);
-      apiClient
-        .get(`/api/musicas/${id}`)
-        .then((resposta) => {
-          const { tags, ...dadosMusica } = resposta.data;
-          setDadosForm(dadosMusica);
-          const nomesDasTags = tags?.map((tag) => tag.nome) || [];
-          setTagsSelecionadas(nomesDasTags);
-        })
-        .catch(() => mostrarNotificacao("Erro ao buscar dados da música para edição.", "error"))
-        .finally(() => setCarregando(false));
+      carregarMusicaParaEdicao();
     } else {
-      // Limpa o formulário ao alternar para o modo de criação
-      setDadosForm(initialState);
-      setTagsSelecionadas([]);
+      setForm(estadoInicialFormulario);
+      setTags([]);
     }
-  }, [id, mostrarNotificacao]);
+  }, [id, carregarMusicaParaEdicao]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setDadosForm((atuais) => ({ ...atuais, [name]: value }));
+    setForm(dadosAtuais => ({ ...dadosAtuais, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setCarregando(true);
 
-    const dadosParaEnviar = { ...dadosForm, tags: tagsSelecionadas };
+    const dadosParaEnviar = { ...form, tags };
 
     try {
       if (id) {
@@ -79,55 +89,57 @@ function FormularioMusica({ id, onSave, onCancel }) {
         mostrarNotificacao("Música atualizada com sucesso!", "success");
       } else {
         await apiClient.post("/api/musicas", dadosParaEnviar);
-        mostrarNotificacao("Música adicionada ao repertório com sucesso!", "success");
+        mostrarNotificacao("Música adicionada com sucesso!", "success");
       }
       onSave();
     } catch (erro) {
       mostrarNotificacao(erro.response?.data?.mensagem || "Falha ao salvar a música.", "error");
-      setCarregando(false); // Garante que o botão não fica bloqueado em caso de erro
+      setCarregando(false);
     }
   };
 
   if (carregando && id) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress color="inherit" /></Box>;
+    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
 
   return (
     <Paper elevation={6} sx={{ p: { xs: 2, md: 4 } }}>
-      <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        <Typography variant="h5" component="h2" fontWeight="bold">{id ? "Editar Música" : "Adicionar Nova Música"}</Typography>
-        <Typography variant="overline" color="text.secondary">Detalhes da música</Typography>
-        <TextField name="nome" label="Nome da Música" value={dadosForm.nome} onChange={handleChange} required fullWidth />
-        <TextField name="artista" label="Artista Original" value={dadosForm.artista} onChange={handleChange} required fullWidth />
+      <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Typography variant="h5" component="h2" fontWeight="bold">
+          {id ? "Editar Música" : "Adicionar Nova Música"}
+        </Typography>
+
+        <Typography variant="overline" color="text.secondary">Informações Principais</Typography>
+        <TextField name="nome" label="Nome da Música" value={form.nome} onChange={handleChange} required fullWidth />
+        <TextField name="artista" label="Artista" value={form.artista} onChange={handleChange} required fullWidth />
+
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}><TextField name="tom" label="Tom" value={dadosForm.tom || ""} onChange={handleChange} fullWidth /></Grid>
-          <Grid item xs={12} sm={4}><TextField name="bpm" label="BPM" type="number" value={dadosForm.bpm || ""} onChange={handleChange} fullWidth /></Grid>
-          <Grid item xs={12} sm={4}><TextField name="duracao_segundos" label="Duração (mm:ss)" placeholder="Ex: 3:25" value={dadosForm.duracao_segundos || ""} onChange={handleChange} fullWidth /></Grid>
+          <Grid item xs={12} sm={4}><TextField name="tom" label="Tom" value={form.tom || ''} onChange={handleChange} fullWidth /></Grid>
+          <Grid item xs={12} sm={4}><TextField name="bpm" label="BPM" type="number" value={form.bpm || ''} onChange={handleChange} fullWidth /></Grid>
+          <Grid item xs={12} sm={4}><TextField name="duracao_segundos" label="Duração (mm:ss)" value={form.duracao_segundos || ''} onChange={handleChange} fullWidth /></Grid>
         </Grid>
-        
+
+        <Typography variant="overline" color="text.secondary" sx={{ mt: 1 }}>Organização e Detalhes</Typography>
         <Autocomplete
           multiple
           freeSolo
           options={tagsDisponiveis}
-          value={tagsSelecionadas}
-          onChange={(event, newValue) => {
-            // Esta é a linha mais importante: atualiza o estado com as novas tags
-            setTagsSelecionadas(newValue);
-          }}
-          renderTags={(value, getTagProps) =>
-            value.map((option, index) => <Chip variant="outlined" label={option} {...getTagProps({ index })} />)
+          value={tags}
+          onChange={(event, novoValor) => setTags(novoValor)}
+          renderTags={(valor, getTagProps) =>
+            valor.map((opcao, index) => <Chip label={opcao} {...getTagProps({ index })} />)
           }
-          renderInput={(params) => <TextField {...params} variant="outlined" label="Tags" placeholder="Adicione ou crie tags" />}
+          renderInput={(params) => <TextField {...params} label="Tags" placeholder="Adicione ou crie tags" />}
         />
 
-        <TextField name="link_cifra" label="Link para Cifra/Partitura (opcional)" value={dadosForm.link_cifra || ""} onChange={handleChange} fullWidth />
-        <TextField name="notas_adicionais" label="Cifra / Letra / Anotações" multiline rows={10} value={dadosForm.notas_adicionais || ""} onChange={handleChange} fullWidth />
-
-        <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+        <TextField name="link_cifra" label="Link para Cifra/Partitura" value={form.link_cifra || ''} onChange={handleChange} fullWidth />
+        <TextField name="notas_adicionais" label="Cifra, Letra ou Anotações" multiline rows={10} value={form.notas_adicionais || ''} onChange={handleChange} fullWidth />
+        
+        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
           <Button type="submit" variant="contained" disabled={carregando}>
             {carregando ? <CircularProgress size={24} /> : "Salvar Música"}
           </Button>
-          <Button type="button" variant="text" onClick={onCancel}>Cancelar</Button>
+          <Button type="button" variant="text" onClick={onCancel} disabled={carregando}>Cancelar</Button>
         </Box>
       </Box>
     </Paper>
