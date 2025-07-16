@@ -1,56 +1,46 @@
-// ficheiro: /api/busca-inteligente.js
+// ficheiro: /api/musicas/busca-inteligente.js
 
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-// --- MÓDULO DE RASPAGEM PARA O CIFRA CLUB ---
-async function rasparCifraClub(url) {
-    try {
-        console.log('[Detetive] A ler Cifra Club:', url);
-        const { data } = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' }
-        });
-        const $ = cheerio.load(data);
-        
-        const nome = $('.g-1 > h1.g-4').text().trim() || $('h1.t1').text().trim();
-        const artista = $('.g-1 > h2.g-4 > a').text().trim() || $('h2.t3').text().trim();
-        const tom = $('#cifra_tom').text().trim();
-        const cifraHtml = $('pre').html();
+// --- FUNÇÕES AUXILIARES ---
 
-        if (!cifraHtml) return null;
+// Obtém um token de acesso da API do Spotify
+async function getSpotifyToken() {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-        const cifraComQuebrasDeLinha = cifraHtml.replace(/<br\s*\/?>/gi, '\n');
-        const $temp = cheerio.load(cifraComQuebrasDeLinha);
-        const cifraLimpa = $temp.text();
-        
-        return { nome, artista, tom, notas_adicionais: cifraLimpa };
-    } catch (error) {
-        console.error("Erro ao raspar Cifra Club:", error.message);
-        return null;
-    }
+    const response = await axios.post('https://accounts.spotify.com/api/token', 'grant_type=client_credentials', {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': 'Basic ' + (Buffer.from(clientId + ':' + clientSecret).toString('base64'))
+        }
+    });
+    return response.data.access_token;
 }
 
-// --- MÓDULO DE RASPAGEM PARA O LETRAS.MUS.BR ---
-async function rasparLetrasMus(url) {
-    try {
-        console.log('[Detetive] A ler Letras.mus.br:', url);
-        const { data } = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' }
-        });
-        const $ = cheerio.load(data);
-        
-        const nome = $('.cnt-head_title h1').text().trim();
-        const artista = $('.cnt-head_title h2 a').text().trim();
-        
-        // Letras.mus.br não tem cifras, então extraímos a letra
-        $('.cnt-letra .letra-frase').find('br').replaceWith('\n');
-        const letra = $('.cnt-letra').text().trim();
+// Busca por uma música no Spotify e extrai os seus dados
+async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
+    const termoBusca = encodeURIComponent(`track:${nomeMusica} artist:${nomeArtista}`);
+    const url = `https://api.spotify.com/v1/search?q=${termoBusca}&type=track&limit=1`;
+    
+    const response = await axios.get(url, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
 
-        return { nome, artista, notas_adicionais: letra };
-    } catch (error) {
-        console.error("Erro ao raspar Letras.mus.br:", error.message);
-        return null;
+    if (!response.data.tracks.items[0]) {
+        return {}; // Não encontrou a música
     }
+
+    const track = response.data.tracks.items[0];
+    const audioFeaturesResponse = await axios.get(`https://api.spotify.com/v1/audio-features/${track.id}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    return {
+        duracao_segundos: Math.round(track.duration_ms / 1000),
+        bpm: Math.round(audioFeaturesResponse.data.tempo),
+    };
 }
 
 
@@ -69,49 +59,48 @@ export default async function handler(req, res) {
     }
 
     try {
-        const termoBusca = `${nomeMusica} ${nomeArtista}`;
-        const apiKey = process.env.GOOGLE_API_KEY;
-        const searchEngineId = process.env.SEARCH_ENGINE_ID;
+        console.log(`[Detetive Final] Iniciando busca completa para: ${nomeMusica} - ${nomeArtista}`);
         
-        const urlBusca = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(termoBusca)}`;
-        
-        console.log(`[Detetive] Buscando no Google por: ${termoBusca}`);
-        const { data: dataBusca } = await axios.get(urlBusca);
-
-        if (!dataBusca.items || dataBusca.items.length === 0) {
-            return res.status(404).json({ message: "Nenhum resultado encontrado no Google." });
-        }
+        // Executa as buscas em paralelo para ser mais rápido
+        const [tokenSpotify, resultadoBuscaGoogle] = await Promise.all([
+            getSpotifyToken(),
+            axios.get(`https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_API_KEY}&cx=${process.env.SEARCH_ENGINE_ID}&q=${encodeURIComponent(nomeMusica + ' ' + nomeArtista)}`)
+        ]);
 
         let dadosFinais = {
             nome: nomeMusica,
             artista: nomeArtista,
             tom: '',
-            notas_adicionais: 'Nenhuma informação encontrada.'
+            notas_adicionais: 'Cifra não encontrada.',
+            bpm: null,
+            duracao_segundos: null,
         };
+        
+        // Processa os dados técnicos do Spotify
+        const dadosSpotify = await buscarDadosSpotify(nomeMusica, nomeArtista, tokenSpotify);
+        dadosFinais = { ...dadosFinais, ...dadosSpotify };
 
-        // Itera sobre os resultados do Google para encontrar a melhor fonte
-        for (const item of dataBusca.items) {
-            const link = item.link;
-            
-            if (link.includes('cifraclub.com.br')) {
-                const dados = await rasparCifraClub(link);
-                if (dados && dados.notas_adicionais) {
-                    dadosFinais = { ...dadosFinais, ...dados };
-                    break; // Encontrou a cifra, pode parar
-                }
-            } else if (link.includes('letras.mus.br') && dadosFinais.notas_adicionais === 'Nenhuma informação encontrada.') {
-                // Só usa o Letras.mus.br se ainda não tiver encontrado uma cifra
-                const dados = await rasparLetrasMus(link);
-                if (dados) {
-                    dadosFinais = { ...dadosFinais, ...dados };
+        // Processa a cifra do Google/Cifra Club
+        if (resultadoBuscaGoogle.data.items && resultadoBuscaGoogle.data.items.length > 0) {
+            const linkCifra = resultadoBuscaGoogle.data.items[0].link;
+            if (linkCifra && linkCifra.includes('cifraclub.com.br')) {
+                const { data: dataCifra } = await axios.get(linkCifra);
+                const $cifra = cheerio.load(dataCifra);
+                const cifraHtml = $cifra('pre').html();
+                if (cifraHtml) {
+                    const cifraComQuebrasDeLinha = cifraHtml.replace(/<br\s*\/?>/gi, '\n');
+                    const $temp = cheerio.load(cifraComQuebrasDeLinha);
+                    dadosFinais.notas_adicionais = $temp.text();
+                    dadosFinais.tom = $cifra('#cifra_tom').text().trim() || dadosFinais.tom;
                 }
             }
         }
         
+        console.log("[Detetive Final] Sucesso! Devolvendo dados consolidados.");
         return res.status(200).json(dadosFinais);
 
     } catch (error) {
-        console.error("[Detetive] ERRO CRÍTICO:", error.response ? error.response.data : error.message);
+        console.error("[Detetive Final] ERRO CRÍTICO:", error.response ? error.response.data.error : error.message);
         return res.status(500).json({ message: "Ocorreu um erro interno ao processar a sua busca." });
     }
 }
