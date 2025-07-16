@@ -1,9 +1,9 @@
 // src/paginas/AdminUsuarios.jsx
 
 import { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../contextos/AuthContext";
-import { useNotificacao } from "../contextos/NotificationContext";
-import apiClient from '../api';
+import { AuthContext } from "../contextos/AuthContext.jsx";
+import { useNotificacao } from "../contextos/NotificationContext.jsx";
+import apiClient from '../api.js';
 
 import {
   Box,
