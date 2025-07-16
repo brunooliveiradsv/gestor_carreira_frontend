@@ -1,6 +1,6 @@
 // src/componentes/FormularioMusica.jsx
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import apiClient from "../api";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
@@ -15,36 +15,33 @@ import {
   Grid,
 } from "@mui/material";
 
-// Define um estado inicial limpo para reutilização
 const estadoInicialFormulario = {
-  nome: "",
-  artista: "",
-  tom: "",
-  duracao_segundos: "",
-  bpm: "",
-  link_cifra: "",
-  notas_adicionais: "",
+  nome: "", artista: "", tom: "", duracao_segundos: "",
+  bpm: "", link_cifra: "", notas_adicionais: "",
 };
 
 function FormularioMusica({ id, onSave, onCancel }) {
-  // Estados separados para os dados do formulário e para as tags
   const [form, setForm] = useState(estadoInicialFormulario);
-  const [tags, setTags] = useState([]);
-  
-  // Estado para as sugestões de tags do Autocomplete (pode estar vazio, não há problema)
+  // O estado agora irá guardar os OBJETOS de tags selecionados, não apenas os nomes
+  const [tagsSelecionadas, setTagsSelecionadas] = useState([]);
+  // Este estado guardará a lista de todas as tags predefinidas
   const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
   
-  const [carregando, setCarregando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
 
-  // Efeito para buscar as tags existentes (executa apenas uma vez)
+  // Efeito para buscar todas as tags predefinidas
   useEffect(() => {
+    setCarregando(true);
     apiClient.get("/api/tags")
-      .then(res => setTagsDisponiveis(res.data.map(t => t.nome)))
-      .catch(() => mostrarNotificacao("Aviso: Não foi possível carregar sugestões de tags.", "warning"));
+      .then(res => {
+        setTagsDisponiveis(res.data);
+      })
+      .catch(() => mostrarNotificacao("Não foi possível carregar as tags.", "error"))
+      .finally(() => setCarregando(false));
   }, [mostrarNotificacao]);
 
-  // Efeito para carregar os dados da música em modo de edição
+  // Efeito para buscar os dados da música em modo de edição
   useEffect(() => {
     if (id) {
       setCarregando(true);
@@ -52,31 +49,29 @@ function FormularioMusica({ id, onSave, onCancel }) {
         .then(({ data }) => {
           const { tags: tagsDaApi, ...dadosMusica } = data;
           setForm(dadosMusica);
-          setTags(tagsDaApi?.map(t => t.nome) || []);
+          // Garante que o estado de tags selecionadas guarde os objetos completos
+          setTagsSelecionadas(tagsDaApi || []); 
         })
-        .catch(() => mostrarNotificacao("Erro ao carregar os dados da música.", "error"))
+        .catch(() => mostrarNotificacao("Erro ao carregar dados da música.", "error"))
         .finally(() => setCarregando(false));
     } else {
-      // Garante que o formulário está limpo ao criar uma nova música
       setForm(estadoInicialFormulario);
-      setTags([]);
+      setTagsSelecionadas([]);
     }
   }, [id, mostrarNotificacao]);
 
-
-  // Função para lidar com mudanças nos campos de texto
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(dadosAtuais => ({ ...dadosAtuais, [name]: value }));
+    setForm(dadosAtuais => ({ ...dadosAtuais, [e.target.name]: e.target.value }));
   };
 
-  // Função para lidar com a submissão do formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
     setCarregando(true);
 
-    // Constrói o objeto final para envio, combinando os dados do formulário e as tags
-    const dadosParaEnviar = { ...form, tags };
+    // Transforma o array de objetos de tags num array de IDs para enviar ao backend
+    const tagIds = tagsSelecionadas.map(tag => tag.id);
+
+    const dadosParaEnviar = { ...form, tagIds };
 
     try {
       if (id) {
@@ -86,14 +81,14 @@ function FormularioMusica({ id, onSave, onCancel }) {
         await apiClient.post("/api/musicas", dadosParaEnviar);
         mostrarNotificacao("Música adicionada com sucesso!", "success");
       }
-      onSave(); // Executa a função do componente pai para fechar o formulário
+      onSave();
     } catch (erro) {
       mostrarNotificacao(erro.response?.data?.mensagem || "Falha ao salvar a música.", "error");
-      setCarregando(false); // Importante para desbloquear o botão em caso de erro
+      setCarregando(false);
     }
   };
 
-  if (carregando && id) {
+  if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
 
@@ -104,31 +99,29 @@ function FormularioMusica({ id, onSave, onCancel }) {
           {id ? "Editar Música" : "Adicionar Nova Música"}
         </Typography>
 
-        <Typography variant="overline" color="text.secondary">Informações Principais</Typography>
         <TextField name="nome" label="Nome da Música" value={form.nome} onChange={handleChange} required fullWidth />
         <TextField name="artista" label="Artista" value={form.artista} onChange={handleChange} required fullWidth />
-
+        
         <Grid container spacing={2}>
           <Grid item xs={12} sm={4}><TextField name="tom" label="Tom" value={form.tom || ''} onChange={handleChange} fullWidth /></Grid>
           <Grid item xs={12} sm={4}><TextField name="bpm" label="BPM" type="number" value={form.bpm || ''} onChange={handleChange} fullWidth /></Grid>
           <Grid item xs={12} sm={4}><TextField name="duracao_segundos" label="Duração (mm:ss)" value={form.duracao_segundos || ''} onChange={handleChange} fullWidth /></Grid>
         </Grid>
 
-        <Typography variant="overline" color="text.secondary" sx={{ mt: 1 }}>Organização e Detalhes</Typography>
         <Autocomplete
           multiple
-          freeSolo // Permite adicionar valores que não estão na lista de opções
+          // A propriedade freeSolo foi REMOVIDA
+          id="tags-predefinidas"
           options={tagsDisponiveis}
-          value={tags}
+          getOptionLabel={(option) => option.nome} // Mostra o nome da tag na lista
+          value={tagsSelecionadas}
+          isOptionEqualToValue={(option, value) => option.id === value.id} // Compara tags pelo ID
           onChange={(event, novoValor) => {
-            // Esta função atualiza o nosso estado 'tags' sempre que o utilizador
-            // seleciona um item, remove um item ou cria um novo.
-            setTags(novoValor);
+            setTagsSelecionadas(novoValor);
           }}
-          renderTags={(valor, getTagProps) =>
-            valor.map((opcao, index) => <Chip label={opcao} {...getTagProps({ index })} />)
-          }
-          renderInput={(params) => <TextField {...params} label="Tags" placeholder="Adicione ou crie tags" />}
+          renderInput={(params) => (
+            <TextField {...params} label="Tags" placeholder="Selecione as tags" />
+          )}
         />
 
         <TextField name="link_cifra" label="Link para Cifra/Partitura" value={form.link_cifra || ''} onChange={handleChange} fullWidth />
