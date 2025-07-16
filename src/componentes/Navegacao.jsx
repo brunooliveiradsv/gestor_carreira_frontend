@@ -218,7 +218,7 @@ function Navegacao() {
             ))}
             {usuario?.role === "admin" && (
               <Button component={RouterLink} to="/admin" sx={{ color: "text.primary", mx: 1 }} style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}>
-                Admin
+                Painel Administrador
               </Button>
             )}
           </Box>

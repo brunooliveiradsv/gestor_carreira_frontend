@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import apiClient from "../api";
-import { useNotificacao } from "../contextos/NotificationContext";
+import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
   Box,
   Button,
@@ -14,7 +14,6 @@ import {
   Chip,
   Grid,
 } from "@mui/material";
-import { Search as SearchIcon } from "@mui/icons-material";
 
 function FormularioMusica({ id, onSave, onCancel }) {
   const [dadosForm, setDadosForm] = useState({
@@ -29,12 +28,10 @@ function FormularioMusica({ id, onSave, onCancel }) {
   const [tagsSelecionadas, setTagsSelecionadas] = useState([]);
   const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
   const [carregando, setCarregando] = useState(false);
-  const [nomeMusicaBusca, setNomeMusicaBusca] = useState("");
-  const [nomeArtistaBusca, setNomeArtistaBusca] = useState("");
-  const [buscando, setBuscando] = useState(false);
   const { mostrarNotificacao } = useNotificacao();
 
   useEffect(() => {
+    // Busca todas as tags existentes para usar como sugestões no Autocomplete
     apiClient
       .get("/api/tags")
       .then((resposta) =>
@@ -46,6 +43,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
   }, [mostrarNotificacao]);
 
   useEffect(() => {
+    // Se um 'id' for fornecido, estamos no modo de edição
     if (id) {
       setCarregando(true);
       apiClient
@@ -53,10 +51,11 @@ function FormularioMusica({ id, onSave, onCancel }) {
         .then((resposta) => {
           const { tags, ...dadosMusica } = resposta.data;
           setDadosForm(dadosMusica);
+          // As tags vêm como um array de objetos, então extraímos apenas os nomes
           setTagsSelecionadas(tags?.map((tag) => tag.nome) || []);
         })
         .catch(() =>
-          mostrarNotificacao("Erro ao buscar dados para edição.", "error")
+          mostrarNotificacao("Erro ao buscar dados da música para edição.", "error")
         )
         .finally(() => setCarregando(false));
     }
@@ -69,19 +68,23 @@ function FormularioMusica({ id, onSave, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setCarregando(true);
+    // Prepara o objeto para envio, incluindo o array de strings das tags
     const dadosParaEnviar = { ...dadosForm, tags: tagsSelecionadas };
+
     try {
       if (id) {
+        // Se temos um ID, atualizamos (PUT)
         await apiClient.put(`/api/musicas/${id}`, dadosParaEnviar);
         mostrarNotificacao("Música atualizada com sucesso!", "success");
       } else {
+        // Caso contrário, criamos uma nova (POST)
         await apiClient.post("/api/musicas", dadosParaEnviar);
         mostrarNotificacao(
           "Música adicionada ao repertório com sucesso!",
           "success"
         );
       }
-      onSave();
+      onSave(); // Chama a função para fechar o formulário e recarregar a lista
     } catch (erro) {
       mostrarNotificacao(
         erro.response?.data?.mensagem || "Falha ao salvar a música.",
@@ -91,43 +94,8 @@ function FormularioMusica({ id, onSave, onCancel }) {
       setCarregando(false);
     }
   };
-
-  const handleBuscaInteligente = async () => {
-    if (!nomeMusicaBusca || !nomeArtistaBusca) {
-      mostrarNotificacao(
-        "Preencha o nome da música e do artista para buscar.",
-        "warning"
-      );
-      return;
-    }
-    setBuscando(true);
-    try {
-      const response = await fetch("/api/busca-inteligente", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nomeMusica: nomeMusicaBusca,
-          nomeArtista: nomeArtistaBusca,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Erro na busca.");
-
-      setDadosForm((atuais) => ({
-        ...atuais,
-        ...data, // Preenche todos os campos recebidos da API
-      }));
-      mostrarNotificacao("Dados importados com sucesso!", "success");
-    } catch (erro) {
-      mostrarNotificacao(
-        erro.message || "Falha na busca inteligente.",
-        "error"
-      );
-    } finally {
-      setBuscando(false);
-    }
-  };
-
+  
+  // Se estiver a carregar os dados para edição, mostra um spinner
   if (carregando && id) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -147,58 +115,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
           {id ? "Editar Música" : "Adicionar Nova Música"}
         </Typography>
 
-        {!id && (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2,
-              borderColor: "primary.main",
-              bgcolor: "rgba(94, 53, 177, 0.05)",
-            }}
-          >
-            <Typography variant="h6" gutterBottom>
-              Busca Inteligente
-            </Typography>
-            <Grid container spacing={2} alignItems="flex-end">
-              <Grid item xs={12} sm={5}>
-                <TextField
-                  fullWidth
-                  label="Nome da Música"
-                  value={nomeMusicaBusca}
-                  onChange={(e) => setNomeMusicaBusca(e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  label="Nome do Artista"
-                  value={nomeArtistaBusca}
-                  onChange={(e) => setNomeArtistaBusca(e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={handleBuscaInteligente}
-                  disabled={buscando}
-                  startIcon={
-                    buscando ? (
-                      <CircularProgress size={20} color="inherit" />
-                    ) : (
-                      <SearchIcon />
-                    )
-                  }
-                >
-                  Buscar
-                </Button>
-              </Grid>
-            </Grid>
-          </Paper>
-        )}
-
         <Typography variant="overline" color="text.secondary">
           Detalhes da música
         </Typography>
@@ -209,7 +125,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
           onChange={handleChange}
           required
           fullWidth
-          InputLabelProps={{ shrink: !!dadosForm.nome }}
         />
         <TextField
           name="artista"
@@ -218,7 +133,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
           onChange={handleChange}
           required
           fullWidth
-          InputLabelProps={{ shrink: !!dadosForm.artista }}
         />
 
         <Grid container spacing={2}>
@@ -229,7 +143,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
               value={dadosForm.tom || ""}
               onChange={handleChange}
               fullWidth
-              InputLabelProps={{ shrink: !!dadosForm.tom }}
             />
           </Grid>
           <Grid item xs={12} sm={4}>
@@ -240,18 +153,16 @@ function FormularioMusica({ id, onSave, onCancel }) {
               value={dadosForm.bpm || ""}
               onChange={handleChange}
               fullWidth
-              InputLabelProps={{ shrink: !!dadosForm.bpm }}
             />
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField
-              name="duracao_segundos" // O nome do campo continua o mesmo no estado
+              name="duracao_segundos"
               label="Duração (mm:ss)"
               placeholder="Ex: 3:25"
               value={dadosForm.duracao_segundos || ""}
               onChange={handleChange}
               fullWidth
-              InputLabelProps={{ shrink: !!dadosForm.duracao_segundos }}
             />
           </Grid>
         </Grid>
@@ -298,14 +209,13 @@ function FormularioMusica({ id, onSave, onCancel }) {
           value={dadosForm.notas_adicionais || ""}
           onChange={handleChange}
           fullWidth
-          InputLabelProps={{ shrink: !!dadosForm.notas_adicionais }}
         />
 
         <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
           <Button
             type="submit"
             variant="contained"
-            disabled={carregando || buscando}
+            disabled={carregando}
           >
             {carregando ? <CircularProgress size={24} /> : "Salvar Música"}
           </Button>
