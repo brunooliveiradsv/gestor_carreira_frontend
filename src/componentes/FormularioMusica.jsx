@@ -1,100 +1,339 @@
-// ficheiro: /api/musicas/busca-inteligente.js (VERSÃO FINAL COM SPOTIFY)
+// src/componentes/FormularioMusica.jsx
 
-import axios from 'axios';
-import * as cheerio from 'cheerio';
+import { useState, useEffect } from "react";
+import apiClient from "../api";
+import { useNotificacao } from "../contextos/NotificationContext";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Paper,
+  CircularProgress,
+  Autocomplete,
+  Chip,
+  Grid,
+} from "@mui/material";
+import { Search as SearchIcon } from "@mui/icons-material";
 
-// --- FUNÇÕES AUXILIARES ---
+function FormularioMusica({ id, onSave, onCancel }) {
+  const [dadosForm, setDadosForm] = useState({
+    nome: "",
+    artista: "",
+    tom: "",
+    duracao_segundos: "",
+    bpm: "", // Campo BPM adicionado ao estado
+    link_cifra: "",
+    notas_adicionais: "",
+  });
+  const [tagsSelecionadas, setTagsSelecionadas] = useState([]);
+  const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
+  const [carregando, setCarregando] = useState(false);
 
-async function getSpotifyToken() {
-    const clientId = process.env.SPOTIFY_CLIENT_ID;
-    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+  const [nomeMusicaBusca, setNomeMusicaBusca] = useState("");
+  const [nomeArtistaBusca, setNomeArtistaBusca] = useState("");
+  const [buscando, setBuscando] = useState(false);
 
-    if (!clientId || !clientSecret) {
-        throw new Error("As credenciais do Spotify (SPOTIFY_CLIENT_ID e SPOTIFY_CLIENT_SECRET) não estão configuradas no ambiente.");
+  const { mostrarNotificacao } = useNotificacao();
+
+  useEffect(() => {
+    apiClient
+      .get("/api/tags")
+      .then((resposta) =>
+        setTagsDisponiveis(resposta.data.map((tag) => tag.nome))
+      )
+      .catch(() =>
+        mostrarNotificacao("Erro ao carregar sugestões de tags.", "error")
+      );
+  }, [mostrarNotificacao]);
+
+  useEffect(() => {
+    if (id) {
+      setCarregando(true);
+      apiClient
+        .get(`/api/musicas/${id}`)
+        .then((resposta) => {
+          const { tags, ...dadosMusica } = resposta.data;
+          setDadosForm(dadosMusica);
+          setTagsSelecionadas(tags.map((tag) => tag.nome));
+        })
+        .catch(() =>
+          mostrarNotificacao(
+            "Erro ao buscar dados da música para edição.",
+            "error"
+          )
+        )
+        .finally(() => setCarregando(false));
     }
+  }, [id, mostrarNotificacao]);
 
-    const authString = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    const response = await axios.post('https://accounts.spotify.com/api/token', 'grant_type=client_credentials', {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${authString}`
-        }
-    });
-    return response.data.access_token;
-}
+  const handleChange = (e) => {
+    setDadosForm((atuais) => ({ ...atuais, [e.target.name]: e.target.value }));
+  };
 
-async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
-    const termoBusca = encodeURIComponent(`track:${nomeMusica} artist:${nomeArtista}`);
-    const url = `https://api.spotify.com/v1/search?q=${termoBusca}&type=track&limit=1`;
-    const response = await axios.get(url, { headers: { 'Authorization': 'Bearer ' + token } });
-
-    if (!response.data.tracks.items[0]) return {};
-    const track = response.data.tracks.items[0];
-
-    const audioFeaturesResponse = await axios.get(`https://api.spotify.com/v1/audio-features/${track.id}`, { headers: { 'Authorization': 'Bearer ' + token } });
-    return {
-        duracao_segundos: Math.round(track.duration_ms / 1000),
-        bpm: audioFeaturesResponse.data.tempo ? Math.round(audioFeaturesResponse.data.tempo) : null,
-    };
-}
-
-async function buscarCifra(resultadoBuscaGoogle) {
-    if (!resultadoBuscaGoogle.data.items || resultadoBuscaGoogle.data.items.length === 0) return null;
-    const itemCifraClub = resultadoBuscaGoogle.data.items.find(item => item.link && item.link.includes('cifraclub.com.br') && !item.link.includes('/videoaulas/'));
-
-    if (itemCifraClub) {
-        const { data: dataCifra } = await axios.get(itemCifraClub.link, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        const $cifra = cheerio.load(dataCifra);
-        const cifraHtml = $cifra('pre').html();
-        if (cifraHtml) {
-            const cifraComQuebrasDeLinha = cifraHtml.replace(/<br\s*\/?>/gi, '\n');
-            const $temp = cheerio.load(cifraComQuebrasDeLinha);
-            return {
-                notas_adicionais: $temp.text(),
-                tom: $cifra('#cifra_tom').text().trim() || ''
-            };
-        }
-    }
-    return null;
-}
-
-// --- FUNÇÃO PRINCIPAL (HANDLER) ---
-export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ message: 'Apenas o método POST é permitido.' });
-
-    const { nomeMusica, nomeArtista } = req.body;
-    if (!nomeMusica || !nomeArtista) return res.status(400).json({ message: "Nome da música e do artista são necessários." });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setCarregando(true);
+    const dadosParaEnviar = { ...dadosForm, tags: tagsSelecionadas };
 
     try {
-        const [tokenSpotify, resultadoBuscaGoogle] = await Promise.all([
-            getSpotifyToken(),
-            axios.get(`https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_API_KEY}&cx=${process.env.SEARCH_ENGINE_ID}&q=${encodeURIComponent(nomeMusica + ' ' + nomeArtista + ' cifraclub')}`)
-        ]);
-
-        const [dadosSpotify, dadosCifra] = await Promise.all([
-            buscarDadosSpotify(nomeMusica, nomeArtista, tokenSpotify),
-            buscarCifra(resultadoBuscaGoogle)
-        ]);
-        
-        const dadosFinais = {
-            nome: nomeMusica,
-            artista: nomeArtista,
-            tom: dadosCifra?.tom || '',
-            notas_adicionais: dadosCifra?.notas_adicionais || 'Cifra não encontrada.',
-            bpm: dadosSpotify?.bpm || null,
-            duracao_segundos: dadosSpotify?.duracao_segundos || null,
-        };
-        
-        return res.status(200).json(dadosFinais);
-
-    } catch (error) {
-        const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
-        console.error("[Detetive Definitivo] ERRO CRÍTICO:", errorMessage);
-        return res.status(500).json({ message: "Ocorreu um erro interno ao processar a sua busca." });
+      if (id) {
+        await apiClient.put(`/api/musicas/${id}`, dadosParaEnviar);
+        mostrarNotificacao("Música atualizada com sucesso!", "success");
+      } else {
+        await apiClient.post("/api/musicas", dadosParaEnviar);
+        mostrarNotificacao(
+          "Música adicionada ao repertório com sucesso!",
+          "success"
+        );
+      }
+      onSave();
+    } catch (erro) {
+      mostrarNotificacao(
+        erro.response?.data?.mensagem || "Falha ao salvar a música.",
+        "error"
+      );
+    } finally {
+      setCarregando(false);
     }
+  };
+
+  const handleBuscaInteligente = async () => {
+    if (!nomeMusicaBusca || !nomeArtistaBusca) {
+      mostrarNotificacao(
+        "Preencha o nome da música e do artista para buscar.",
+        "warning"
+      );
+      return;
+    }
+    setBuscando(true);
+    try {
+      const response = await fetch('/api/busca-inteligente', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nomeMusica: nomeMusicaBusca,
+          nomeArtista: nomeArtistaBusca,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.mensagem || "Erro na busca.");
+      }
+
+      // Desestrutura todos os dados, incluindo o BPM
+      const { nome, artista, tom, notas_adicionais, bpm, duracao_segundos } = data;
+
+      setDadosForm((atuais) => ({
+        ...atuais,
+        nome: nome || atuais.nome,
+        artista: artista || atuais.artista,
+        tom: tom || atuais.tom,
+        notas_adicionais: notas_adicionais || atuais.notas_adicionais,
+        bpm: bpm || atuais.bpm, // Define o BPM
+        duracao_segundos: duracao_segundos || atuais.duracao_segundos,
+      }));
+
+      mostrarNotificacao("Dados importados com sucesso!", "success");
+    } catch (erro) {
+      mostrarNotificacao(
+        erro.message || "Falha na busca inteligente.",
+        "error"
+      );
+    } finally {
+      setBuscando(false);
+    }
+  };
+
+  if (carregando && id) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+        <CircularProgress color="inherit" />
+      </Box>
+    );
+  }
+
+  return (
+    <Paper elevation={6} sx={{ p: { xs: 2, md: 4 } }}>
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+      >
+        <Typography variant="h5" component="h2" fontWeight="bold">
+          {id ? "Editar Música" : "Adicionar Nova Música"}
+        </Typography>
+
+        {!id && (
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2,
+              borderColor: "primary.main",
+              bgcolor: "rgba(94, 53, 177, 0.05)",
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Busca Inteligente
+            </Typography>
+            <Grid container spacing={2} alignItems="flex-end">
+              <Grid item xs={12} sm={5}>
+                <TextField
+                  fullWidth
+                  label="Nome da Música"
+                  value={nomeMusicaBusca}
+                  onChange={(e) => setNomeMusicaBusca(e.target.value)}
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Nome do Artista"
+                  value={nomeArtistaBusca}
+                  onChange={(e) => setNomeArtistaBusca(e.target.value)}
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={handleBuscaInteligente}
+                  disabled={buscando}
+                  startIcon={
+                    buscando ? (
+                      <CircularProgress size={20} color="inherit" />
+                    ) : (
+                      <SearchIcon />
+                    )
+                  }
+                >
+                  Buscar
+                </Button>
+              </Grid>
+            </Grid>
+          </Paper>
+        )}
+
+        <Typography variant="overline" color="text.secondary">
+          Detalhes da música
+        </Typography>
+
+        <TextField
+          name="nome"
+          label="Nome da Música"
+          value={dadosForm.nome}
+          onChange={handleChange}
+          required
+          fullWidth
+          InputLabelProps={{ shrink: !!dadosForm.nome }}
+        />
+        <TextField
+          name="artista"
+          label="Artista Original"
+          value={dadosForm.artista}
+          onChange={handleChange}
+          required
+          fullWidth
+          InputLabelProps={{ shrink: !!dadosForm.artista }}
+        />
+        {/* --- GRID PARA ORGANIZAR TOM, DURAÇÃO E BPM --- */}
+        <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+                 <TextField
+                    name="tom"
+                    label="Tom"
+                    value={dadosForm.tom || ""}
+                    onChange={handleChange}
+                    fullWidth
+                    InputLabelProps={{ shrink: !!dadosForm.tom }}
+                />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+                <TextField
+                    name="duracao_segundos"
+                    label="Duração (segundos)"
+                    type="number"
+                    value={dadosForm.duracao_segundos || ""}
+                    onChange={handleChange}
+                    fullWidth
+                />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+                <TextField
+                    name="bpm"
+                    label="BPM"
+                    type="number"
+                    value={dadosForm.bpm || ""}
+                    onChange={handleChange}
+                    fullWidth
+                />
+            </Grid>
+        </Grid>
+
+        <Autocomplete
+          multiple
+          freeSolo
+          options={tagsDisponiveis}
+          value={tagsSelecionadas}
+          onChange={(event, newValue) => {
+            setTagsSelecionadas(newValue);
+          }}
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => (
+              <Chip
+                variant="outlined"
+                label={option}
+                {...getTagProps({ index })}
+              />
+            ))
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant="outlined"
+              label="Tags"
+              placeholder="Adicione ou crie tags (ex: Lenta, Anos 80)"
+            />
+          )}
+        />
+
+        <TextField
+          name="link_cifra"
+          label="Link para Cifra/Partitura (opcional)"
+          value={dadosForm.link_cifra || ""}
+          onChange={handleChange}
+          fullWidth
+        />
+        <TextField
+          name="notas_adicionais"
+          label="Cifra / Letra / Anotações"
+          multiline
+          rows={10}
+          value={dadosForm.notas_adicionais || ""}
+          onChange={handleChange}
+          fullWidth
+          InputLabelProps={{ shrink: !!dadosForm.notas_adicionais }}
+        />
+
+        <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={carregando || buscando}
+          >
+            {carregando ? <CircularProgress size={24} /> : "Salvar Música"}
+          </Button>
+          <Button type="button" variant="text" onClick={onCancel}>
+            Cancelar
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
+  );
 }
+
+export default FormularioMusica;
