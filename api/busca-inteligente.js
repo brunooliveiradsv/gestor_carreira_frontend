@@ -1,65 +1,49 @@
-// ficheiro: /api/musicas/busca-inteligente.js (VERSÃO FINAL COM GETSONGKEY.COM)
+// ficheiro: /api/musicas/busca-inteligente.js (VERSÃO FINAL COM SPOTIFY)
 
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 // --- FUNÇÕES AUXILIARES ---
 
-/**
- * Busca no getsongkey.com e extrai dados técnicos (BPM, Tom, Duração).
- */
-async function buscarDadosTecnicos(nomeMusica, nomeArtista) {
-    try {
-        const termoBusca = encodeURIComponent(`${nomeArtista} ${nomeMusica}`);
-        const urlBusca = `https://getsongkey.com/search?q=${termoBusca}`;
-        console.log(`[GetSongKey] Buscando em: ${urlBusca}`);
+async function getSpotifyToken() {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-        const { data: dataBusca } = await axios.get(urlBusca, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' }
-        });
-
-        const $busca = cheerio.load(dataBusca);
-        // Encontra o link da primeira música na lista de resultados
-        const linkPaginaMusica = $busca('a.gsk-link').first().attr('href');
-
-        if (!linkPaginaMusica) {
-            console.log("[GetSongKey] Não encontrou um link para a página da música.");
-            return {};
-        }
-
-        console.log(`[GetSongKey] Página da música encontrada: ${linkPaginaMusica}`);
-        const { data: dataPaginaMusica } = await axios.get(linkPaginaMusica, {
-             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' }
-        });
-
-        const $pagina = cheerio.load(dataPaginaMusica);
-        const dadosTecnicos = {};
-
-        // Extrai os dados específicos da página da música
-        dadosTecnicos.tom = $pagina('p:contains("Key:") span').text().trim();
-        dadosTecnicos.bpm = parseInt($pagina('p:contains("BPM:") span').text().trim(), 10);
-        
-        const duracaoTexto = $pagina('p:contains("Duration:") span').text().trim();
-        const partes = duracaoTexto.split(':');
-        if (partes.length === 2) {
-            dadosTecnicos.duracao_segundos = parseInt(partes[0], 10) * 60 + parseInt(partes[1], 10);
-        }
-        
-        console.log("[GetSongKey] Dados técnicos extraídos:", dadosTecnicos);
-        return dadosTecnicos;
-
-    } catch (error) {
-        console.error("[GetSongKey] Erro ao buscar dados:", error.message);
-        return {}; // Retorna um objeto vazio em caso de erro
+    if (!clientId || !clientSecret) {
+        throw new Error("As credenciais do Spotify (SPOTIFY_CLIENT_ID e SPOTIFY_CLIENT_SECRET) não estão configuradas no ambiente.");
     }
+
+    const authString = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const response = await axios.post('https://accounts.spotify.com/api/token', 'grant_type=client_credentials', {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${authString}`
+        }
+    });
+    return response.data.access_token;
 }
 
-/**
- * Busca no Google pelo link do Cifra Club e extrai a cifra.
- */
+async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
+    const termoBusca = encodeURIComponent(`track:${nomeMusica} artist:${nomeArtista}`);
+    const url = `https://api.spotify.com/v1/search?q=${termoBusca}&type=track&limit=1`;
+    const response = await axios.get(url, { headers: { 'Authorization': 'Bearer ' + token } });
+
+    if (!response.data.tracks.items[0]) {
+        console.log(`[Spotify] Não encontrou a música: ${nomeMusica} - ${nomeArtista}`);
+        return {};
+    }
+    const track = response.data.tracks.items[0];
+
+    const audioFeaturesResponse = await axios.get(`https://api.spotify.com/v1/audio-features/${track.id}`, { headers: { 'Authorization': 'Bearer ' + token } });
+    return {
+        duracao_segundos: Math.round(track.duration_ms / 1000),
+        bpm: audioFeaturesResponse.data.tempo ? Math.round(audioFeaturesResponse.data.tempo) : null,
+    };
+}
+
 async function buscarCifra(resultadoBuscaGoogle) {
     if (!resultadoBuscaGoogle.data.items || resultadoBuscaGoogle.data.items.length === 0) return null;
-    const itemCifraClub = resultadoBuscaGoogle.data.items.slice(0, 5).find(item => item.link && item.link.includes('cifraclub.com.br') && !item.link.includes('/videoaulas/'));
+    const itemCifraClub = resultadoBuscaGoogle.data.items.find(item => item.link && item.link.includes('cifraclub.com.br') && !item.link.includes('/videoaulas/'));
 
     if (itemCifraClub) {
         const linkCifra = itemCifraClub.link;
@@ -68,7 +52,6 @@ async function buscarCifra(resultadoBuscaGoogle) {
         const { data: dataCifra } = await axios.get(linkCifra, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         const $cifra = cheerio.load(dataCifra);
         const cifraHtml = $cifra('pre').html();
-
         if (cifraHtml) {
             const cifraComQuebrasDeLinha = cifraHtml.replace(/<br\s*\/?>/gi, '\n');
             const $temp = cheerio.load(cifraComQuebrasDeLinha);
@@ -91,34 +74,36 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ message: 'Apenas o método POST é permitido.' });
 
     const { nomeMusica, nomeArtista } = req.body;
-    if (!nomeMusica || !nomeArtista) {
-        return res.status(400).json({ message: "Nome da música e do artista são necessários." });
-    }
+    if (!nomeMusica || !nomeArtista) return res.status(400).json({ message: "Nome da música e do artista são necessários." });
 
     try {
-        console.log(`[Detetive GetSongKey] Iniciando busca para: ${nomeMusica} - ${nomeArtista}`);
+        console.log(`[Detetive Definitivo] Iniciando busca para: ${nomeMusica} - ${nomeArtista}`);
         
-        const [dadosTecnicos, resultadoBuscaGoogle] = await Promise.all([
-            buscarDadosTecnicos(nomeMusica, nomeArtista),
+        const [tokenSpotify, resultadoBuscaGoogle] = await Promise.all([
+            getSpotifyToken(),
             axios.get(`https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_API_KEY}&cx=${process.env.SEARCH_ENGINE_ID}&q=${encodeURIComponent(nomeMusica + ' ' + nomeArtista + ' cifraclub')}`)
         ]);
 
-        const dadosCifra = await buscarCifra(resultadoBuscaGoogle);
+        const [dadosSpotify, dadosCifra] = await Promise.all([
+            buscarDadosSpotify(nomeMusica, nomeArtista, tokenSpotify),
+            buscarCifra(resultadoBuscaGoogle)
+        ]);
         
         const dadosFinais = {
             nome: nomeMusica,
             artista: nomeArtista,
-            tom: dadosCifra?.tom || dadosTecnicos?.tom || '',
+            tom: dadosCifra?.tom || '',
             notas_adicionais: dadosCifra?.notas_adicionais || 'Cifra não encontrada.',
-            bpm: dadosTecnicos?.bpm || null,
-            duracao_segundos: dadosTecnicos?.duracao_segundos || null,
+            bpm: dadosSpotify?.bpm || null,
+            duracao_segundos: dadosSpotify?.duracao_segundos || null,
         };
         
-        console.log("[Detetive GetSongKey] Sucesso! Devolvendo dados consolidados:", dadosFinais);
+        console.log("[Detetive Definitivo] Sucesso! Devolvendo dados consolidados:", dadosFinais);
         return res.status(200).json(dadosFinais);
 
     } catch (error) {
-        console.error("[Detetive GetSongKey] ERRO CRÍTICO:", error.response ? JSON.stringify(error.response.data) : error.message);
+        const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
+        console.error("[Detetive Definitivo] ERRO CRÍTICO:", errorMessage);
         return res.status(500).json({ message: "Ocorreu um erro interno ao processar a sua busca." });
     }
 }
