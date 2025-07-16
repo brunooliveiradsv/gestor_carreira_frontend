@@ -13,7 +13,7 @@ import LayoutPrincipal from "./componentes/LayoutPrincipal.jsx";
 import AdminUsuarios from "./paginas/AdminUsuarios.jsx";
 import Contatos from "./paginas/Contatos.jsx";
 import Configuracoes from "./paginas/Configuracoes.jsx";
-import Repertorios from "./paginas/Repertorio.jsx";
+import Repertorio from "./paginas/Repertorio.jsx";
 import Equipamentos from "./paginas/Equipamentos.jsx";
 import RecuperarSenha from "./paginas/RecuperarSenha.jsx";
 import Setlists from "./paginas/Setlists.jsx"; // Novo
@@ -45,7 +45,7 @@ function App() {
         <Route path="/admin/usuarios" element={<AdminUsuarios />} />
         <Route path="/contatos" element={<Contatos />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
-        <Route path="/repertorios" element={<Repertorios />} />
+        <Route path="/repertorio" element={<Repertorios />} />
         <Route path="/equipamentos" element={<Equipamentos />} />
         <Route path="/setlists" element={<Setlists />} />{" "}
         {/* Nova lista de Setlists */}
