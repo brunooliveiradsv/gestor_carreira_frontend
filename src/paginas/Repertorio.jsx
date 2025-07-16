@@ -101,16 +101,15 @@ function Repertorios() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper elevation={6} sx={{ p: { xs: 2, md: 4 } }}>
-        {/* Cabeçalho */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h4" component="h1" fontWeight="bold">Repertório Geral</Typography>
-          <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => handleAbrirFormulario()}>
-            Adicionar Música
-          </Button>
-        </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold">Repertório Geral</Typography>
+        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => handleAbrirFormulario()}>
+          Adicionar Música
+        </Button>
+      </Box>
 
+      <Paper elevation={6} sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Filtros */}
         <Grid container spacing={2} sx={{ mb: 4 }}>
           <Grid item xs={12} md={8}>
@@ -146,7 +145,7 @@ function Repertorios() {
         {carregando ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>
         ) : (
-          <Grid container spacing={2}>
+          <Grid container spacing={2} sx={{ flexGrow: 1, overflowY: 'auto' }}>
             {musicas.length > 0 ? (
               musicas.map((musica) => (
                 <Grid item xs={12} key={musica.id}>
@@ -186,7 +185,7 @@ function Repertorios() {
       {musicaParaSugerir && (
         <FormularioSugestao open={dialogoSugestaoAberto} onClose={() => setDialogoSugestaoAberto(false)} musica={musicaParaSugerir} />
       )}
-    </Container>
+    </Box>
   );
 }
 

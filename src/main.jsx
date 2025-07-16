@@ -7,20 +7,25 @@ import './index.css';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './contextos/AuthContext.jsx';
 import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline'; // <-- Importe CssBaseline
+import CssBaseline from '@mui/material/CssBaseline';
 import darkTheme from './tema';
 
 import { NotificationProvider } from './contextos/NotificationContext.jsx';
 
+import { Provider } from 'react-redux'; // Importar Provider
+import store from './store'; // Importar o store
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider theme={darkTheme}> 
-      <CssBaseline /> {/* <-- Adicione CssBaseline aqui */}
+      <CssBaseline />
       <NotificationProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <Provider store={store}> {/* Adicione o Provider aqui */}
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </Provider>
         </AuthProvider>
       </NotificationProvider>
     </ThemeProvider>
