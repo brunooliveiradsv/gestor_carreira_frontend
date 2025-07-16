@@ -10,12 +10,19 @@ async function getSpotifyToken() {
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
+    // --- INÍCIO DA CORREÇÃO ---
+    // Codifica o Client ID e o Client Secret em Base64, como exigido pelo Spotify
+    const authString = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
     const response = await axios.post('https://accounts.spotify.com/api/token', 'grant_type=client_credentials', {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': 'Basic ' + (Buffer.from(clientId + ':' + clientSecret).toString('base64'))
+            // Usa a string codificada no cabeçalho de Autorização
+            'Authorization': `Basic ${authString}`
         }
     });
+    // --- FIM DA CORREÇÃO ---
+    
     return response.data.access_token;
 }
 
@@ -29,17 +36,19 @@ async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
     });
 
     if (!response.data.tracks.items[0]) {
-        return {}; // Não encontrou a música
+        console.log(`[Spotify] Não encontrou a música: ${nomeMusica} - ${nomeArtista}`);
+        return {};
     }
 
     const track = response.data.tracks.items[0];
     const audioFeaturesResponse = await axios.get(`https://api.spotify.com/v1/audio-features/${track.id}`, {
         headers: { 'Authorization': 'Bearer ' + token }
     });
-
+    
+    console.log(`[Spotify] Dados técnicos encontrados para: ${track.name}`);
     return {
         duracao_segundos: Math.round(track.duration_ms / 1000),
-        bpm: Math.round(audioFeaturesResponse.data.tempo),
+        bpm: audioFeaturesResponse.data.tempo ? Math.round(audioFeaturesResponse.data.tempo) : null,
     };
 }
 
@@ -61,7 +70,6 @@ export default async function handler(req, res) {
     try {
         console.log(`[Detetive Final] Iniciando busca completa para: ${nomeMusica} - ${nomeArtista}`);
         
-        // Executa as buscas em paralelo para ser mais rápido
         const [tokenSpotify, resultadoBuscaGoogle] = await Promise.all([
             getSpotifyToken(),
             axios.get(`https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_API_KEY}&cx=${process.env.SEARCH_ENGINE_ID}&q=${encodeURIComponent(nomeMusica + ' ' + nomeArtista)}`)
@@ -76,11 +84,9 @@ export default async function handler(req, res) {
             duracao_segundos: null,
         };
         
-        // Processa os dados técnicos do Spotify
         const dadosSpotify = await buscarDadosSpotify(nomeMusica, nomeArtista, tokenSpotify);
         dadosFinais = { ...dadosFinais, ...dadosSpotify };
 
-        // Processa a cifra do Google/Cifra Club
         if (resultadoBuscaGoogle.data.items && resultadoBuscaGoogle.data.items.length > 0) {
             const linkCifra = resultadoBuscaGoogle.data.items[0].link;
             if (linkCifra && linkCifra.includes('cifraclub.com.br')) {
