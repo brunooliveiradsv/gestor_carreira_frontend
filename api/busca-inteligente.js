@@ -3,12 +3,12 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-// --- FUNÇÃO DE AUTENTICAÇÃO ATUALIZADA ---
+// ... (as duas funções auxiliares getSpotifyToken e buscarDadosSpotify permanecem iguais)
+
 async function getSpotifyToken() {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-  // O Spotify espera as credenciais no corpo do pedido, não no cabeçalho para este fluxo
   const params = new URLSearchParams();
   params.append("grant_type", "client_credentials");
   params.append("client_id", clientId);
@@ -27,9 +27,6 @@ async function getSpotifyToken() {
   return response.data.access_token;
 }
 
-// ... (o resto do ficheiro permanece igual)
-
-// Busca por uma música no Spotify e extrai os seus dados
 async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
   const termoBusca = encodeURIComponent(
     `track:${nomeMusica} artist:${nomeArtista}`
@@ -64,7 +61,7 @@ async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
   };
 }
 
-// --- FUNÇÃO PRINCIPAL (HANDLER) ---
+// --- FUNÇÃO PRINCIPAL OTIMIZADA ---
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -85,9 +82,10 @@ export default async function handler(req, res) {
 
   try {
     console.log(
-      `[Detetive Final V2] Iniciando busca completa para: ${nomeMusica} - ${nomeArtista}`
+      `[Detetive Otimizado] Iniciando busca para: ${nomeMusica} - ${nomeArtista}`
     );
 
+    // Executa as buscas de token e do Google em paralelo
     const [tokenSpotify, resultadoBuscaGoogle] = await Promise.all([
       getSpotifyToken(),
       axios.get(
@@ -108,13 +106,14 @@ export default async function handler(req, res) {
       duracao_segundos: null,
     };
 
-    const dadosSpotify = await buscarDadosSpotify(
+    // Executa a busca no Spotify enquanto prepara a busca da cifra
+    const promessaSpotify = buscarDadosSpotify(
       nomeMusica,
       nomeArtista,
       tokenSpotify
     );
-    dadosFinais = { ...dadosFinais, ...dadosSpotify };
 
+    // Processa a cifra do Google/Cifra Club
     if (
       resultadoBuscaGoogle.data.items &&
       resultadoBuscaGoogle.data.items.length > 0
@@ -137,12 +136,16 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log("[Detetive Final V2] Sucesso! Devolvendo dados consolidados.");
+    // Espera pela conclusão da busca do Spotify e junta os resultados
+    const dadosSpotify = await promessaSpotify;
+    dadosFinais = { ...dadosFinais, ...dadosSpotify };
+
+    console.log("[Detetive Otimizado] Sucesso! Devolvendo dados consolidados.");
     return res.status(200).json(dadosFinais);
   } catch (error) {
     console.error(
-      "[Detetive Final V2] ERRO CRÍTICO:",
-      error.response ? error.response.data : error.message
+      "[Detetive Otimizado] ERRO CRÍTICO:",
+      error.response ? error.response.data.error : error.message
     );
     return res
       .status(500)
