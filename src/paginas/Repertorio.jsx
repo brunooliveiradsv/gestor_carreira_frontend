@@ -190,4 +190,4 @@ function Repertorios() {
   );
 }
 
-export default Repertorio;
+export default Repertorios;
