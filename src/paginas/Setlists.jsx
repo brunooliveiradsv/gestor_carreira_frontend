@@ -5,7 +5,8 @@ import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
   Box, Button, Container, Typography, CircularProgress, Paper,
-  List, ListItem, ListItemText, ListItemIcon, IconButton, Tooltip
+  List, ListItem, ListItemText, ListItemIcon, IconButton, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField
 } from '@mui/material';
 import {
   AddCircleOutline as AddCircleOutlineIcon, Edit as EditIcon,
@@ -17,6 +18,12 @@ function Setlists() {
   const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
   const navigate = useNavigate();
+
+  // Estados para o diálogo de novo setlist
+  const [dialogoNovoSetlistAberto, setDialogoNovoSetlistAberto] = useState(false);
+  const [nomeNovoSetlist, setNomeNovoSetlist] = useState('');
+  const [criandoSetlist, setCriandoSetlist] = useState(false);
+
 
   const buscarSetlists = async () => {
     try {
@@ -33,16 +40,31 @@ function Setlists() {
     buscarSetlists();
   }, []);
 
-  const handleNovoSetlist = async () => {
-    const nome = prompt("Qual o nome do novo setlist? (ex: Show Bar da Esquina)");
-    if (nome) {
-      try {
-        const resposta = await apiClient.post('/api/setlists', { nome });
-        mostrarNotificacao("Setlist criado! Agora adicione músicas a ele.", "success");
-        navigate(`/setlists/editar/${resposta.data.id}`); // Redireciona para a edição
-      } catch (erro) {
-        mostrarNotificacao("Falha ao criar o setlist.", "error");
-      }
+  const handleAbrirDialogoNovoSetlist = () => {
+    setDialogoNovoSetlistAberto(true);
+    setNomeNovoSetlist(''); // Limpa o campo ao abrir
+  };
+
+  const handleFecharDialogoNovoSetlist = () => {
+    setDialogoNovoSetlistAberto(false);
+    setNomeNovoSetlist('');
+  };
+
+  const handleConfirmarNovoSetlist = async () => {
+    if (!nomeNovoSetlist.trim()) {
+      mostrarNotificacao("O nome do setlist não pode ser vazio.", "warning");
+      return;
+    }
+    setCriandoSetlist(true);
+    try {
+      const resposta = await apiClient.post('/api/setlists', { nome: nomeNovoSetlist });
+      mostrarNotificacao("Setlist criado! Agora adicione músicas a ele.", "success");
+      handleFecharDialogoNovoSetlist();
+      navigate(`/setlists/editar/${resposta.data.id}`); // Redireciona para a edição
+    } catch (erro) {
+      mostrarNotificacao("Falha ao criar o setlist.", "error");
+    } finally {
+      setCriandoSetlist(false);
     }
   };
   
@@ -67,7 +89,7 @@ function Setlists() {
       <Paper elevation={6} sx={{ p: { xs: 2, md: 4 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
           <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
-          <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleNovoSetlist}>
+          <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirDialogoNovoSetlist}>
             Novo Setlist
           </Button>
         </Box>
@@ -106,6 +128,35 @@ function Setlists() {
           </Typography>
         )}
       </Paper>
+
+      {/* Diálogo para criar novo setlist */}
+      <Dialog open={dialogoNovoSetlistAberto} onClose={handleFecharDialogoNovoSetlist}>
+        <DialogTitle>Criar Novo Setlist</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="nomeSetlist"
+            label="Nome do Setlist"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={nomeNovoSetlist}
+            onChange={(e) => setNomeNovoSetlist(e.target.value)}
+            onKeyPress={(e) => { // Permite criar ao pressionar Enter
+              if (e.key === 'Enter' && !criandoSetlist) {
+                handleConfirmarNovoSetlist();
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleFecharDialogoNovoSetlist} disabled={criandoSetlist}>Cancelar</Button>
+          <Button onClick={handleConfirmarNovoSetlist} disabled={criandoSetlist || !nomeNovoSetlist.trim()} variant="contained">
+            {criandoSetlist ? <CircularProgress size={24} /> : 'Criar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

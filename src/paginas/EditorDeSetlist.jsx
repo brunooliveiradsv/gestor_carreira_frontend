@@ -89,6 +89,12 @@ function EditorDeSetlist() {
         setRepertorioGeral(atual => [musica, ...atual]);
     };
 
+    // Nova função para adicionar música ao setlist via botão
+    const adicionarAoSetlist = (musica) => {
+        setMusicasNoSetlist(prev => [...prev, musica]);
+        setRepertorioGeral(prev => prev.filter(m => m.id !== musica.id));
+    };
+
     const handleSalvar = async () => {
         setSalvando(true);
         try {
@@ -146,6 +152,13 @@ function EditorDeSetlist() {
                                                         ref={provided.innerRef}
                                                         {...provided.draggableProps}
                                                         {...provided.dragHandleProps}
+                                                        secondaryAction={ // Adicionado para o botão "Adicionar"
+                                                            <Tooltip title="Adicionar ao Setlist">
+                                                                <IconButton edge="end" aria-label="add" onClick={() => adicionarAoSetlist(musica)}>
+                                                                    <PlaylistAddIcon />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        }
                                                         sx={{ mb: 1, bgcolor: 'background.default', borderRadius: 1 }}
                                                     >
                                                         <ListItemText primary={musica.nome} secondary={musica.artista} />
