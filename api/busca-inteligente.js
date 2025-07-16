@@ -1,14 +1,24 @@
-// ficheiro: /api/musicas/busca-inteligente.js
+// ficheiro: /api/musicas/busca-inteligente.js (VERSÃO COMPLETA E FINAL)
 
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-// ... (as duas funções auxiliares getSpotifyToken e buscarDadosSpotify permanecem iguais)
+// --- FUNÇÕES AUXILIARES ---
 
+/**
+ * Obtém um token de acesso da API do Spotify usando as credenciais do ambiente.
+ */
 async function getSpotifyToken() {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      "As credenciais do Spotify (SPOTIFY_CLIENT_ID e SPOTIFY_CLIENT_SECRET) não estão configuradas no ambiente."
+    );
+  }
+
+  // O Spotify espera as credenciais no corpo do pedido para este fluxo.
   const params = new URLSearchParams();
   params.append("grant_type", "client_credentials");
   params.append("client_id", clientId);
@@ -27,11 +37,14 @@ async function getSpotifyToken() {
   return response.data.access_token;
 }
 
+/**
+ * Busca por uma música no Spotify e extrai os seus dados técnicos (BPM, duração).
+ */
 async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
   const termoBusca = encodeURIComponent(
     `track:${nomeMusica} artist:${nomeArtista}`
   );
-  const url = `https://api.spotify.com/v1/search?q=${termoBusca}&type=track&limit=1`;
+  const url = `https://api.spotify.com/v1/search?q=$${termoBusca}&type=track&limit=1`;
 
   const response = await axios.get(url, {
     headers: { Authorization: "Bearer " + token },
@@ -41,12 +54,12 @@ async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
     console.log(
       `[Spotify] Não encontrou a música: ${nomeMusica} - ${nomeArtista}`
     );
-    return {};
+    return {}; // Não encontrou a música, retorna objeto vazio
   }
 
   const track = response.data.tracks.items[0];
   const audioFeaturesResponse = await axios.get(
-    `https://api.spotify.com/v1/audio-features/${track.id}`,
+    `https://api.spotify.com/v1/audio-features/$${track.id}`,
     {
       headers: { Authorization: "Bearer " + token },
     }
@@ -61,17 +74,21 @@ async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
   };
 }
 
-// --- FUNÇÃO PRINCIPAL OTIMIZADA ---
+// --- FUNÇÃO PRINCIPAL (HANDLER) ---
 export default async function handler(req, res) {
+  // Configuração do CORS para permitir pedidos do teu frontend
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST")
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+  if (req.method !== "POST") {
     return res
       .status(405)
       .json({ message: "Apenas o método POST é permitido." });
+  }
 
   const { nomeMusica, nomeArtista } = req.body;
   if (!nomeMusica || !nomeArtista) {
@@ -82,10 +99,10 @@ export default async function handler(req, res) {
 
   try {
     console.log(
-      `[Detetive Otimizado] Iniciando busca para: ${nomeMusica} - ${nomeArtista}`
+      `[Detetive Final] Iniciando busca completa para: ${nomeMusica} - ${nomeArtista}`
     );
 
-    // Executa as buscas de token e do Google em paralelo
+    // Etapa 1: Obter o token do Spotify e fazer a busca no Google em paralelo para ganhar tempo
     const [tokenSpotify, resultadoBuscaGoogle] = await Promise.all([
       getSpotifyToken(),
       axios.get(
@@ -97,6 +114,7 @@ export default async function handler(req, res) {
       ),
     ]);
 
+    // Prepara o objeto de resposta final com os dados que já temos
     let dadosFinais = {
       nome: nomeMusica,
       artista: nomeArtista,
@@ -106,22 +124,29 @@ export default async function handler(req, res) {
       duracao_segundos: null,
     };
 
-    // Executa a busca no Spotify enquanto prepara a busca da cifra
-    const promessaSpotify = buscarDadosSpotify(
+    // Etapa 2: Buscar os dados técnicos no Spotify usando o token obtido
+    const dadosSpotify = await buscarDadosSpotify(
       nomeMusica,
       nomeArtista,
       tokenSpotify
     );
+    dadosFinais = { ...dadosFinais, ...dadosSpotify };
 
-    // Processa a cifra do Google/Cifra Club
+    // Etapa 3: Processar o resultado do Google para encontrar e raspar a cifra
     if (
       resultadoBuscaGoogle.data.items &&
       resultadoBuscaGoogle.data.items.length > 0
     ) {
       const linkCifra = resultadoBuscaGoogle.data.items[0].link;
+
+      // Apenas tenta raspar se o link for do Cifra Club
       if (linkCifra && linkCifra.includes("cifraclub.com.br")) {
+        console.log(
+          `[Detetive Final] Link do Cifra Club encontrado: ${linkCifra}`
+        );
         const { data: dataCifra } = await axios.get(linkCifra);
         const $cifra = cheerio.load(dataCifra);
+
         const cifraHtml = $cifra("pre").html();
         if (cifraHtml) {
           const cifraComQuebrasDeLinha = cifraHtml.replace(
@@ -136,17 +161,14 @@ export default async function handler(req, res) {
       }
     }
 
-    // Espera pela conclusão da busca do Spotify e junta os resultados
-    const dadosSpotify = await promessaSpotify;
-    dadosFinais = { ...dadosFinais, ...dadosSpotify };
-
-    console.log("[Detetive Otimizado] Sucesso! Devolvendo dados consolidados.");
+    console.log("[Detetive Final] Sucesso! Devolvendo dados consolidados.");
     return res.status(200).json(dadosFinais);
   } catch (error) {
-    console.error(
-      "[Detetive Otimizado] ERRO CRÍTICO:",
-      error.response ? error.response.data.error : error.message
-    );
+    // Registo de erro mais detalhado
+    const errorMessage = error.response
+      ? JSON.stringify(error.response.data)
+      : error.message;
+    console.error("[Detetive Final] ERRO CRÍTICO:", errorMessage);
     return res
       .status(500)
       .json({ message: "Ocorreu um erro interno ao processar a sua busca." });
