@@ -14,7 +14,6 @@ import {
     Delete as DeleteIcon
 } from '@mui/icons-material';
 
-// Função auxiliar para reordenar a lista
 const reorder = (list, startIndex, endIndex) => {
     const result = Array.from(list);
     const [removed] = result.splice(startIndex, 1);
@@ -43,7 +42,7 @@ function EditorDeSetlist() {
 
             setSetlist(setlistRes.data);
             setMusicasNoSetlist(setlistRes.data.musicas || []);
-            
+
             const idsNoSetlist = new Set((setlistRes.data.musicas || []).map(m => m.id));
             setRepertorioGeral(repertorioRes.data.filter(m => !idsNoSetlist.has(m.id)));
 
@@ -58,30 +57,23 @@ function EditorDeSetlist() {
     useEffect(() => {
         buscarDados();
     }, [buscarDados]);
-    
+
     const onDragEnd = (result) => {
         const { source, destination } = result;
         if (!destination) return;
 
-        // Movendo dentro da mesma lista (reordenando o setlist)
         if (source.droppableId === 'setlist' && destination.droppableId === 'setlist') {
             const items = reorder(musicasNoSetlist, source.index, destination.index);
             setMusicasNoSetlist(items);
         }
-        // Movendo do repertório para o setlist
         if (source.droppableId === 'repertorio' && destination.droppableId === 'setlist') {
-            const itemMovido = repertorioGeral[source.index];
-            
-            const novoRepertorio = [...repertorioGeral];
-            novoRepertorio.splice(source.index, 1);
-            setRepertorioGeral(novoRepertorio);
-            
-            const novoSetlist = [...musicasNoSetlist];
-            novoSetlist.splice(destination.index, 0, itemMovido);
-            setMusicasNoSetlist(novoSetlist);
+            const itemMovido = repertorioGeral.splice(source.index, 1)[0];
+            musicasNoSetlist.splice(destination.index, 0, itemMovido);
+            setRepertorioGeral([...repertorioGeral]);
+            setMusicasNoSetlist([...musicasNoSetlist]);
         }
     };
-    
+
     const removerDoSetlist = (musica, index) => {
         const novoSetlist = [...musicasNoSetlist];
         novoSetlist.splice(index, 1);
@@ -89,7 +81,6 @@ function EditorDeSetlist() {
         setRepertorioGeral(atual => [musica, ...atual]);
     };
 
-    // Nova função para adicionar música ao setlist via botão
     const adicionarAoSetlist = (musica) => {
         setMusicasNoSetlist(prev => [...prev, musica]);
         setRepertorioGeral(prev => prev.filter(m => m.id !== musica.id));
@@ -107,109 +98,107 @@ function EditorDeSetlist() {
             setSalvando(false);
         }
     };
-    
+
     if (carregando) {
-        return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
+        return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, minHeight: '100vh' }}><CircularProgress /></Box>;
     }
 
     return (
-        <DragDropContext onDragEnd={onDragEnd}>
-            <Box sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2}}>
-                        <IconButton onClick={() => navigate('/setlists')}><ArrowBackIcon /></IconButton>
-                        <Typography variant="h4" fontWeight="bold">{setlist?.nome}</Typography>
-                    </Box>
-                    <Button 
-                        variant="contained" 
-                        startIcon={salvando ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
-                        onClick={handleSalvar}
-                        disabled={salvando}
-                    >
-                        Salvar Alterações
-                    </Button>
+        <Box sx={{ p: 3, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2}}>
+                    <IconButton onClick={() => navigate('/setlists')}><ArrowBackIcon /></IconButton>
+                    <Typography variant="h4" fontWeight="bold">{setlist?.nome}</Typography>
                 </Box>
-                <Grid container spacing={3}>
-                    {/* Coluna do Repertório Geral */}
-                    <Grid item xs={12} md={6}>
-                        <Paper sx={{ p: 2, height: '80vh', overflowY: 'auto' }}>
-                            <Typography variant="h6" gutterBottom>Repertório Geral</Typography>
-                            <TextField
-                                fullWidth
-                                placeholder="Buscar no repertório..."
-                                value={termoBusca}
-                                onChange={(e) => setTermoBusca(e.target.value)}
-                                sx={{ mb: 2 }}
-                                InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
-                            />
-                            <Droppable droppableId="repertorio">
-                                {(provided) => (
-                                    <List {...provided.droppableProps} ref={provided.innerRef}>
-                                        {repertorioGeral.map((musica, index) => (
-                                            <Draggable key={musica.id} draggableId={`musica-${musica.id}`} index={index}>
-                                                {(provided) => (
-                                                    <ListItem
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        secondaryAction={ // Adicionado para o botão "Adicionar"
-                                                            <Tooltip title="Adicionar ao Setlist">
-                                                                <IconButton edge="end" aria-label="add" onClick={() => adicionarAoSetlist(musica)}>
-                                                                    <PlaylistAddIcon />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                        }
-                                                        sx={{ mb: 1, bgcolor: 'background.default', borderRadius: 1 }}
-                                                    >
-                                                        <ListItemText primary={musica.nome} secondary={musica.artista} />
-                                                    </ListItem>
-                                                )}
-                                            </Draggable>
-                                        ))}
-                                        {provided.placeholder}
-                                    </List>
-                                )}
-                            </Droppable>
-                        </Paper>
-                    </Grid>
-
-                    {/* Coluna do Setlist Atual */}
-                    <Grid item xs={12} md={6}>
-                        <Paper sx={{ p: 2, height: '80vh', overflowY: 'auto', bgcolor: 'primary.dark', color: 'primary.contrastText' }}>
-                            <Typography variant="h6" gutterBottom>Músicas no Setlist</Typography>
-                             <Droppable droppableId="setlist">
-                                {(provided) => (
-                                    <List {...provided.droppableProps} ref={provided.innerRef}>
-                                        {musicasNoSetlist.map((musica, index) => (
-                                            <Draggable key={`setlist-${musica.id}`} draggableId={`setlist-${musica.id}`} index={index}>
-                                                {(provided) => (
-                                                    <ListItem
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        secondaryAction={
-                                                            <Tooltip title="Remover do Setlist">
-                                                                <IconButton edge="end" onClick={() => removerDoSetlist(musica, index)}>
-                                                                    <DeleteIcon sx={{color: 'primary.contrastText'}}/>
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                        }
-                                                        sx={{ mb: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1 }}
-                                                    >
-                                                        <ListItemText primary={musica.nome} secondary={musica.artista} secondaryTypographyProps={{color: 'rgba(255,255,255,0.7)'}} />
-                                                    </ListItem>
-                                                )}
-                                            </Draggable>
-                                        ))}
-                                        {provided.placeholder}
-                                    </List>
-                                )}
-                            </Droppable>
-                        </Paper>
-                    </Grid>
-                </Grid>
+                <Button
+                    variant="contained"
+                    startIcon={salvando ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+                    onClick={handleSalvar}
+                    disabled={salvando}
+                >
+                    Salvar Alterações
+                </Button>
             </Box>
-        </DragDropContext>
+            <Grid container spacing={3} sx={{ flexGrow: 1 }}>
+                {/* Coluna do Repertório Geral */}
+                <Grid item xs={12} md={6}>
+                    <Paper sx={{ p: 2, height: 'calc(100vh - 128px)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="h6" gutterBottom>Repertório Geral</Typography>
+                        <TextField
+                            fullWidth
+                            placeholder="Buscar no repertório..."
+                            value={termoBusca}
+                            onChange={(e) => setTermoBusca(e.target.value)}
+                            sx={{ mb: 2 }}
+                            InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
+                        />
+                        <Droppable droppableId="repertorio">
+                            {(provided) => (
+                                <List {...provided.droppableProps} ref={provided.innerRef} sx={{ flexGrow: 1, overflowY: 'auto' }}>
+                                    {repertorioGeral.map((musica, index) => (
+                                        <Draggable key={musica.id} draggableId={`musica-${musica.id}`} index={index}>
+                                            {(provided) => (
+                                                <ListItem
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                    secondaryAction={
+                                                        <Tooltip title="Adicionar ao Setlist">
+                                                            <IconButton edge="end" aria-label="add" onClick={() => adicionarAoSetlist(musica)}>
+                                                                <PlaylistAddIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    }
+                                                    sx={{ mb: 1, bgcolor: 'background.default', borderRadius: 1 }}
+                                                >
+                                                    <ListItemText primary={musica.nome} secondary={musica.artista} />
+                                                </ListItem>
+                                            )}
+                                        </Draggable>
+                                    ))}
+                                    {provided.placeholder}
+                                </List>
+                            )}
+                        </Droppable>
+                    </Paper>
+                </Grid>
+
+                {/* Coluna do Setlist Atual */}
+                <Grid item xs={12} md={6}>
+                    <Paper sx={{ p: 2, height: 'calc(100vh - 128px)', overflowY: 'auto', bgcolor: 'primary.dark', color: 'primary.contrastText', display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="h6" gutterBottom>Músicas no Setlist</Typography>
+                         <Droppable droppableId="setlist">
+                            {(provided) => (
+                                <List {...provided.droppableProps} ref={provided.innerRef} sx={{ flexGrow: 1, overflowY: 'auto' }}>
+                                    {musicasNoSetlist.map((musica, index) => (
+                                        <Draggable key={`setlist-${musica.id}`} draggableId={`setlist-${musica.id}`} index={index}>
+                                            {(provided) => (
+                                                <ListItem
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                    secondaryAction={
+                                                        <Tooltip title="Remover do Setlist">
+                                                            <IconButton edge="end" onClick={() => removerDoSetlist(musica, index)}>
+                                                                <DeleteIcon sx={{color: 'primary.contrastText'}}/>
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    }
+                                                    sx={{ mb: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1 }}
+                                                >
+                                                    <ListItemText primary={musica.nome} secondary={musica.artista} secondaryTypographyProps={{color: 'rgba(255,255,255,0.7)'}} />
+                                                </ListItem>
+                                            )}
+                                        </Draggable>
+                                    ))}
+                                    {provided.placeholder}
+                                </List>
+                            )}
+                        </Droppable>
+                    </Paper>
+                </Grid>
+            </Grid>
+        </Box>
     );
 }
 

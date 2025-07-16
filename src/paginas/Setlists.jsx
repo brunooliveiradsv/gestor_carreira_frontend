@@ -19,7 +19,6 @@ function Setlists() {
   const { mostrarNotificacao } = useNotificacao();
   const navigate = useNavigate();
 
-  // Estados para o diálogo de novo setlist
   const [dialogoNovoSetlistAberto, setDialogoNovoSetlistAberto] = useState(false);
   const [nomeNovoSetlist, setNomeNovoSetlist] = useState('');
   const [criandoSetlist, setCriandoSetlist] = useState(false);
@@ -42,7 +41,7 @@ function Setlists() {
 
   const handleAbrirDialogoNovoSetlist = () => {
     setDialogoNovoSetlistAberto(true);
-    setNomeNovoSetlist(''); // Limpa o campo ao abrir
+    setNomeNovoSetlist('');
   };
 
   const handleFecharDialogoNovoSetlist = () => {
@@ -60,14 +59,14 @@ function Setlists() {
       const resposta = await apiClient.post('/api/setlists', { nome: nomeNovoSetlist });
       mostrarNotificacao("Setlist criado! Agora adicione músicas a ele.", "success");
       handleFecharDialogoNovoSetlist();
-      navigate(`/setlists/editar/${resposta.data.id}`); // Redireciona para a edição
+      navigate(`/setlists/editar/${resposta.data.id}`);
     } catch (erro) {
       mostrarNotificacao("Falha ao criar o setlist.", "error");
     } finally {
       setCriandoSetlist(false);
     }
   };
-  
+
   const handleApagar = async (id, nome) => {
       if (window.confirm(`Tem certeza que deseja apagar o setlist "${nome}"?`)) {
           try {
@@ -81,21 +80,21 @@ function Setlists() {
   }
 
   if (carregando) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress color="inherit" /></Box>;
+    return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}><CircularProgress color="inherit" /></Box>;
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={6} sx={{ p: { xs: 2, md: 4 } }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
-          <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirDialogoNovoSetlist}>
-            Novo Setlist
-          </Button>
-        </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
+        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirDialogoNovoSetlist}>
+          Novo Setlist
+        </Button>
+      </Box>
 
+      <Paper elevation={6} sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         {setlists.length > 0 ? (
-          <List>
+          <List sx={{ flexGrow: 1, overflowY: 'auto' }}>
             {setlists.map(setlist => (
               <Paper key={setlist.id} variant="outlined" sx={{ mb: 1.5 }}>
                 <ListItem
@@ -123,7 +122,7 @@ function Setlists() {
             ))}
           </List>
         ) : (
-          <Typography sx={{ textAlign: 'center', p: 4 }}>
+          <Typography sx={{ textAlign: 'center', p: 4, flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             Nenhum setlist criado. Que tal começar um agora?
           </Typography>
         )}
@@ -143,7 +142,7 @@ function Setlists() {
             variant="outlined"
             value={nomeNovoSetlist}
             onChange={(e) => setNomeNovoSetlist(e.target.value)}
-            onKeyPress={(e) => { // Permite criar ao pressionar Enter
+            onKeyPress={(e) => {
               if (e.key === 'Enter' && !criandoSetlist) {
                 handleConfirmarNovoSetlist();
               }
@@ -157,7 +156,7 @@ function Setlists() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 }
 
