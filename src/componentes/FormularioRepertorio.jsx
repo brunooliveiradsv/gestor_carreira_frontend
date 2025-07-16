@@ -16,7 +16,7 @@ function FormularioRepertorio({ id, onSave, onCancel }) {
 
   useEffect(() => {
     if (id) {
-      apiClient.get(`/api/repertorios/${id}`)
+      apiClient.get(`/api/repertorio/${id}`)
         .then(resposta => setDadosForm(resposta.data))
         .catch(erro => console.error("Erro ao buscar repertório para edição", erro));
     }
@@ -32,10 +32,10 @@ function FormularioRepertorio({ id, onSave, onCancel }) {
     setCarregando(true);
     try {
       if (id) {
-        await apiClient.put(`/api/repertorios/${id}`, dadosForm);
+        await apiClient.put(`/api/repertorio/${id}`, dadosForm);
         mostrarNotificacao('Repertório atualizado com sucesso!', 'success');
       } else {
-        await apiClient.post('/api/repertorios', dadosForm);
+        await apiClient.post('/api/repertorio', dadosForm);
         mostrarNotificacao('Repertório criado com sucesso!', 'success');
       }
       onSave();

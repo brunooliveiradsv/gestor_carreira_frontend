@@ -45,7 +45,7 @@ function App() {
         <Route path="/admin/usuarios" element={<AdminUsuarios />} />
         <Route path="/contatos" element={<Contatos />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
-        <Route path="/repertorio" element={<Repertorios />} />
+        <Route path="/repertorio" element={<Repertorio />} />
         <Route path="/equipamentos" element={<Equipamentos />} />
         <Route path="/setlists" element={<Setlists />} />{" "}
         {/* Nova lista de Setlists */}
