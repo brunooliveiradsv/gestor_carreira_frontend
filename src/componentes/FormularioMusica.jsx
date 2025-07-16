@@ -22,6 +22,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
     artista: "",
     tom: "",
     duracao_segundos: "",
+    bpm: "", // Campo BPM adicionado ao estado
     link_cifra: "",
     notas_adicionais: "",
   });
@@ -97,7 +98,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
     }
   };
 
-  // --- FUNÇÃO DE BUSCA INTELIGENTE CORRIGIDA ---
   const handleBuscaInteligente = async () => {
     if (!nomeMusicaBusca || !nomeArtistaBusca) {
       mostrarNotificacao(
@@ -108,8 +108,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
     }
     setBuscando(true);
     try {
-      // AQUI ESTÁ A CORREÇÃO: Usamos 'fetch' para chamar a rota relativa da API da Vercel.
-       const response = await fetch('/api/busca-inteligente', {
+      const response = await fetch('/api/busca-inteligente', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -124,7 +123,8 @@ function FormularioMusica({ id, onSave, onCancel }) {
         throw new Error(data.mensagem || "Erro na busca.");
       }
 
-      const { nome, artista, tom, notas_adicionais } = data;
+      // Desestrutura todos os dados, incluindo o BPM
+      const { nome, artista, tom, notas_adicionais, bpm, duracao_segundos } = data;
 
       setDadosForm((atuais) => ({
         ...atuais,
@@ -132,6 +132,8 @@ function FormularioMusica({ id, onSave, onCancel }) {
         artista: artista || atuais.artista,
         tom: tom || atuais.tom,
         notas_adicionais: notas_adicionais || atuais.notas_adicionais,
+        bpm: bpm || atuais.bpm, // Define o BPM
+        duracao_segundos: duracao_segundos || atuais.duracao_segundos,
       }));
 
       mostrarNotificacao("Dados importados com sucesso!", "success");
@@ -238,22 +240,39 @@ function FormularioMusica({ id, onSave, onCancel }) {
           fullWidth
           InputLabelProps={{ shrink: !!dadosForm.artista }}
         />
-        <TextField
-          name="tom"
-          label="Tom (ex: G, Am, C#m)"
-          value={dadosForm.tom || ""}
-          onChange={handleChange}
-          fullWidth
-          InputLabelProps={{ shrink: !!dadosForm.tom }}
-        />
-        <TextField
-          name="duracao_segundos"
-          label="Duração (em segundos)"
-          type="number"
-          value={dadosForm.duracao_segundos || ""}
-          onChange={handleChange}
-          fullWidth
-        />
+        {/* --- GRID PARA ORGANIZAR TOM, DURAÇÃO E BPM --- */}
+        <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+                 <TextField
+                    name="tom"
+                    label="Tom"
+                    value={dadosForm.tom || ""}
+                    onChange={handleChange}
+                    fullWidth
+                    InputLabelProps={{ shrink: !!dadosForm.tom }}
+                />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+                <TextField
+                    name="duracao_segundos"
+                    label="Duração (segundos)"
+                    type="number"
+                    value={dadosForm.duracao_segundos || ""}
+                    onChange={handleChange}
+                    fullWidth
+                />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+                <TextField
+                    name="bpm"
+                    label="BPM"
+                    type="number"
+                    value={dadosForm.bpm || ""}
+                    onChange={handleChange}
+                    fullWidth
+                />
+            </Grid>
+        </Grid>
 
         <Autocomplete
           multiple

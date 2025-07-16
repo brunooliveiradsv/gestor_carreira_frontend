@@ -1,4 +1,4 @@
-// ficheiro: /api/musicas/busca-inteligente.js (VERSÃO FINAL COM TUNEBAT)
+// ficheiro: /api/musicas/busca-inteligente.js (VERSÃO FINAL COM USER-AGENT NO TUNEBAT)
 
 import axios from 'axios';
 import * as cheerio from 'cheerio';
@@ -14,12 +14,16 @@ async function buscarDadosTuneBat(nomeMusica, nomeArtista) {
         const urlBusca = `https://tunebat.com/Search?q=${termoBusca}`;
         console.log(`[TuneBat] Buscando em: ${urlBusca}`);
 
-        const { data: dataBusca } = await axios.get(urlBusca, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' }
-        });
+        // --- INÍCIO DA CORREÇÃO ---
+        // Adiciona um cabeçalho de User-Agent para simular um navegador
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'
+        };
+        // --- FIM DA CORREÇÃO ---
+
+        const { data: dataBusca } = await axios.get(urlBusca, { headers });
 
         const $busca = cheerio.load(dataBusca);
-        // Encontra o link da primeira música nos resultados da busca
         const linkPaginaMusica = $busca('.main-well a.search-track-name').first().attr('href');
 
         if (!linkPaginaMusica) {
@@ -30,14 +34,12 @@ async function buscarDadosTuneBat(nomeMusica, nomeArtista) {
         const urlCompletaMusica = `https://tunebat.com${linkPaginaMusica}`;
         console.log(`[TuneBat] Página da música encontrada: ${urlCompletaMusica}`);
 
-        const { data: dataPaginaMusica } = await axios.get(urlCompletaMusica, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' }
-        });
+        // Usa os mesmos headers para o segundo pedido
+        const { data: dataPaginaMusica } = await axios.get(urlCompletaMusica, { headers });
 
         const $pagina = cheerio.load(dataPaginaMusica);
         const dadosTecnicos = {};
 
-        // Itera sobre todos os painéis de informação para encontrar os dados
         $pagina('.info-box-value').each(function() {
             const valor = $(this).text().trim();
             const tipo = $(this).prev('.info-box-key').text().trim();
@@ -57,7 +59,7 @@ async function buscarDadosTuneBat(nomeMusica, nomeArtista) {
 
     } catch (error) {
         console.error("[TuneBat] Erro ao buscar dados:", error.message);
-        return {}; // Retorna um objeto vazio em caso de erro para não parar o processo
+        return {}; 
     }
 }
 
@@ -91,6 +93,7 @@ async function buscarCifra(resultadoBuscaGoogle) {
     return null;
 }
 
+
 // --- FUNÇÃO PRINCIPAL (HANDLER) ---
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -108,7 +111,6 @@ export default async function handler(req, res) {
     try {
         console.log(`[Detetive TuneBat] Iniciando busca para: ${nomeMusica} - ${nomeArtista}`);
         
-        // Executa as buscas em paralelo para ser mais rápido
         const [dadosTecnicos, resultadoBuscaGoogle] = await Promise.all([
             buscarDadosTuneBat(nomeMusica, nomeArtista),
             axios.get(`https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_API_KEY}&cx=${process.env.SEARCH_ENGINE_ID}&q=${encodeURIComponent(nomeMusica + ' ' + nomeArtista + ' cifraclub')}`)
