@@ -1,8 +1,8 @@
 // src/paginas/Repertorios.jsx
 
 import { useState, useEffect, useCallback } from "react";
-import apiClient from "../api";
-import { useNotificacao } from "../contextos/NotificationContext";
+import apiClient from "../api.js";
+import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
   Box,
   Button,
