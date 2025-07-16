@@ -1,26 +1,40 @@
-// ficheiro: /api/busca-inteligente.js (VERSÃO DE DIAGNÓSTICO FINAL)
+// ficheiro: /api/musicas/busca-inteligente.js (VERSÃO FINAL COM AUTENTICAÇÃO ALTERNATIVA)
 
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-async function getSpotifyToken(clientId, clientSecret) {
-    const params = new URLSearchParams();
-    params.append('grant_type', 'client_credentials');
-    params.append('client_id', clientId);
-    params.append('client_secret', clientSecret);
+// --- FUNÇÃO DE AUTENTICAÇÃO COM O MÉTODO DE CABEÇALHO (HEADER) ---
+async function getSpotifyToken() {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-    const response = await axios.post('https://accounts.spotify.com/api/token', params, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    if (!clientId || !clientSecret) {
+        throw new Error("As credenciais do Spotify não foram encontradas no ambiente.");
+    }
+    
+    // Codifica o Client ID e o Client Secret em Base64
+    const authString = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+    const response = await axios.post('https://accounts.spotify.com/api/token', 'grant_type=client_credentials', {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            // Usa a string codificada no cabeçalho de Autorização
+            'Authorization': `Basic ${authString}`
+        }
     });
+    
     return response.data.access_token;
 }
 
-// ... (as outras funções auxiliares permanecem iguais)
+// O resto do ficheiro permanece exatamente igual
 async function buscarDadosSpotify(nomeMusica, nomeArtista, token) {
     const termoBusca = encodeURIComponent(`track:${nomeMusica} artist:${nomeArtista}`);
     const url = `https://api.spotify.com/v1/search?q=${termoBusca}&type=track&limit=1`;
     const response = await axios.get(url, { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!response.data.tracks.items[0]) return {};
+    if (!response.data.tracks.items[0]) {
+        console.log(`[Spotify] Não encontrou a música: ${nomeMusica} - ${nomeArtista}`);
+        return {};
+    }
     const track = response.data.tracks.items[0];
     const audioFeaturesResponse = await axios.get(`https://api.spotify.com/v1/audio-features/${track.id}`, { headers: { 'Authorization': 'Bearer ' + token } });
     return {
@@ -48,8 +62,6 @@ async function buscarCifra(resultadoBuscaGoogle) {
     return null;
 }
 
-
-// --- FUNÇÃO PRINCIPAL COM DIAGNÓSTICO ---
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -58,21 +70,12 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ message: 'Apenas o método POST é permitido.' });
 
-    // --- LOGS DE DIAGNÓSTICO DAS VARIÁVEIS DE AMBIENTE ---
-    console.log(`[Diagnóstico] Verificando chaves...`);
-    console.log(`[Diagnóstico] GOOGLE_API_KEY: ${process.env.GOOGLE_API_KEY ? 'Encontrada' : 'NÃO ENCONTRADA'}`);
-    console.log(`[Diagnóstico] SEARCH_ENGINE_ID: ${process.env.SEARCH_ENGINE_ID ? 'Encontrada' : 'NÃO ENCONTRADA'}`);
-    console.log(`[Diagnóstico] SPOTIFY_CLIENT_ID: ${process.env.SPOTIFY_CLIENT_ID ? 'Encontrada' : 'NÃO ENCONTRADA'}`);
-    console.log(`[Diagnóstico] SPOTIFY_CLIENT_SECRET: ${process.env.SPOTIFY_CLIENT_SECRET ? 'Encontrada' : 'NÃO ENCONTRADA'}`);
-    
     const { nomeMusica, nomeArtista } = req.body;
-    if (!nomeMusica || !nomeArtista) {
-        return res.status(400).json({ message: "Nome da música e do artista são necessários." });
-    }
+    if (!nomeMusica || !nomeArtista) return res.status(400).json({ message: "Nome da música e do artista são necessários." });
 
     try {
         const [tokenSpotify, resultadoBuscaGoogle] = await Promise.all([
-            getSpotifyToken(process.env.SPOTIFY_CLIENT_ID, process.env.SPOTIFY_CLIENT_SECRET),
+            getSpotifyToken(),
             axios.get(`https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_API_KEY}&cx=${process.env.SEARCH_ENGINE_ID}&q=${encodeURIComponent(nomeMusica + ' ' + nomeArtista)}`)
         ]);
 
@@ -91,10 +94,9 @@ export default async function handler(req, res) {
         };
         
         return res.status(200).json(dadosFinais);
-
     } catch (error) {
         const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
-        console.error("[Diagnóstico] ERRO CRÍTICO:", errorMessage);
+        console.error("[Diagnóstico Final] ERRO CRÍTICO:", errorMessage);
         return res.status(500).json({ message: "Ocorreu um erro interno ao processar a sua busca." });
     }
 }
