@@ -22,7 +22,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
     artista: "",
     tom: "",
     duracao_segundos: "",
-    bpm: "",
+    bpm: "", // Campo para o BPM
     link_cifra: "",
     notas_adicionais: "",
   });
@@ -109,27 +109,25 @@ function FormularioMusica({ id, onSave, onCancel }) {
     setBuscando(true);
 
     try {
+      // ETAPA 1: Tenta a busca interna primeiro
       mostrarNotificacao("Buscando no seu repertório...", "info");
-      const params = new URLSearchParams({
-        nome: nomeMusicaBusca,
-        artista: nomeArtistaBusca,
-      });
-      const respostaInterna = await apiClient.get(
-        `/api/musicas/busca-interna?${params.toString()}`
-      );
+      const params = new URLSearchParams({ nome: nomeMusicaBusca, artista: nomeArtistaBusca });
+      const respostaInterna = await apiClient.get(`/api/musicas/busca-interna?${params.toString()}`);
 
+      // Se encontrou, preenche o formulário e termina
       mostrarNotificacao("Música encontrada no seu repertório!", "success");
       setDadosForm(respostaInterna.data);
-      setTagsSelecionadas(respostaInterna.data.tags?.map((t) => t.nome) || []);
-    } catch (erroInterno) {
-      if (erroInterno.response && erroInterno.response.status === 404) {
-        mostrarNotificacao(
-          "Música não encontrada no seu repertório. Buscando na internet...",
-          "info"
-        );
+      // Assumindo que a resposta interna também pode ter tags
+      setTagsSelecionadas(respostaInterna.data.tags?.map(t => t.nome) || []);
 
+    } catch (erroInterno) {
+      // Se deu erro 404, significa que não encontrou. Continua para a busca externa.
+      if (erroInterno.response && erroInterno.response.status === 404) {
+        mostrarNotificacao("Música não encontrada no seu repertório. Buscando na internet...", "info");
+        
         try {
-          const responseExterna = await fetch("/api/busca-inteligente", {
+          // ETAPA 2: Busca externa na Vercel
+          const responseExterna = await fetch('/api/busca-inteligente', {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -140,33 +138,27 @@ function FormularioMusica({ id, onSave, onCancel }) {
 
           const dataExterna = await responseExterna.json();
           if (!responseExterna.ok) {
-            throw new Error(
-              dataExterna.message || "Erro na busca na internet."
-            );
+            throw new Error(dataExterna.message || "Erro na busca na internet.");
           }
 
-          mostrarNotificacao(
-            "Dados encontrados! Preencha o resto e salve.",
-            "success"
-          );
-          setDadosForm((atuais) => ({
-            ...atuais,
-            nome: dataExterna.nome || atuais.nome,
-            artista: dataExterna.artista || atuais.artista,
-            tom: dataExterna.tom || atuais.tom,
-            notas_adicionais:
-              dataExterna.notas_adicionais || atuais.notas_adicionais,
-            bpm: dataExterna.bpm || atuais.bpm,
-            duracao_segundos:
-              dataExterna.duracao_segundos || atuais.duracao_segundos,
+          // ETAPA 3: Preenche o formulário com os dados encontrados na internet
+          mostrarNotificacao("Dados encontrados! Preencha o resto e salve.", "success");
+          setDadosForm(atuais => ({
+              ...atuais,
+              nome: dataExterna.nome || atuais.nome,
+              artista: dataExterna.artista || atuais.artista,
+              tom: dataExterna.tom || atuais.tom,
+              notas_adicionais: dataExterna.notas_adicionais || atuais.notas_adicionais,
+              bpm: dataExterna.bpm || atuais.bpm,
+              duracao_segundos: dataExterna.duracao_segundos || atuais.duracao_segundos,
           }));
+
         } catch (erroExterno) {
-          mostrarNotificacao(
-            erroExterno.message || "Falha na busca inteligente na internet.",
-            "error"
-          );
+          mostrarNotificacao(erroExterno.message || "Falha na busca inteligente na internet.", "error");
         }
+
       } else {
+        // Se foi outro erro na busca interna, mostra a mensagem.
         mostrarNotificacao("Erro ao buscar no seu repertório.", "error");
       }
     } finally {
@@ -268,38 +260,38 @@ function FormularioMusica({ id, onSave, onCancel }) {
           InputLabelProps={{ shrink: !!dadosForm.artista }}
         />
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              name="tom"
-              label="Tom"
-              value={dadosForm.tom || ""}
-              onChange={handleChange}
-              fullWidth
-              InputLabelProps={{ shrink: !!dadosForm.tom }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              name="bpm"
-              label="BPM"
-              type="number"
-              value={dadosForm.bpm || ""}
-              onChange={handleChange}
-              fullWidth
-              InputLabelProps={{ shrink: !!dadosForm.bpm }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              name="duracao_segundos"
-              label="Duração (segundos)"
-              type="number"
-              value={dadosForm.duracao_segundos || ""}
-              onChange={handleChange}
-              fullWidth
-              InputLabelProps={{ shrink: !!dadosForm.duracao_segundos }}
-            />
-          </Grid>
+            <Grid item xs={12} sm={4}>
+                 <TextField
+                    name="tom"
+                    label="Tom"
+                    value={dadosForm.tom || ""}
+                    onChange={handleChange}
+                    fullWidth
+                    InputLabelProps={{ shrink: !!dadosForm.tom }}
+                />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+                <TextField
+                    name="bpm"
+                    label="BPM"
+                    type="number"
+                    value={dadosForm.bpm || ""}
+                    onChange={handleChange}
+                    fullWidth
+                    InputLabelProps={{ shrink: !!dadosForm.bpm }}
+                />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+                <TextField
+                    name="duracao_segundos"
+                    label="Duração (segundos)"
+                    type="number"
+                    value={dadosForm.duracao_segundos || ""}
+                    onChange={handleChange}
+                    fullWidth
+                    InputLabelProps={{ shrink: !!dadosForm.duracao_segundos }}
+                />
+            </Grid>
         </Grid>
 
         <Autocomplete
