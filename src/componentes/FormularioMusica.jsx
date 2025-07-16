@@ -31,56 +31,51 @@ function FormularioMusica({ id, onSave, onCancel }) {
   const [form, setForm] = useState(estadoInicialFormulario);
   const [tags, setTags] = useState([]);
   
-  // Estado para as sugestões de tags do Autocomplete
+  // Estado para as sugestões de tags do Autocomplete (pode estar vazio, não há problema)
   const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
   
   const [carregando, setCarregando] = useState(false);
   const { mostrarNotificacao } = useNotificacao();
 
-  // Função para carregar os dados da música para edição
-  const carregarMusicaParaEdicao = useCallback(async () => {
-    if (!id) return;
-    setCarregando(true);
-    try {
-      const { data } = await apiClient.get(`/api/musicas/${id}`);
-      const { tags: tagsDaApi, ...dadosMusica } = data;
-      setForm(dadosMusica);
-      setTags(tagsDaApi?.map(t => t.nome) || []);
-    } catch (error) {
-      mostrarNotificacao("Erro ao carregar os dados da música.", "error");
-      onCancel(); // Fecha o formulário em caso de erro
-    } finally {
-      setCarregando(false);
-    }
-  }, [id, mostrarNotificacao, onCancel]);
-
-  // Efeito para carregar as sugestões de tags uma vez
+  // Efeito para buscar as tags existentes (executa apenas uma vez)
   useEffect(() => {
     apiClient.get("/api/tags")
       .then(res => setTagsDisponiveis(res.data.map(t => t.nome)))
-      .catch(() => mostrarNotificacao("Não foi possível carregar as tags.", "error"));
+      .catch(() => mostrarNotificacao("Aviso: Não foi possível carregar sugestões de tags.", "warning"));
   }, [mostrarNotificacao]);
 
-  // Efeito principal que decide se carrega para edição ou limpa para criação
+  // Efeito para carregar os dados da música em modo de edição
   useEffect(() => {
     if (id) {
-      carregarMusicaParaEdicao();
+      setCarregando(true);
+      apiClient.get(`/api/musicas/${id}`)
+        .then(({ data }) => {
+          const { tags: tagsDaApi, ...dadosMusica } = data;
+          setForm(dadosMusica);
+          setTags(tagsDaApi?.map(t => t.nome) || []);
+        })
+        .catch(() => mostrarNotificacao("Erro ao carregar os dados da música.", "error"))
+        .finally(() => setCarregando(false));
     } else {
+      // Garante que o formulário está limpo ao criar uma nova música
       setForm(estadoInicialFormulario);
       setTags([]);
     }
-  }, [id, carregarMusicaParaEdicao]);
+  }, [id, mostrarNotificacao]);
 
 
+  // Função para lidar com mudanças nos campos de texto
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(dadosAtuais => ({ ...dadosAtuais, [name]: value }));
   };
 
+  // Função para lidar com a submissão do formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
     setCarregando(true);
 
+    // Constrói o objeto final para envio, combinando os dados do formulário e as tags
     const dadosParaEnviar = { ...form, tags };
 
     try {
@@ -91,10 +86,10 @@ function FormularioMusica({ id, onSave, onCancel }) {
         await apiClient.post("/api/musicas", dadosParaEnviar);
         mostrarNotificacao("Música adicionada com sucesso!", "success");
       }
-      onSave();
+      onSave(); // Executa a função do componente pai para fechar o formulário
     } catch (erro) {
       mostrarNotificacao(erro.response?.data?.mensagem || "Falha ao salvar a música.", "error");
-      setCarregando(false);
+      setCarregando(false); // Importante para desbloquear o botão em caso de erro
     }
   };
 
@@ -122,10 +117,14 @@ function FormularioMusica({ id, onSave, onCancel }) {
         <Typography variant="overline" color="text.secondary" sx={{ mt: 1 }}>Organização e Detalhes</Typography>
         <Autocomplete
           multiple
-          freeSolo
+          freeSolo // Permite adicionar valores que não estão na lista de opções
           options={tagsDisponiveis}
           value={tags}
-          onChange={(event, novoValor) => setTags(novoValor)}
+          onChange={(event, novoValor) => {
+            // Esta função atualiza o nosso estado 'tags' sempre que o utilizador
+            // seleciona um item, remove um item ou cria um novo.
+            setTags(novoValor);
+          }}
           renderTags={(valor, getTagProps) =>
             valor.map((opcao, index) => <Chip label={opcao} {...getTagProps({ index })} />)
           }
