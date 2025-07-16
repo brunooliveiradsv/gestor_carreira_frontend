@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 
 function FormularioMusica({ id, onSave, onCancel }) {
+  // Estado para os campos do formulário (exceto tags)
   const [dadosForm, setDadosForm] = useState({
     nome: "",
     artista: "",
@@ -25,13 +26,15 @@ function FormularioMusica({ id, onSave, onCancel }) {
     link_cifra: "",
     notas_adicionais: "",
   });
+
+  // Estado separado e dedicado apenas para as tags
   const [tagsSelecionadas, setTagsSelecionadas] = useState([]);
   const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const { mostrarNotificacao } = useNotificacao();
 
+  // Busca as tags existentes para usar como sugestões
   useEffect(() => {
-    // Busca todas as tags existentes para usar como sugestões no Autocomplete
     apiClient
       .get("/api/tags")
       .then((resposta) =>
@@ -42,8 +45,8 @@ function FormularioMusica({ id, onSave, onCancel }) {
       );
   }, [mostrarNotificacao]);
 
+  // Carrega os dados da música quando em modo de edição
   useEffect(() => {
-    // Se um 'id' for fornecido, estamos no modo de edição
     if (id) {
       setCarregando(true);
       apiClient
@@ -51,7 +54,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
         .then((resposta) => {
           const { tags, ...dadosMusica } = resposta.data;
           setDadosForm(dadosMusica);
-          // As tags vêm como um array de objetos, então extraímos apenas os nomes
           setTagsSelecionadas(tags?.map((tag) => tag.nome) || []);
         })
         .catch(() =>
@@ -64,30 +66,34 @@ function FormularioMusica({ id, onSave, onCancel }) {
     }
   }, [id, mostrarNotificacao]);
 
+  // Handler para atualizar os campos de texto
   const handleChange = (e) => {
     setDadosForm((atuais) => ({ ...atuais, [e.target.name]: e.target.value }));
   };
 
+  // Handler para submeter o formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
     setCarregando(true);
-    // Prepara o objeto para envio, incluindo o array de strings das tags
-    const dadosParaEnviar = { ...dadosForm, tags: tagsSelecionadas };
+
+    // Objeto final para envio, combinando os dados do formulário e as tags selecionadas
+    const dadosParaEnviar = {
+      ...dadosForm,
+      tags: tagsSelecionadas,
+    };
 
     try {
       if (id) {
-        // Se temos um ID, atualizamos (PUT)
         await apiClient.put(`/api/musicas/${id}`, dadosParaEnviar);
         mostrarNotificacao("Música atualizada com sucesso!", "success");
       } else {
-        // Caso contrário, criamos uma nova (POST)
         await apiClient.post("/api/musicas", dadosParaEnviar);
         mostrarNotificacao(
           "Música adicionada ao repertório com sucesso!",
           "success"
         );
       }
-      onSave(); // Chama a função para fechar o formulário e recarregar a lista
+      onSave(); // Fecha o formulário e atualiza a lista na página anterior
     } catch (erro) {
       mostrarNotificacao(
         erro.response?.data?.mensagem || "Falha ao salvar a música.",
@@ -98,7 +104,6 @@ function FormularioMusica({ id, onSave, onCancel }) {
     }
   };
 
-  // Se estiver a carregar os dados para edição, mostra um spinner
   if (carregando && id) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -121,6 +126,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
         <Typography variant="overline" color="text.secondary">
           Detalhes da música
         </Typography>
+
         <TextField
           name="nome"
           label="Nome da Música"
@@ -192,7 +198,7 @@ function FormularioMusica({ id, onSave, onCancel }) {
               {...params}
               variant="outlined"
               label="Tags"
-              placeholder="Adicione ou crie tags (ex: Lenta, Anos 80)"
+              placeholder="Adicione ou crie tags"
             />
           )}
         />
