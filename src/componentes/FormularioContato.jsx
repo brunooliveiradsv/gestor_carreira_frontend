@@ -15,6 +15,9 @@ function FormularioContato({ id, onSave, onCancel }) {
       apiClient.get(`/api/contatos/${id}`)
         .then(resposta => setDadosForm(resposta.data))
         .catch(erro => console.error("Erro ao buscar contato para edição", erro));
+    } else {
+      // Limpa o formulário ao criar um novo
+      setDadosForm({ nome: '', email: '', telefone: '', funcao: '' });
     }
   }, [id]);
 
@@ -43,23 +46,22 @@ function FormularioContato({ id, onSave, onCancel }) {
   };
 
   return (
-    <Paper elevation={6} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3 }}>
-      <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom>
-          {id ? 'Editar Contato' : 'Novo Contato'}
-        </Typography>
-        <TextField name="nome" label="Nome do Contato" value={dadosForm.nome} onChange={handleChange} required fullWidth />
-        <TextField name="email" label="E-mail" type="email" value={dadosForm.email} onChange={handleChange} fullWidth />
-        <TextField name="telefone" label="Telefone" value={dadosForm.telefone} onChange={handleChange} fullWidth />
-        <TextField name="funcao" label="Função (ex: Produtor)" value={dadosForm.funcao} onChange={handleChange} fullWidth />
-        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-          <Button type="submit" variant="contained" color="primary" disabled={carregando}>
-            {carregando ? <CircularProgress size={24} /> : 'Salvar'}
-          </Button>
-          <Button type="button" variant="text" onClick={onCancel}>Cancelar</Button>
-        </Box>
+    // O Paper foi removido, o Box agora é o container principal
+    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 1 /* Padding leve para não colar nas bordas do Dialog */ }}>
+      <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom>
+        {id ? 'Editar Contato' : 'Novo Contato'}
+      </Typography>
+      <TextField name="nome" label="Nome do Contato" value={dadosForm.nome} onChange={handleChange} required fullWidth />
+      <TextField name="email" label="E-mail" type="email" value={dadosForm.email} onChange={handleChange} fullWidth />
+      <TextField name="telefone" label="Telefone" value={dadosForm.telefone} onChange={handleChange} fullWidth />
+      <TextField name="funcao" label="Função (ex: Produtor)" value={dadosForm.funcao} onChange={handleChange} fullWidth />
+      <Box sx={{ mt: 2, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+        <Button type="button" variant="text" onClick={onCancel}>Cancelar</Button>
+        <Button type="submit" variant="contained" color="primary" disabled={carregando}>
+          {carregando ? <CircularProgress size={24} /> : 'Salvar'}
+        </Button>
       </Box>
-    </Paper>
+    </Box>
   );
 }
 

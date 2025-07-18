@@ -1,46 +1,45 @@
 // src/paginas/Conquistas.jsx
 import { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  CircularProgress, 
-  Card, 
-  CardContent, 
-  Paper, 
-  Avatar, 
-  Tooltip, 
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Paper,
+  Avatar,
+  Tooltip,
   Alert,
-  LinearProgress, 
-  Chip 
+  LinearProgress,
+  Chip,
+  Grid,
+  useTheme // <-- Importação adicionada
 } from '@mui/material';
-import { 
-  MilitaryTech as MilitaryTechIcon, 
-  MusicNote as MusicNoteIcon, 
-  AttachMoney as AttachMoneyIcon, 
-  People as PeopleIcon 
+import {
+  MilitaryTech as MilitaryTechIcon,
+  MusicNote as MusicNoteIcon,
+  AttachMoney as AttachMoneyIcon,
+  People as PeopleIcon,
+  WorkspacePremium as WorkspacePremiumIcon
 } from '@mui/icons-material';
 
 const formatarMoeda = (valor) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(valor);
+  }).format(valor || 0);
 };
 
 function Conquistas() {
   const [conquistas, setConquistas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
+  const theme = useTheme(); // <-- Hook instanciado aqui
 
   const getConquistaIcon = (tipo) => {
-    if (tipo.includes('SHOWS')) return <MusicNoteIcon fontSize="large" />;
-    if (tipo.includes('RECEITA')) return <AttachMoneyIcon fontSize="large" />;
-    if (tipo.includes('CONTATO')) return <PeopleIcon fontSize="large" />;
-    return <MilitaryTechIcon fontSize="large" />;
+    if (tipo.includes('SHOWS')) return <MusicNoteIcon />;
+    if (tipo.includes('RECEITA')) return <AttachMoneyIcon />;
+    if (tipo.includes('CONTATO')) return <PeopleIcon />;
+    return <MilitaryTechIcon />;
   };
 
   const buscarEProcessarConquistas = useCallback(async () => {
@@ -48,10 +47,11 @@ function Conquistas() {
     setErro(null);
     try {
       const resposta = await apiClient.get('/api/conquistas');
-      setConquistas(resposta.data); 
+      const conquistasOrdenadas = resposta.data.sort((a, b) => b.desbloqueada - a.desbloqueada);
+      setConquistas(conquistasOrdenadas);
     } catch (error) {
       console.error("Erro ao buscar conquistas:", error);
-      setErro("Não foi possível carregar as conquistas. Por favor, tente novamente mais tarde.");
+      setErro("Não foi possível carregar as conquistas.");
     } finally {
       setCarregando(false);
     }
@@ -62,127 +62,103 @@ function Conquistas() {
   }, [buscarEProcessarConquistas]);
 
   if (carregando) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80vh' }}>
-        <CircularProgress color="inherit" size={60} />
-        <Typography variant="h6" sx={{ mt: 2 }}>Carregando conquistas...</Typography>
-      </Box>
-    );
-  }
-
-  if (erro) {
-    return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Alert severity="error" sx={{ mt: 4, mb: 2 }}>
-          {erro}
-        </Alert>
-        <Typography variant="body1" align="center" color="text.secondary">
-            Por favor, verifique sua conexão ou tente novamente mais tarde.
-        </Typography>
-      </Container>
-    );
+    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress color="inherit" /></Box>;
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 2, md: 4 } }}>
-      <Paper elevation={6} sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 3, mb: 4 }}>
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          fontWeight="bold" 
-          gutterBottom 
-          align="center"
-          sx={{ mb: { xs: 3, md: 4 } }}
-        >
-          Minhas Conquistas
-        </Typography>
-        {conquistas.length === 0 && (
-          <Typography variant="h6" color="text.secondary" align="center" sx={{ mt: 4, py: 4 }}>
-            Nenhuma conquista encontrada ainda. Continue usando o app para desbloqueá-las!
-          </Typography>
-        )}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 } }}>
-          {conquistas.map(conquista => (
-            <Card 
-              key={conquista.id}
-              variant="outlined" 
-              sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                p: { xs: 1.5, sm: 2 },
-                opacity: conquista.desbloqueada ? 1 : 0.7,
-                borderColor: conquista.desbloqueada ? 'gold' : 'rgba(0, 0, 0, 0.2)', 
-                boxShadow: conquista.desbloqueada ? '0px 0px 8px rgba(255, 215, 0, 0.3)' : 'none',
-                transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, opacity 0.3s ease-in-out',
-                '&:hover': {
-                  transform: conquista.desbloqueada ? 'translateY(-3px) scale(1.005)' : 'none',
-                  boxShadow: conquista.desbloqueada ? '0px 6px 15px rgba(255, 215, 0, 0.5)' : 'none',
-                },
-                borderRadius: 2,
-              }}
-            >
-              <Avatar 
-                sx={{ 
-                  width: { xs: 56, sm: 64 }, 
-                  height: { xs: 56, sm: 64 },
-                  mr: { xs: 2, sm: 3 },
-                  flexShrink: 0,
-                  bgcolor: conquista.desbloqueada ? 'gold' : 'grey.300',
-                  color: conquista.desbloqueada ? 'black' : 'grey.600',
-                  border: conquista.desbloqueada ? '2px solid rgba(255, 215, 0, 0.8)' : 'none',
-                  boxShadow: conquista.desbloqueada ? '0px 0px 10px rgba(255, 215, 0, 0.4)' : 'none'
-                }}
-              >
-                {getConquistaIcon(conquista.tipo_condicao)}
-              </Avatar>
-              <CardContent sx={{ flexGrow: 1, p: 0, '&:last-child': { pb: 0 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5, flexWrap: 'wrap', gap: 1 }}>
-                  <Typography variant="h6" component="div" fontWeight="bold">
-                    {conquista.nome}
-                  </Typography>
-                  {conquista.desbloqueada && (
-                    <Tooltip title={`Desbloqueado em: ${new Date(conquista.data_desbloqueio).toLocaleDateString('pt-BR')}`}>
-                      <Chip 
-                        label="DESBLOQUEADA" 
-                        color="success" 
-                        size="small" 
-                        sx={{ fontWeight: 'bold', bgcolor: 'gold', color: 'black' }}
-                      />
-                    </Tooltip>
-                  )}
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {conquista.descricao}
-                </Typography>
-                
-                {!conquista.desbloqueada && conquista.tipo_progresso !== 'binario' && (
-                  <Box sx={{ width: '100%', mt: 1 }}>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={conquista.porcentagem_progresso} 
-                      sx={{ height: 8, borderRadius: 4 }} 
-                      color="primary"
-                    />
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                      Progresso: 
-                      {conquista.tipo_progresso === 'monetario' 
-                        ? `${formatarMoeda(conquista.progresso_atual)} / ${formatarMoeda(conquista.progresso_total)}`
-                        : `${conquista.progresso_atual} / ${conquista.progresso_total}`} 
-                      &nbsp;({conquista.porcentagem_progresso.toFixed(0)}%)
-                    </Typography>
-                  </Box>
-                )}
-                {!conquista.desbloqueada && conquista.tipo_progresso === 'binario' && (
-                  <Typography variant="caption" color="text.disabled" sx={{mt: 1, display: 'block'}}>
-                    Aguardando ação para desbloquear
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+    <Box>
+       <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" component="h1" fontWeight="bold">Minhas Conquistas</Typography>
+            <Typography color="text.secondary">Acompanhe seu progresso e marcos na carreira.</Typography>
         </Box>
-      </Paper>
-    </Container>
+
+      {erro && <Alert severity="error" sx={{ mb: 4 }}>{erro}</Alert>}
+
+      {conquistas.length === 0 && !carregando ? (
+         <Paper variant="outlined" sx={{p: 4, textAlign: 'center'}}>
+            <WorkspacePremiumIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
+            <Typography variant="h6">Nenhuma conquista por aqui ainda.</Typography>
+            <Typography color="text.secondary">Continue usando o VoxGest para desbloquear novas medalhas!</Typography>
+          </Paper>
+      ) : (
+        <Grid container spacing={3}>
+          {conquistas.map(conquista => (
+            <Grid item xs={12} sm={6} md={4} key={conquista.id}>
+                <Paper
+                variant="outlined"
+                sx={{
+                    p: 2.5,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    opacity: conquista.desbloqueada ? 1 : 0.6,
+                    borderWidth: conquista.desbloqueada ? '2px' : '1px',
+                    borderColor: conquista.desbloqueada ? 'secondary.main' : 'divider',
+                    boxShadow: conquista.desbloqueada ? `0px 0px 15px ${theme.palette.secondary.dark}55` : 'none',
+                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                     '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: conquista.desbloqueada ? `0px 4px 20px ${theme.palette.secondary.dark}77` : 'none',
+                    },
+                }}
+                >
+                <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2}}>
+                        <Avatar
+                            sx={{
+                                width: 56,
+                                height: 56,
+                                bgcolor: conquista.desbloqueada ? 'secondary.main' : 'action.disabledBackground',
+                                color: conquista.desbloqueada ? 'white' : 'text.disabled',
+                            }}
+                        >
+                            {getConquistaIcon(conquista.tipo_condicao)}
+                        </Avatar>
+                        <Typography variant="h6" component="div" fontWeight="bold">
+                            {conquista.nome}
+                        </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                    {conquista.descricao}
+                    </Typography>
+                </Box>
+
+                <Box sx={{ width: '100%', mt: 2.5 }}>
+                    {conquista.desbloqueada ? (
+                         <Tooltip title={`Desbloqueado em: ${new Date(conquista.data_desbloqueio).toLocaleDateString('pt-BR')}`}>
+                            <Chip
+                                label="Desbloqueada"
+                                color="secondary"
+                                variant="filled"
+                                size="small"
+                                sx={{ fontWeight: 'bold' }}
+                            />
+                        </Tooltip>
+                    ) : conquista.tipo_progresso !== 'binario' ? (
+                        <>
+                            <LinearProgress
+                                variant="determinate"
+                                value={conquista.porcentagem_progresso}
+                                sx={{ height: 8, borderRadius: 4 }}
+                                color="secondary"
+                            />
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', textAlign: 'right' }}>
+                            {conquista.tipo_progresso === 'monetario'
+                                ? `${formatarMoeda(conquista.progresso_atual)} / ${formatarMoeda(conquista.progresso_total)}`
+                                : `${conquista.progresso_atual} / ${conquista.progresso_total}`}
+                            </Typography>
+                        </>
+                    ) : (
+                        <Chip label="Pendente" size="small" variant="outlined" />
+                    )}
+                </Box>
+                </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Box>
   );
 }
 

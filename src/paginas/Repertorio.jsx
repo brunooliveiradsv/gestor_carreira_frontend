@@ -6,15 +6,16 @@ import { useNotificacao } from "../contextos/NotificationContext.jsx";
 
 // Componentes do Material-UI
 import {
-  Box, Button, Container, Typography, CircularProgress, Paper,
-  Grid, TextField, InputAdornment, Select, MenuItem, FormControl,
-  InputLabel, Chip, OutlinedInput, IconButton, Tooltip, Dialog
+  Box, Button, Typography, CircularProgress, Paper,
+  Grid, TextField, InputAdornment, MenuItem,
+  Chip, IconButton, Tooltip, Dialog, Card, CardContent, CardActions
 } from "@mui/material";
 
 // Ícones
 import {
   AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon,
-  Edit as EditIcon, Delete as DeleteIcon, LibraryMusic as LibraryMusicIcon,
+  Edit as EditIcon, Delete as DeleteIcon,
+  MusicNote as MusicNoteIcon,
   PlaylistAddCheck as SuggestionIcon,
 } from "@mui/icons-material";
 
@@ -22,12 +23,10 @@ import {
 import FormularioMusica from "../componentes/FormularioMusica.jsx";
 import FormularioSugestao from "../componentes/FormularioSugestao.jsx";
 
-function Repertorios() {
-  // Estados para os dados
+function Repertorio() {
   const [musicas, setMusicas] = useState([]);
   const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
   
-  // Estados de controlo da UI
   const [carregando, setCarregando] = useState(true);
   const [filtros, setFiltros] = useState({ termoBusca: "", tags: [] });
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
@@ -37,7 +36,6 @@ function Repertorios() {
 
   const { mostrarNotificacao } = useNotificacao();
 
-  // Função para buscar as músicas com base nos filtros
   const buscarMusicas = useCallback(async () => {
     setCarregando(true);
     try {
@@ -54,19 +52,16 @@ function Repertorios() {
     }
   }, [mostrarNotificacao, filtros]);
 
-  // Efeito para buscar as tags uma vez
   useEffect(() => {
     apiClient.get("/api/tags")
       .then((resposta) => setTagsDisponiveis(resposta.data))
       .catch(() => mostrarNotificacao("Não foi possível carregar as tags para filtro.", "error"));
   }, [mostrarNotificacao]);
 
-  // Efeito para buscar as músicas sempre que os filtros mudam
   useEffect(() => {
     buscarMusicas();
   }, [buscarMusicas]);
 
-  // Funções para controlar os diálogos
   const handleAbrirFormulario = (id = null) => {
     setMusicaEmEdicaoId(id);
     setDialogoFormularioAberto(true);
@@ -79,7 +74,7 @@ function Repertorios() {
 
   const handleSucessoFormulario = () => {
     handleFecharFormulario();
-    buscarMusicas(); // Atualiza a lista após salvar
+    buscarMusicas();
   };
 
   const handleAbrirSugestao = (musica) => {
@@ -87,7 +82,6 @@ function Repertorios() {
     setDialogoSugestaoAberto(true);
   };
 
-  // Função para apagar uma música
   const handleApagar = async (id) => {
     if (window.confirm("Tem certeza que deseja apagar esta música?")) {
       try {
@@ -101,87 +95,105 @@ function Repertorios() {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant="h4" component="h1" fontWeight="bold">Repertório Geral</Typography>
-        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => handleAbrirFormulario()}>
-          Adicionar Música
-        </Button>
-      </Box>
+    <Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+            <Box>
+                <Typography variant="h4" component="h1" fontWeight="bold">Repertório Geral</Typography>
+                <Typography color="text.secondary">Adicione e gerencie todas as suas músicas.</Typography>
+            </Box>
+            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => handleAbrirFormulario()}>
+            Adicionar Música
+            </Button>
+        </Box>
 
-      <Paper elevation={6} sx={{ p: { xs: 2, md: 4 }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Filtros */}
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={8}>
-            <TextField fullWidth label="Buscar por nome ou artista..."
-              value={filtros.termoBusca}
-              onChange={(e) => setFiltros(f => ({ ...f, termoBusca: e.target.value }))}
-              InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth>
-              <InputLabel>Filtrar por Tags</InputLabel>
-              <Select multiple
-                value={filtros.tags}
-                onChange={(e) => setFiltros(f => ({ ...f, tags: e.target.value }))}
-                input={<OutlinedInput label="Filtrar por Tags" />}
-                renderValue={(selectedIds) => (
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                    {selectedIds.map((id) => {
-                      const tag = tagsDisponiveis.find((t) => t.id === id);
-                      return <Chip key={id} label={tag ? tag.nome : id} size="small" />;
-                    })}
-                  </Box>
-                )}
-              >
-                {tagsDisponiveis.map((tag) => <MenuItem key={tag.id} value={tag.id}>{tag.nome}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        {/* Lista de Músicas */}
-        {carregando ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>
-        ) : (
-          <Grid container spacing={2} sx={{ flexGrow: 1, overflowY: 'auto' }}>
-            {musicas.length > 0 ? (
-              musicas.map((musica) => (
-                <Grid item xs={12} key={musica.id}>
-                  <Paper variant="outlined" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography variant="h6">{musica.nome}</Typography>
-                      <Typography color="text.secondary">{musica.artista} - Tom: {musica.tom || "N/A"}</Typography>
-                      <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {musica.tags.map((tag) => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
+        <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
+            <Grid container spacing={2}>
+            <Grid item xs={12} md={5}> 
+                <TextField fullWidth label="Buscar por nome ou artista..."
+                value={filtros.termoBusca}
+                onChange={(e) => setFiltros(f => ({ ...f, termoBusca: e.target.value }))}
+                InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
+                />
+            </Grid>
+            <Grid item xs={12} md={7}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Filtrar por Tags"
+                  value={filtros.tags}
+                  onChange={(e) => setFiltros(f => ({ ...f, tags: e.target.value }))}
+                  // --- ESTA É A CORREÇÃO FINAL ---
+                  // Força o label a ficar sempre na posição "encolhida" (flutuando)
+                  InputLabelProps={{ shrink: true }}
+                  SelectProps={{
+                    multiple: true,
+                    value: filtros.tags,
+                    renderValue: (selectedIds) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selectedIds.map((id) => {
+                          const tag = tagsDisponiveis.find((t) => t.id === id);
+                          return <Chip key={id} label={tag ? tag.nome : id} size="small" />;
+                        })}
                       </Box>
-                    </Box>
-                    <Box>
-                      <Tooltip title="Sugerir Melhoria"><IconButton onClick={() => handleAbrirSugestao(musica)} color="secondary"><SuggestionIcon /></IconButton></Tooltip>
-                      <Tooltip title="Editar Música"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
-                      <Tooltip title="Apagar Música"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
-                    </Box>
-                  </Paper>
+                    ),
+                  }}
+                >
+                  {tagsDisponiveis.map((tag) => (
+                    <MenuItem key={tag.id} value={tag.id}>
+                      {tag.nome}
+                    </MenuItem>
+                  ))}
+                </TextField>
+            </Grid>
+            </Grid>
+        </Paper>
+
+        {carregando ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>
+        ) : (
+            <Grid container spacing={3}>
+            {musicas.length > 0 ? (
+                musicas.map((musica) => (
+                <Grid item xs={12} sm={6} md={4} key={musica.id}>
+                    <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+                        <CardContent sx={{flexGrow: 1}}>
+                            <Typography variant="h6" fontWeight="medium">{musica.nome}</Typography>
+                            <Typography color="text.secondary" variant="body2">
+                                {musica.artista}
+                            </Typography>
+                             <Typography color="text.secondary" variant="body2" sx={{mt: 0.5}}>
+                                Tom: {musica.tom || "N/A"}
+                            </Typography>
+                            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {musica.tags.map((tag) => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
+                            </Box>
+                        </CardContent>
+                        <CardActions sx={{justifyContent: 'flex-end'}}>
+                            <Tooltip title="Sugerir Melhoria"><IconButton onClick={() => handleAbrirSugestao(musica)}><SuggestionIcon /></IconButton></Tooltip>
+                            <Tooltip title="Editar"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
+                            <Tooltip title="Apagar"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
+                        </CardActions>
+                    </Card>
                 </Grid>
-              ))
+                ))
             ) : (
-              <Grid item xs={12}>
-                <Typography sx={{ textAlign: 'center', p: 4 }}>Nenhuma música encontrada. Que tal adicionar uma nova?</Typography>
-              </Grid>
+                <Grid item xs={12}>
+                    <Paper variant="outlined" sx={{p: 4, textAlign: 'center'}}>
+                        <MusicNoteIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
+                        <Typography variant="h6">Nenhuma música encontrada</Typography>
+                        <Typography color="text.secondary">Adicione uma música ou ajuste seus filtros.</Typography>
+                    </Paper>
+                </Grid>
             )}
-          </Grid>
+            </Grid>
         )}
-      </Paper>
       
-      {/* Diálogo para o Formulário */}
       <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="md">
         <Box sx={{p: {xs: 2, md: 3}}}>
             <FormularioMusica id={musicaEmEdicaoId} onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} />
         </Box>
       </Dialog>
       
-      {/* Diálogo para Sugestões */}
       {musicaParaSugerir && (
         <FormularioSugestao open={dialogoSugestaoAberto} onClose={() => setDialogoSugestaoAberto(false)} musica={musicaParaSugerir} />
       )}
@@ -189,4 +201,4 @@ function Repertorios() {
   );
 }
 
-export default Repertorios;
+export default Repertorio;

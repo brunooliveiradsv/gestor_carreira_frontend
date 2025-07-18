@@ -1,30 +1,26 @@
 // src/componentes/Navegacao.jsx
-
 import React, { useContext, useState, useEffect } from "react";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext.jsx";
 import apiClient from "../api";
 
-// Imports do Material-UI
 import {
-  AppBar, Toolbar, Typography, Button, Box, IconButton, Badge, Menu,
+  AppBar, Toolbar, Typography, Box, IconButton, Badge, Menu,
   MenuItem, Tooltip, Divider, ListItemIcon, ListItemText, Dialog,
   DialogActions, DialogContent, DialogContentText, DialogTitle,
-  useTheme, Drawer, List, ListItem, ListItemButton, Avatar,
+  useTheme, Drawer, List, ListItem, ListItemButton, Avatar, Button
 } from "@mui/material";
 
-// Imports dos Ícones
 import {
   Notifications as NotificationsIcon, Close as CloseIcon, MilitaryTech as MilitaryTechIcon,
   MusicNote as MusicNoteIcon, AttachMoney as AttachMoneyIcon, People as PeopleIcon,
   Settings as SettingsIcon, Menu as MenuIcon, Logout as LogoutIcon,
   AdminPanelSettings as AdminPanelSettingsIcon, Dashboard as DashboardIcon, CalendarMonth as CalendarMonthIcon,
   MonetizationOn as MonetizationOnIcon, LibraryMusic as LibraryMusicIcon, Piano as PianoIcon,
-  Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon, // Ícone importado corretamente
-  EmojiEvents as EmojiEventsIcon, // Mantido como exemplo de outro ícone
+  Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon,
+  EmojiEvents as EmojiEventsIcon,
 } from "@mui/icons-material";
 
-// Mapeamento de ícones para notificações (usando o nome correto do ícone)
 const iconMapNotificacao = {
   SHOWS: MusicNoteIcon,
   RECEITA: AttachMoneyIcon,
@@ -39,10 +35,11 @@ function Navegacao() {
   const [notificacoes, setNotificacoes] = useState([]);
   const [anchorElNotificacoes, setAnchorElNotificacoes] = useState(null);
   const [dialogoLimparAberto, setDialogoLimparAberto] = useState(false);
-  const [drawerAberto, setDrawerAberto] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const openNotificacoes = Boolean(anchorElNotificacoes);
   const naoLidasCount = notificacoes.filter((n) => !n.lida).length;
+  const drawerWidth = 270;
 
   const buscarNotificacoes = async () => {
     if (!usuario) return;
@@ -60,11 +57,8 @@ function Navegacao() {
     return () => clearInterval(intervalId);
   }, [usuario]);
 
-  const toggleDrawer = (aberto) => (event) => {
-    if (event.type === "keydown" && (event.key === "Tab" || event.key === "Shift")) {
-      return;
-    }
-    setDrawerAberto(aberto);
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
   const handleMenuNotificacoesOpen = (event) => setAnchorElNotificacoes(event.currentTarget);
@@ -133,11 +127,6 @@ function Navegacao() {
     return <Icone fontSize="small" />;
   };
 
-  const activeLinkStyle = {
-    backgroundColor: theme.palette.action.selected,
-    borderRadius: '4px',
-  };
-
   const navLinks = [
     { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
@@ -149,108 +138,155 @@ function Navegacao() {
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
 
+  // Constrói a URL completa da foto do usuário a partir do contexto
+  const fotoUrlCompleta = usuario?.foto_url
+    ? `${apiClient.defaults.baseURL}${usuario.foto_url}`
+    : null;
+
   const drawerContent = (
-    <Box sx={{ width: 270, bgcolor: "background.paper", height: "100%", display: "flex", flexDirection: "column" }}
-      role="presentation" onClick={toggleDrawer(false)} onKeyDown={toggleDrawer(false)}
-    >
-      <Box sx={{ p: 2, textAlign: "center", borderBottom: `1px solid ${theme.palette.divider}` }}>
-        <Avatar sx={{ width: 80, height: 80, margin: "0 auto 16px", bgcolor: "primary.main", color: "primary.contrastText" }}>
+    <div>
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+         <Box component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', mb: 3 }}>
+            <Typography variant="h4" component="span" sx={{ mr: 0.5, fontWeight: 'bold', color: 'primary.main' }}>VOX</Typography>
+            <Typography variant="h5" component="span" sx={{ fontWeight: 'normal', color: 'text.primary' }}>Gest</Typography>
+          </Box>
+        <Avatar
+          src={fotoUrlCompleta} // Usa a URL completa da foto
+          sx={{
+            width: 80,
+            height: 80,
+            mb: 2,
+            bgcolor: 'primary.main',
+            fontSize: '2.5rem'
+          }}
+        >
           {usuario?.nome?.charAt(0).toUpperCase()}
         </Avatar>
         <Typography variant="h6">{usuario?.nome}</Typography>
         <Typography variant="body2" color="text.secondary">{usuario?.email}</Typography>
       </Box>
-      <List sx={{ flexGrow: 1 }}>
+      <Divider />
+      <List sx={{ p: 1 }}>
         {navLinks.map((link) => (
-          <ListItem key={link.text} disablePadding>
-            <ListItemButton component={RouterLink} to={link.to} style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}>
-              <ListItemIcon sx={{ color: "inherit" }}>{link.icon}</ListItemIcon>
+          <ListItem key={link.text} disablePadding sx={{ my: 0.5 }}>
+            <ListItemButton
+              component={RouterLink}
+              to={link.to}
+              sx={{
+                borderRadius: theme.shape.borderRadius,
+                '&.active': {
+                  backgroundColor: theme.palette.action.selected,
+                  color: theme.palette.primary.main,
+                  '& .MuiListItemIcon-root': {
+                    color: theme.palette.primary.main,
+                  },
+                },
+              }}
+            >
+              <ListItemIcon>{link.icon}</ListItemIcon>
               <ListItemText primary={link.text} />
             </ListItemButton>
           </ListItem>
         ))}
         {usuario?.role === "admin" && (
-          <ListItem disablePadding>
-            <ListItemButton component={RouterLink} to="/admin" style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}>
-              <ListItemIcon sx={{ color: "inherit" }}><AdminPanelSettingsIcon /></ListItemIcon>
-              <ListItemText primary="Painel de Admin" />
+          <ListItem disablePadding sx={{ my: 0.5 }}>
+            <ListItemButton
+              component={RouterLink}
+              to="/admin"
+              sx={{
+                borderRadius: theme.shape.borderRadius,
+                '&.active': {
+                  backgroundColor: theme.palette.action.selected,
+                  color: theme.palette.primary.main,
+                   '& .MuiListItemIcon-root': {
+                    color: theme.palette.primary.main,
+                  },
+                },
+              }}
+            >
+              <ListItemIcon><AdminPanelSettingsIcon /></ListItemIcon>
+              <ListItemText primary="Painel Admin" />
             </ListItemButton>
           </ListItem>
         )}
       </List>
+      <Box sx={{ flexGrow: 1 }} />
       <Divider />
-      <List>
+      <List sx={{ p: 1 }}>
         <ListItem disablePadding>
-          <ListItemButton component={RouterLink} to="/configuracoes">
-            <ListItemIcon sx={{ color: "inherit" }}><SettingsIcon /></ListItemIcon>
+          <ListItemButton component={RouterLink} to="/configuracoes" sx={{ borderRadius: theme.shape.borderRadius }}>
+            <ListItemIcon><SettingsIcon /></ListItemIcon>
             <ListItemText primary="Configurações" />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton onClick={handleLogout}>
-            <ListItemIcon sx={{ color: "inherit" }}><LogoutIcon /></ListItemIcon>
+          <ListItemButton onClick={handleLogout} sx={{ borderRadius: theme.shape.borderRadius }}>
+            <ListItemIcon><LogoutIcon /></ListItemIcon>
             <ListItemText primary="Sair" />
           </ListItemButton>
         </ListItem>
       </List>
-    </Box>
+    </div>
   );
 
   return (
     <>
-      <AppBar position="fixed" sx={{ background: theme.palette.background.paper, boxShadow: theme.shadows[3] }}>
+      <AppBar
+        position="fixed"
+        elevation={0}
+        sx={{
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` },
+          borderBottom: `1px solid ${theme.palette.divider}`
+        }}
+      >
         <Toolbar>
-          <Box sx={{ display: { xs: "block", md: "none" }, mr: 1 }}>
-            <IconButton size="large" edge="start" color="inherit" aria-label="menu" onClick={toggleDrawer(true)}>
-              <MenuIcon />
-            </IconButton>
-          </Box>
-          <Box component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
-            <Typography variant="h6" component="span" sx={{ mr: 0.5, fontWeight: 'bold', color: 'primary.main' }}>VOX</Typography>
-            <Typography variant="subtitle1" component="span" sx={{ fontWeight: 'normal', color: 'text.primary' }}>Gest</Typography>
-          </Box>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { md: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+           <Box sx={{ flexGrow: 1 }} />
 
-          <Box sx={{ display: { xs: "none", md: "flex" }, ml: 4 }}>
-            {navLinks.map((link) => (
-              <Button key={link.to} component={RouterLink} to={link.to} sx={{ color: "text.primary", mx: 1 }} style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}>
-                {link.text}
-              </Button>
-            ))}
-            {usuario?.role === "admin" && (
-              <Button component={RouterLink} to="/admin" sx={{ color: "text.primary", mx: 1 }} style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}>
-                Painel Administrador
-              </Button>
-            )}
-          </Box>
-
-          <Box sx={{ flexGrow: 1 }} />
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 } }}>
-            <Typography sx={{ display: { xs: "none", sm: "block" }, color: "text.primary", mr: 1 }}>
-              Olá, {usuario?.nome}
-            </Typography>
-            <Tooltip title="Notificações">
-              <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}>
-                <Badge badgeContent={naoLidasCount} color="error">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Configurações">
-              <IconButton color="inherit" component={RouterLink} to="/configuracoes" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-            <Button variant="outlined" onClick={handleLogout} color="primary" sx={{ display: { xs: "none", md: "flex" } }}>
-              Sair
-            </Button>
-          </Box>
+          <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}>
+            <Badge badgeContent={naoLidasCount} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
         </Toolbar>
       </AppBar>
 
-      <Drawer anchor="left" open={drawerAberto} onClose={toggleDrawer(false)}>
-        {drawerContent}
-      </Drawer>
+      <Box
+        component="nav"
+        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+      >
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none' },
+          }}
+          open
+        >
+          {drawerContent}
+        </Drawer>
+      </Box>
 
       <Menu anchorEl={anchorElNotificacoes} open={openNotificacoes} onClose={handleMenuNotificacoesClose} PaperProps={{ sx: { maxHeight: 400, width: { xs: "calc(100vw - 32px)", sm: "400px" }, mt: 1, bgcolor: "background.paper", boxShadow: theme.shadows[6] } }}>
         <Box sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>

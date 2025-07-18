@@ -3,30 +3,31 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navegacao from './Navegacao';
-import { Box, CssBaseline, useTheme, Toolbar } from '@mui/material'; // Adicionado useTheme
+import { Box, CssBaseline, Toolbar } from '@mui/material';
 
 function LayoutPrincipal() {
-  const theme = useTheme(); // Para acessar as cores do tema
-
   return (
-    // Removendo o background fixo. O CssBaseline já cuida do background.
-    // Se você *ainda* quiser um gradiente específico AQUI no layout, use as cores do tema.
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
+    <Box sx={{
+      display: 'flex',
       minHeight: '100vh',
-      // Exemplo para manter o gradiente usando cores do tema:
-      background: `linear-gradient(to right bottom, ${theme.palette.background.default}, ${theme.palette.background.paper})`,
-      // Ou simplesmente remova a linha acima para usar a cor sólida do tema (theme.palette.background.default)
+      bgcolor: 'background.default', // Usando a cor de fundo sólida do novo tema
     }}>
-      {/* CssBaseline já está no main.jsx, mas não custa ter aqui também se houver outros resets específicos */}
-      <CssBaseline /> 
+      <CssBaseline />
       <Navegacao />
-      <Toolbar />
-      {/* O 'main' agora conterá nossas páginas, já com o fundo correto */}
-      <main style={{ padding: '20px', flexGrow: 1 }}>
+
+      {/* O 'main' agora conterá nossas páginas */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: { xs: 2, sm: 3, md: 4 }, // Padding responsivo para o conteúdo
+          width: { sm: `calc(100% - 270px)` }, // Considera o drawer no desktop
+          ml: { sm: `270px` }, // Espaçamento para o drawer no desktop
+        }}
+      >
+        <Toolbar /> {/* Espaço para a AppBar não cobrir o conteúdo */}
         <Outlet />
-      </main>
+      </Box>
     </Box>
   );
 }

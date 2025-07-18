@@ -1,98 +1,83 @@
 // src/contextos/AuthContext.jsx
+import React, { createContext, useState, useEffect, useCallback } from 'react';
+import apiClient from '../api';
+import { useNotificacao } from './NotificationContext';
 
-import React, { createContext, useState, useEffect } from "react";
-import { Box, CircularProgress } from "@mui/material";
-import apiClient from "../api";
+export const AuthContext = createContext();
 
-export const AuthContext = createContext({});
+export const AuthProvider = ({ children }) => {
+    const [usuario, setUsuario] = useState(null);
+    const [carregando, setCarregando] = useState(true);
+    const { mostrarNotificacao } = useNotificacao();
 
-export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null);
-  const [carregandoSessao, setCarregandoSessao] = useState(true);
+    const carregarUsuarioPeloToken = useCallback(async () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            try {
+                const { data } = await apiClient.get('/api/usuarios/perfil');
+                setUsuario(data);
+            } catch (error) {
+                console.error("Token inválido ou expirado, limpando...");
+                localStorage.removeItem('token');
+                delete apiClient.defaults.headers.common['Authorization'];
+                setUsuario(null);
+            }
+        }
+        setCarregando(false);
+    }, []);
 
-  async function carregarDadosDoUsuario() {
-    const tokenSalvo = localStorage.getItem("token");
-    if (!tokenSalvo) {
-      logout(); // Garante que tudo seja limpo se não houver token
-      return;
-    }
+    useEffect(() => {
+        carregarUsuarioPeloToken();
+    }, [carregarUsuarioPeloToken]);
 
-    try {
-      apiClient.defaults.headers.common["Authorization"] = `Bearer ${tokenSalvo}`;
-      const resposta = await apiClient.get(
-        `/api/usuarios/perfil`
-      );
-      setUsuario(resposta.data);
-    } catch (error) {
-      console.error("Sessão inválida. Removendo token.", error);
-      logout();
-    }
-  }
+    const login = async (email, senha) => {
+        try {
+            const { data } = await apiClient.post('/api/usuarios/login', { email, senha });
+            localStorage.setItem('token', data.token);
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+            setUsuario(data.usuario); // <-- Ponto chave: Atualiza o estado do usuário
+            mostrarNotificacao(data.mensagem || 'Login bem-sucedido!', 'success');
+            return true;
+        } catch (error) {
+            mostrarNotificacao(error.response?.data?.mensagem || 'Falha no login.', 'error');
+            return false;
+        }
+    };
+    
+    const registrar = async (nome, email, senha) => {
+        try {
+            const { data } = await apiClient.post('/api/usuarios/registrar', { nome, email, senha });
+            localStorage.setItem('token', data.token);
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+            setUsuario(data.usuario); // <-- Ponto chave: Atualiza o estado do usuário
+            mostrarNotificacao(data.mensagem || 'Cadastro realizado com sucesso!', 'success');
+            return true;
+        } catch (error) {
+            mostrarNotificacao(error.response?.data?.mensagem || 'Falha no cadastro.', 'error');
+            return false;
+        }
+    };
 
-  useEffect(() => {
-    const tokenSalvo = localStorage.getItem("token");
-    if (tokenSalvo) {
-      carregarDadosDoUsuario().finally(() => setCarregandoSessao(false));
-    } else {
-      setCarregandoSessao(false);
-    }
-  }, []);
+    const logout = () => {
+        localStorage.removeItem('token');
+        delete apiClient.defaults.headers.common['Authorization'];
+        setUsuario(null);
+    };
 
-  async function login(email, senha) {
-    try {
-      const resposta = await apiClient.post(
-        `/api/usuarios/login`,
-        { email, senha }
-      );
-      const { token } = resposta.data;
-      localStorage.setItem("token", token);
-      await carregarDadosDoUsuario();
-      return true;
-    } catch (erro) {
-      console.error("Erro no login pelo contexto:", erro);
-      return false;
-    }
-  }
-
-  function loginComToken(token) {
-    localStorage.setItem("token", token);
-    carregarDadosDoUsuario();
-  }
-
-  function logout() {
-    setUsuario(null);
-    localStorage.removeItem("token");
-    apiClient.defaults.headers.common["Authorization"] = undefined;
-  }
-
-  if (carregandoSessao) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          bgcolor: "#111827",
-        }}
-      >
-        <CircularProgress color="inherit" />
-      </Box>
-    );
-  }
-
-  return (
-    <AuthContext.Provider
-      value={{
-        logado: !!usuario,
+    const valorDoContexto = {
         usuario,
+        setUsuario,
+        logado: !!usuario,
+        carregando,
         login,
+        registrar,
         logout,
-        loginComToken,
-        carregarDadosDoUsuario,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
+    };
+
+    return (
+        <AuthContext.Provider value={valorDoContexto}>
+            {!carregando && children}
+        </AuthContext.Provider>
+    );
+};

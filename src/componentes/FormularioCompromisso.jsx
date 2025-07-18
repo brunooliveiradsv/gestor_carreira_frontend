@@ -14,17 +14,21 @@ import {
   Paper,
   CircularProgress,
   useTheme,
-  Autocomplete, // 1. Importar o Autocomplete do Material-UI
+  Autocomplete,
   Grid,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from '@mui/material';
 import { useNotificacao } from '../contextos/NotificationContext';
-// 2. Importar o hook que acabamos de instalar
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
 } from 'use-places-autocomplete';
 
-// Componente auxiliar para o Autocomplete de locais
+// O componente PlacesAutocomplete não precisa de alterações
 function PlacesAutocomplete({ initialValue, onSelectPlace }) {
   const {
     ready,
@@ -34,12 +38,11 @@ function PlacesAutocomplete({ initialValue, onSelectPlace }) {
     clearSuggestions,
   } = usePlacesAutocomplete({
     requestOptions: {
-      types: ['(cities)'], // Busca apenas por cidades
+      types: ['(cities)'],
     },
     debounce: 300,
   });
 
-  // Define o valor inicial quando o componente carrega (importante para o modo de edição)
   useEffect(() => {
     if (initialValue) {
       setValue(initialValue, false);
@@ -50,7 +53,7 @@ function PlacesAutocomplete({ initialValue, onSelectPlace }) {
   const handleInput = (e, newValue) => {
     setValue(newValue);
     if (onSelectPlace) {
-      onSelectPlace(newValue); // Atualiza o formulário principal enquanto digita
+      onSelectPlace(newValue);
     }
   };
 
@@ -62,7 +65,6 @@ function PlacesAutocomplete({ initialValue, onSelectPlace }) {
 
     getGeocode({ address: newValue })
       .then((results) => {
-         // Passa o nome formatado do local para o formulário
         if (onSelectPlace) {
             onSelectPlace(results[0].formatted_address);
         }
@@ -108,6 +110,11 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
   const { mostrarNotificacao } = useNotificacao();
   const theme = useTheme();
 
+  // --- NOVOS ESTADOS PARA O DIÁLOGO DE CONFIRMAÇÃO ---
+  const [dialogoConfirmacaoAberto, setDialogoConfirmacaoAberto] = useState(false);
+  const [indiceDespesaParaRemover, setIndiceDespesaParaRemover] = useState(null);
+
+
   useEffect(() => {
     if (id) {
       apiClient.get(`/api/compromissos/${id}`)
@@ -122,7 +129,7 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
             ...resposta.data,
             data: dataFormatadaParaInput,
             despesas: despesasSeguro,
-            local: resposta.data.local || '' // Garante que o local seja definido
+            local: resposta.data.local || ''
           });
         })
         .catch(erro => {
@@ -150,13 +157,25 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
     }));
   };
 
+  // --- FUNÇÃO MODIFICADA: APENAS ABRE O DIÁLOGO ---
   const removerDespesa = (index) => {
-    if (window.confirm("Remover esta despesa?")) {
-      const novasDespesas = [...dadosForm.despesas];
-      novasDespesas.splice(index, 1);
-      setDadosForm(dadosAtuais => ({ ...dadosAtuais, despesas: novasDespesas }));
-    }
+    setIndiceDespesaParaRemover(index);
+    setDialogoConfirmacaoAberto(true);
   };
+
+  // --- NOVA FUNÇÃO: EXECUTA A REMOÇÃO APÓS CONFIRMAÇÃO ---
+  const handleConfirmarRemocaoDespesa = () => {
+    if (indiceDespesaParaRemover === null) return;
+    
+    const novasDespesas = [...dadosForm.despesas];
+    novasDespesas.splice(indiceDespesaParaRemover, 1);
+    setDadosForm(dadosAtuais => ({ ...dadosAtuais, despesas: novasDespesas }));
+
+    // Fecha o diálogo e reseta o índice
+    setDialogoConfirmacaoAberto(false);
+    setIndiceDespesaParaRemover(null);
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -187,26 +206,14 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
 
   const getStatusOptions = () => {
     if (!id) {
-      return [
-        <MenuItem key="agendado-novo" value="Agendado">
-          Agendado
-        </MenuItem>,
-      ];
+      return [<MenuItem key="agendado-novo" value="Agendado">Agendado</MenuItem>];
     }
     if (dadosForm.status === "Realizado" || dadosForm.status === "Cancelado") {
-      return [
-        <MenuItem key={dadosForm.status} value={dadosForm.status}>
-          {dadosForm.status}
-        </MenuItem>,
-      ];
+      return [<MenuItem key={dadosForm.status} value={dadosForm.status}>{dadosForm.status}</MenuItem>];
     }
     return [
-      <MenuItem key="agendado" value="Agendado">
-        Agendado
-      </MenuItem>,
-      <MenuItem key="cancelado" value="Cancelado">
-        Cancelado
-      </MenuItem>,
+      <MenuItem key="agendado" value="Agendado">Agendado</MenuItem>,
+      <MenuItem key="cancelado" value="Cancelado">Cancelado</MenuItem>,
     ];
   };
 
@@ -217,11 +224,11 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
 
 
   return (
-    <Paper elevation={6} sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+    <>
       <Box
         component="form"
         onSubmit={handleSubmit}
-        sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+        sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1 }}
       >
         <Typography variant="h5" component="h2" fontWeight="bold" gutterBottom>
           {id ? "Editar Compromisso" : "Novo Compromisso"}
@@ -273,14 +280,33 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
           </Button>
         </Box>
 
-        <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+        <Box sx={{ mt: 2, display: "flex", justifyContent: 'flex-end', gap: 2 }}>
+          <Button type="button" variant="text" onClick={onCancel}>Cancelar</Button>
           <Button type="submit" variant="contained" disabled={carregando}>
             {carregando ? <CircularProgress size={24} /> : "Salvar"}
           </Button>
-          <Button type="button" variant="text" onClick={onCancel}>Cancelar</Button>
         </Box>
       </Box>
-    </Paper>
+
+      {/* --- NOVO DIÁLOGO DE CONFIRMAÇÃO --- */}
+      <Dialog
+        open={dialogoConfirmacaoAberto}
+        onClose={() => setDialogoConfirmacaoAberto(false)}
+      >
+        <DialogTitle>Confirmar Remoção</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tem certeza que deseja remover esta despesa?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogoConfirmacaoAberto(false)}>Cancelar</Button>
+          <Button onClick={handleConfirmarRemocaoDespesa} color="error" autoFocus>
+            Remover
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 
