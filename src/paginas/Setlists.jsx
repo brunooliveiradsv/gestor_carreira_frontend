@@ -1,157 +1,153 @@
 // src/paginas/Setlists.jsx
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom'; // Importe o useNavigate
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
-  Box, Button, Typography, CircularProgress, Paper,
-  IconButton, Tooltip, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField, Grid, Card, CardContent, CardActions
+  Box, Typography, Button, CircularProgress, Paper,
+  Grid, Card, CardContent, CardActions, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField
 } from '@mui/material';
 import {
-  AddCircleOutline as AddCircleOutlineIcon, Edit as EditIcon,
-  Delete as DeleteIcon, PlaylistPlay as PlaylistPlayIcon
+  AddCircleOutline as AddCircleOutlineIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  PlaylistPlay as PlaylistPlayIcon
 } from '@mui/icons-material';
 
 function Setlists() {
   const [setlists, setSetlists] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Hook para navegação
 
-  const [dialogoNovoSetlistAberto, setDialogoNovoSetlistAberto] = useState(false);
-  const [nomeNovoSetlist, setNomeNovoSetlist] = useState('');
-  const [criandoSetlist, setCriandoSetlist] = useState(false);
+  // Estados para o novo Dialog de CRIAR setlist
+  const [dialogoCriarAberto, setDialogoCriarAberto] = useState(false);
+  const [novoNomeSetlist, setNovoNomeSetlist] = useState('');
 
-  // ... (Toda a lógica de busca e manipulação de dados permanece a mesma) ...
-    const buscarSetlists = async () => {
-        try {
-        const resposta = await apiClient.get('/api/setlists');
-        setSetlists(resposta.data);
-        } catch (erro) {
-        mostrarNotificacao("Não foi possível carregar os setlists.", "error");
-        } finally {
-        setCarregando(false);
-        }
-    };
-
-    useEffect(() => {
-        buscarSetlists();
-    }, []);
-
-    const handleAbrirDialogoNovoSetlist = () => {
-        setDialogoNovoSetlistAberto(true);
-        setNomeNovoSetlist('');
-    };
-
-    const handleFecharDialogoNovoSetlist = () => {
-        setDialogoNovoSetlistAberto(false);
-        setNomeNovoSetlist('');
-    };
-
-    const handleConfirmarNovoSetlist = async () => {
-        if (!nomeNovoSetlist.trim()) {
-        mostrarNotificacao("O nome do setlist não pode ser vazio.", "warning");
-        return;
-        }
-        setCriandoSetlist(true);
-        try {
-        const resposta = await apiClient.post('/api/setlists', { nome: nomeNovoSetlist });
-        mostrarNotificacao("Setlist criado! Agora adicione músicas a ele.", "success");
-        handleFecharDialogoNovoSetlist();
-        navigate(`/setlists/editar/${resposta.data.id}`);
-        } catch (erro) {
-        mostrarNotificacao("Falha ao criar o setlist.", "error");
-        } finally {
-        setCriandoSetlist(false);
-        }
-    };
-
-    const handleApagar = async (id, nome) => {
-        if (window.confirm(`Tem certeza que deseja apagar o setlist "${nome}"?`)) {
-            try {
-                await apiClient.delete(`/api/setlists/${id}`);
-                mostrarNotificacao("Setlist apagado com sucesso!", "success");
-                buscarSetlists();
-            } catch(erro) {
-                mostrarNotificacao("Falha ao apagar o setlist.", "error");
-            }
-        }
+  const buscarSetlists = useCallback(async () => {
+    try {
+      const resposta = await apiClient.get('/api/setlists');
+      setSetlists(resposta.data);
+    } catch (error) {
+      mostrarNotificacao('Erro ao carregar os setlists.', 'error');
+    } finally {
+      setCarregando(false);
     }
+  }, [mostrarNotificacao]);
+
+  useEffect(() => {
+    buscarSetlists();
+  }, [buscarSetlists]);
+
+  // Função para navegar para a página de edição
+  const handleEditar = (id) => {
+    navigate(`/setlists/editar/${id}`);
+  };
+  
+  const handleAbrirCriarDialogo = () => {
+      setNovoNomeSetlist('');
+      setDialogoCriarAberto(true);
+  };
+
+  const handleFecharCriarDialogo = () => {
+      setDialogoCriarAberto(false);
+  };
+
+  const handleCriarNovoSetlist = async () => {
+      if (!novoNomeSetlist) {
+          mostrarNotificacao('O nome do setlist é obrigatório.', 'warning');
+          return;
+      }
+      try {
+          const resposta = await apiClient.post('/api/setlists', { nome: novoNomeSetlist });
+          mostrarNotificacao('Setlist criado com sucesso!', 'success');
+          handleFecharCriarDialogo();
+          // Navega para a página de edição do setlist recém-criado
+          navigate(`/setlists/editar/${resposta.data.id}`);
+      } catch (error) {
+          mostrarNotificacao('Erro ao criar o setlist.', 'error');
+      }
+  };
 
 
   if (carregando) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}><CircularProgress color="inherit" /></Box>;
+    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
 
   return (
     <Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
-            <Box>
-                <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
-                <Typography color="text.secondary">Crie e organize as sequências de músicas para seus shows.</Typography>
-            </Box>
-            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirDialogoNovoSetlist}>
-            Novo Setlist
-            </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
+          <Typography color="text.secondary">Crie e organize as sequências de músicas para seus shows.</Typography>
         </Box>
+        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirCriarDialogo}>
+          Novo Setlist
+        </Button>
+      </Box>
 
-        {setlists.length > 0 ? (
-            <Grid container spacing={3}>
-                {setlists.map(setlist => (
-                <Grid item xs={12} sm={6} md={4} key={setlist.id}>
-                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        <CardContent sx={{ flexGrow: 1 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                                <PlaylistPlayIcon color="primary" sx={{fontSize: 40}} />
-                                <Typography variant="h6" fontWeight="bold">{setlist.nome}</Typography>
-                            </Box>
-                            <Typography variant="body2" color="text.secondary" sx={{fontStyle: 'italic'}}>
-                                {setlist.notas_adicionais || 'Nenhuma nota adicional.'}
-                            </Typography>
-                        </CardContent>
-                         <CardActions sx={{ justifyContent: 'flex-end' }}>
-                            <Tooltip title="Editar Setlist">
-                                <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/setlists/editar/${setlist.id}`)}>
-                                    <EditIcon />
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Apagar Setlist">
-                                <IconButton edge="end" aria-label="delete" color="error" onClick={() => handleApagar(setlist.id, setlist.nome)}>
-                                    <DeleteIcon />
-                                </IconButton>
-                            </Tooltip>
-                        </CardActions>
-                    </Card>
-                </Grid>
-                ))}
+      {setlists.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h6">Nenhum setlist criado.</Typography>
+          <Typography color="text.secondary">Clique em "Novo Setlist" para criar o seu primeiro.</Typography>
+        </Paper>
+      ) : (
+        <Grid container spacing={3}>
+          {setlists.map((setlist) => (
+            <Grid item xs={12} sm={6} md={4} key={setlist.id}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <PlaylistPlayIcon sx={{ color: 'primary.main', mr: 1.5 }} />
+                    <Typography variant="h6" fontWeight="bold">{setlist.nome}</Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                  }}>
+                    {setlist.notas_adicionais || 'Nenhuma nota adicional.'}
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'flex-end' }}>
+                  <Tooltip title="Editar Músicas e Detalhes">
+                    {/* Botão de edição agora navega para a página do editor */}
+                    <IconButton onClick={() => handleEditar(setlist.id)}>
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Excluir">
+                    <IconButton color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </CardActions>
+              </Card>
             </Grid>
-        ) : (
-            <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
-                <PlaylistPlayIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h6">Nenhum setlist criado.</Typography>
-                <Typography color="text.secondary">Que tal começar um agora?</Typography>
-            </Paper>
-        )}
+          ))}
+        </Grid>
+      )}
 
-      {/* Diálogo para criar novo setlist */}
-      <Dialog open={dialogoNovoSetlistAberto} onClose={handleFecharDialogoNovoSetlist}>
+      {/* Dialog para CRIAR um novo setlist */}
+      <Dialog open={dialogoCriarAberto} onClose={handleFecharCriarDialogo} fullWidth maxWidth="sm">
         <DialogTitle>Criar Novo Setlist</DialogTitle>
         <DialogContent>
           <TextField
-            autoFocus margin="dense" id="nomeSetlist" label="Nome do Setlist"
-            type="text" fullWidth variant="outlined" value={nomeNovoSetlist}
-            onChange={(e) => setNomeNovoSetlist(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !criandoSetlist) { handleConfirmarNovoSetlist(); }
-            }}
+            autoFocus
+            margin="dense"
+            label="Nome do Setlist"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={novoNomeSetlist}
+            onChange={(e) => setNovoNomeSetlist(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleFecharDialogoNovoSetlist} disabled={criandoSetlist}>Cancelar</Button>
-          <Button onClick={handleConfirmarNovoSetlist} disabled={criandoSetlist || !nomeNovoSetlist.trim()} variant="contained">
-            {criandoSetlist ? <CircularProgress size={24} /> : 'Criar'}
-          </Button>
+          <Button onClick={handleFecharCriarDialogo}>Cancelar</Button>
+          <Button onClick={handleCriarNovoSetlist} variant="contained">Criar e Editar Músicas</Button>
         </DialogActions>
       </Dialog>
     </Box>

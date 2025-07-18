@@ -1,5 +1,5 @@
 // src/paginas/EditorDeSetlist.jsx
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import apiClient from "../api";
 import { useNotificacao } from "../contextos/NotificationContext";
@@ -26,14 +26,14 @@ function EditorDeSetlist() {
   const navigate = useNavigate();
   const { mostrarNotificacao } = useNotificacao();
 
-  const [setlist, setSetlist] = useState(null);
+  const [nomeSetlist, setNomeSetlist] = useState('');
+  const [notasSetlist, setNotasSetlist] = useState('');
   const [musicasNoSetlist, setMusicasNoSetlist] = useState([]);
   const [repertorioGeral, setRepertorioGeral] = useState([]);
   const [termoBusca, setTermoBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
 
-  // ... (Toda a lógica de busca e manipulação de dados permanece a mesma) ...
   const buscarDados = useCallback(async () => {
     try {
       const [setlistRes, repertorioRes] = await Promise.all([
@@ -41,7 +41,8 @@ function EditorDeSetlist() {
         apiClient.get(`/api/musicas?termoBusca=${termoBusca}`),
       ]);
 
-      setSetlist(setlistRes.data);
+      setNomeSetlist(setlistRes.data.nome);
+      setNotasSetlist(setlistRes.data.notas_adicionais || '');
       setMusicasNoSetlist(setlistRes.data.musicas || []);
 
       const idsNoSetlist = new Set((setlistRes.data.musicas || []).map((m) => m.id));
@@ -61,35 +62,40 @@ function EditorDeSetlist() {
   const onDragEnd = (result) => {
     const { source, destination } = result;
     if (!destination) return;
+
     if (source.droppableId === "setlist" && destination.droppableId === "setlist") {
-      const items = reorder(musicasNoSetlist, source.index, destination.index);
-      setMusicasNoSetlist(items);
+      setMusicasNoSetlist(reorder(musicasNoSetlist, source.index, destination.index));
     }
     if (source.droppableId === "repertorio" && destination.droppableId === "setlist") {
       const itemMovido = repertorioGeral[source.index];
-      const novoRepertorio = [...repertorioGeral];
-      novoRepertorio.splice(source.index, 1);
-      setRepertorioGeral(novoRepertorio);
+      setRepertorioGeral(repertorioGeral.filter((_, i) => i !== source.index));
       const novoSetlist = [...musicasNoSetlist];
       novoSetlist.splice(destination.index, 0, itemMovido);
       setMusicasNoSetlist(novoSetlist);
     }
   };
+  
   const removerDoSetlist = (musica, index) => {
-    const novoSetlist = [...musicasNoSetlist];
-    novoSetlist.splice(index, 1);
-    setMusicasNoSetlist(novoSetlist);
+    setMusicasNoSetlist(musicasNoSetlist.filter((_, i) => i !== index));
     setRepertorioGeral((atual) => [musica, ...atual]);
   };
+  
   const adicionarAoSetlist = (musica) => {
     setMusicasNoSetlist((prev) => [...prev, musica]);
     setRepertorioGeral((prev) => prev.filter((m) => m.id !== musica.id));
   };
+  
   const handleSalvar = async () => {
     setSalvando(true);
     try {
       const musicasIds = musicasNoSetlist.map((m) => m.id);
-      await apiClient.put(`/api/setlists/${id}/musicas`, { musicasIds });
+      
+      // Executa as duas requisições de salvamento em paralelo
+      await Promise.all([
+        apiClient.put(`/api/setlists/${id}`, { nome: nomeSetlist, notas_adicionais: notasSetlist }),
+        apiClient.put(`/api/setlists/${id}/musicas`, { musicasIds })
+      ]);
+
       mostrarNotificacao("Setlist salvo com sucesso!", "success");
     } catch (error) {
       mostrarNotificacao("Erro ao salvar o setlist.", "error");
@@ -108,15 +114,38 @@ function EditorDeSetlist() {
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexShrink: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Tooltip title="Voltar para Setlists">
-                <IconButton onClick={() => navigate("/setlists")}><ArrowBackIcon /></IconButton>
+              <IconButton onClick={() => navigate("/setlists")}><ArrowBackIcon /></IconButton>
             </Tooltip>
-            <Typography variant="h5" fontWeight="bold">{setlist?.nome}</Typography>
+            <Typography variant="h5" fontWeight="bold">{nomeSetlist}</Typography>
           </Box>
           <Button variant="contained" startIcon={salvando ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} onClick={handleSalvar} disabled={salvando}>
             Salvar
           </Button>
         </Box>
-        <Grid container spacing={3} sx={{ flexGrow: 1 }}>
+
+        {/* --- NOVOS CAMPOS DE EDIÇÃO --- */}
+        <Paper sx={{ p: 2, mb: 3, flexShrink: 0 }}>
+            <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                    <TextField 
+                        fullWidth
+                        label="Nome do Setlist"
+                        value={nomeSetlist}
+                        onChange={(e) => setNomeSetlist(e.target.value)}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                    <TextField 
+                        fullWidth
+                        label="Notas Adicionais"
+                        value={notasSetlist}
+                        onChange={(e) => setNotasSetlist(e.target.value)}
+                    />
+                </Grid>
+            </Grid>
+        </Paper>
+
+        <Grid container spacing={3} sx={{ flexGrow: 1, overflow: 'hidden' }}>
           {/* Coluna do Repertório Geral */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
             <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -157,7 +186,7 @@ function EditorDeSetlist() {
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
             <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'action.selected' }}>
               <Typography variant="h6" gutterBottom>Músicas no Setlist ({musicasNoSetlist.length})</Typography>
-               <Droppable droppableId="setlist">
+                <Droppable droppableId="setlist">
                 {(provided) => (
                   <List dense sx={{ overflowY: 'auto', flexGrow: 1 }} {...provided.droppableProps} ref={provided.innerRef}>
                     {musicasNoSetlist.map((musica, index) => (
@@ -172,7 +201,7 @@ function EditorDeSetlist() {
                             }
                             sx={{ mb: 1, bgcolor: 'background.paper', borderRadius: 2 }}
                           >
-                             <ListItemIcon sx={{minWidth: 32, color: 'text.secondary'}}><DragIndicatorIcon /></ListItemIcon>
+                              <ListItemIcon sx={{minWidth: 32, color: 'text.secondary'}}><DragIndicatorIcon /></ListItemIcon>
                             <ListItemText primary={musica.nome} secondary={musica.artista} />
                           </ListItem>
                         )}

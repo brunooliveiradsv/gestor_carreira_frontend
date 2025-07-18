@@ -205,7 +205,7 @@ function Navegacao() {
               }}
             >
               <ListItemIcon><AdminPanelSettingsIcon /></ListItemIcon>
-              <ListItemText primary="Painel Admin" />
+              <ListItemText primary="Painel Administrador" />
             </ListItemButton>
           </ListItem>
         )}

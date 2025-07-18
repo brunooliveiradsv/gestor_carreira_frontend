@@ -1,8 +1,4 @@
-// src/App.jsx
-
 import { Routes, Route } from "react-router-dom";
-
-// Importando nossas páginas e componentes de layout
 import Autenticacao from "./paginas/Autenticacao.jsx";
 import Dashboard from "./paginas/Dashboard.jsx";
 import Agenda from "./paginas/Agenda.jsx";
@@ -16,21 +12,22 @@ import Configuracoes from "./paginas/Configuracoes.jsx";
 import Repertorio from "./paginas/Repertorio.jsx";
 import Equipamentos from "./paginas/Equipamentos.jsx";
 import RecuperarSenha from "./paginas/RecuperarSenha.jsx";
-import Setlists from "./paginas/Setlists.jsx"; // Novo
-import EditorDeSetlist from "./paginas/EditorDeSetlist.jsx"; // Novo
+import Setlists from "./paginas/Setlists.jsx";
+import EditorDeSetlist from "./paginas/EditorDeSetlist.jsx";
 import AdminPainel from "./paginas/AdminPainel.jsx";
+import PaginaVitrine from "./paginas/PaginaVitrine.jsx"; // <-- Importe a nova página
+import AdminMusicas from "./paginas/AdminMusicas.jsx";
 
 function App() {
   return (
     <Routes>
+      {/* Rotas Públicas */}
       <Route path="/login" element={<Autenticacao />} />
       <Route path="/cadastro" element={<Autenticacao />} />
-      {/* Apenas a rota para solicitar a recuperação é necessária */}
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+      <Route path="/vitrine/:url_unica" element={<PaginaVitrine />} /> {/* <-- ROTA PÚBLICA NOVA */}
 
-      {/* Rota com token foi REMOVIDA */}
-      {/* <Route path="/redefinir-senha/:token" element={<RecuperarSenha />} /> */}
-
+      {/* Rotas Protegidas */}
       <Route
         element={
           <RotaProtegida>
@@ -47,11 +44,10 @@ function App() {
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/repertorio" element={<Repertorio />} />
         <Route path="/equipamentos" element={<Equipamentos />} />
-        <Route path="/setlists" element={<Setlists />} />{" "}
-        {/* Nova lista de Setlists */}
-        <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />{" "}
-        {/* Novo editor */}
+        <Route path="/setlists" element={<Setlists />} />
+        <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
         <Route path="/admin" element={<AdminPainel />} />
+        <Route path="/admin/musicas" element={<AdminMusicas />} />
       </Route>
     </Routes>
   );

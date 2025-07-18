@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import {
   Edit as EditIcon, Delete as DeleteIcon, AddCircleOutline as AddCircleOutlineIcon,
-  Person as PersonIcon, Phone as PhoneIcon, Email as EmailIcon, Work as WorkIcon,
+  Person as PersonIcon, Phone as PhoneIcon, Email as EmailIcon, Star as StarIcon,
   ContactPage as ContactPageIcon
 } from "@mui/icons-material";
 
@@ -28,9 +28,9 @@ function Contatos() {
   const [contatoSelecionadoId, setContatoSelecionadoId] = useState(null);
   const [contatoParaApagar, setContatoParaApagar] = useState(null);
 
-
   const buscarContatos = async () => {
     try {
+      // Não é necessário resetar o carregamento aqui para evitar piscar da tela
       const resposta = await apiClient.get("/api/contatos");
       setContatos(resposta.data);
     } catch (erro) {
@@ -41,6 +41,7 @@ function Contatos() {
   };
 
   useEffect(() => {
+    setCarregando(true);
     buscarContatos();
   }, []);
 
@@ -82,6 +83,19 @@ function Contatos() {
     }
   };
 
+  // --- NOVA FUNÇÃO ---
+  // Função para definir um contato como público para a vitrine
+  const handleDefinirPublico = async (contatoId) => {
+    try {
+      await apiClient.patch(`/api/contatos/${contatoId}/definir-publico`);
+      mostrarNotificacao('Contato destacado na sua página vitrine!', 'success');
+      // Atualiza a lista para refletir a mudança visual
+      buscarContatos(); 
+    } catch (error) {
+      mostrarNotificacao('Erro ao destacar o contato.', 'error');
+    }
+  };
+
   if (carregando) {
     return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress color="inherit" /></Box>;
   }
@@ -108,7 +122,7 @@ function Contatos() {
             <Grid container spacing={3}>
             {contatos.map((contato) => (
                 <Grid item xs={12} sm={6} md={4} key={contato.id}>
-                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', border: contato.publico ? `2px solid ${theme.palette.primary.main}` : 'none' }}>
                         <CardContent sx={{ flexGrow: 1 }}>
                             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                             <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}><PersonIcon /></Avatar>
@@ -130,13 +144,30 @@ function Contatos() {
                             </Box>
                             )}
                         </CardContent>
-                        <CardActions sx={{ justifyContent: 'flex-end' }}>
-                            <Tooltip title="Editar">
-                            <IconButton onClick={() => handleAbrirFormulario(contato.id)}><EditIcon /></IconButton>
+                        <CardActions sx={{ justifyContent: 'space-between', px: 2 }}>
+                            {/* --- NOVO BOTÃO DE DESTAQUE --- */}
+                            <Tooltip title={contato.publico ? "Este contato já está na sua vitrine" : "Destacar na vitrine pública"}>
+                                {/* O 'span' é necessário para o Tooltip funcionar com um botão desabilitado */}
+                                <span>
+                                    <Button
+                                        size="small"
+                                        startIcon={<StarIcon />}
+                                        onClick={() => handleDefinirPublico(contato.id)}
+                                        disabled={contato.publico}
+                                        color="primary"
+                                    >
+                                        {contato.publico ? "Público" : "Destacar"}
+                                    </Button>
+                                </span>
                             </Tooltip>
-                            <Tooltip title="Excluir">
-                            <IconButton onClick={() => handleAbrirConfirmacaoApagar(contato)} color="error"><DeleteIcon /></IconButton>
-                            </Tooltip>
+                            <Box>
+                                <Tooltip title="Editar">
+                                <IconButton onClick={() => handleAbrirFormulario(contato.id)}><EditIcon /></IconButton>
+                                </Tooltip>
+                                <Tooltip title="Excluir">
+                                <IconButton onClick={() => handleAbrirConfirmacaoApagar(contato)} color="error"><DeleteIcon /></IconButton>
+                                </Tooltip>
+                            </Box>
                         </CardActions>
                     </Card>
                 </Grid>
@@ -144,24 +175,15 @@ function Contatos() {
             </Grid>
         )}
 
-
-      <Dialog 
-        open={dialogoFormularioAberto} 
-        onClose={handleFecharFormulario} 
-        fullWidth 
-        maxWidth="sm"
-        // ADICIONADO PARA REMOVER A SOMBRA
-        PaperProps={{ elevation: 0 }}
-      >
-          <DialogContent>
-              <FormularioContato
-                  id={contatoSelecionadoId}
-                  onSave={handleSucessoFormulario}
-                  onCancel={handleFecharFormulario}
-              />
-          </DialogContent>
+      <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="sm" PaperProps={{ elevation: 0 }}>
+        <DialogContent>
+            <FormularioContato
+                id={contatoSelecionadoId}
+                onSave={handleSucessoFormulario}
+                onCancel={handleFecharFormulario}
+            />
+        </DialogContent>
       </Dialog>
-
 
       <Dialog open={dialogoConfirmacaoAberto} onClose={handleFecharConfirmacaoApagar}>
         <DialogTitle>Confirmar Exclusão</DialogTitle>
