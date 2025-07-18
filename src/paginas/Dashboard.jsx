@@ -6,7 +6,6 @@ import apiClient from '../api';
 import { AuthContext } from '../contextos/AuthContext';
 import {
   Box,
-  Container,
   Grid,
   Typography,
   Paper,
@@ -17,8 +16,6 @@ import {
   ListItemText,
   ListItemIcon,
   Avatar,
-  useTheme,
-  Divider,
   Chip,
   Alert
 } from '@mui/material';
@@ -39,7 +36,6 @@ function Dashboard() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
   const { usuario } = useContext(AuthContext);
-  const theme = useTheme();
   const navigate = useNavigate();
 
   const abrirFormulario = (path) => {
@@ -55,8 +51,8 @@ function Dashboard() {
           apiClient.get('/api/conquistas/recentes').catch(() => ({ data: [] }))
         ]);
         
-        if (!resumoFinanceiro.data || !proximosCompromissos.data || !ultimasConquistas.data) {
-          setErro("Não foi possível carregar alguns dados do dashboard. Verifique se o backend está executando e se as rotas da API foram criadas.");
+        if (!resumoFinanceiro.data && !proximosCompromissos.data && !ultimasConquistas.data) {
+          setErro("Não foi possível carregar os dados do dashboard. Verifique se o backend está a ser executado.");
         }
         
         setResumo({
@@ -90,17 +86,18 @@ function Dashboard() {
 
       {erro && <Alert severity="warning" sx={{ mb: 4 }}>{erro}</Alert>}
 
+      {/* --- CORREÇÃO DO GRID V2 COMEÇA AQUI --- */}
       <Grid container spacing={4}>
         {/* Coluna Principal */}
-        <Grid item xs={12} lg={8}>
+        <Grid xs={12} lg={8}>
           <Grid container spacing={4}>
             {/* Balanço do Mês */}
-            <Grid item xs={12}>
+            <Grid xs={12}>
                 <Paper sx={{ p: 3 }}>
                     <Typography variant="h6" fontWeight="bold" gutterBottom>Balanço do Mês</Typography>
                     {resumo?.financeiro ? (
                         <Grid container spacing={3} mt={1}>
-                            <Grid item xs={12} sm={4}>
+                            <Grid xs={12} sm={4}>
                                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                                     <Avatar sx={{ bgcolor: 'success.dark', mr: 2 }}><TrendingUpIcon /></Avatar>
                                     <Box>
@@ -109,7 +106,7 @@ function Dashboard() {
                                     </Box>
                                 </Box>
                             </Grid>
-                             <Grid item xs={12} sm={4}>
+                             <Grid xs={12} sm={4}>
                                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                                     <Avatar sx={{ bgcolor: 'error.main', mr: 2 }}><TrendingDownIcon /></Avatar>
                                     <Box>
@@ -118,7 +115,7 @@ function Dashboard() {
                                     </Box>
                                 </Box>
                             </Grid>
-                             <Grid item xs={12} sm={4}>
+                             <Grid xs={12} sm={4}>
                                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                                     <Avatar sx={{ bgcolor: resumo.financeiro.saldo >= 0 ? 'primary.dark' : 'error.dark', mr: 2 }}><AccountBalanceWalletIcon /></Avatar>
                                     <Box>
@@ -135,7 +132,7 @@ function Dashboard() {
             </Grid>
 
             {/* Ações Rápidas */}
-             <Grid item xs={12}>
+             <Grid xs={12}>
                 <Paper sx={{ p: 3 }}>
                     <Typography variant="h6" fontWeight="bold" gutterBottom>Ações Rápidas</Typography>
                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 2 }}>
@@ -150,10 +147,10 @@ function Dashboard() {
         </Grid>
         
         {/* Coluna da Direita */}
-        <Grid item xs={12} lg={4}>
+        <Grid xs={12} lg={4}>
           <Grid container spacing={4}>
             {/* Próximos Compromissos */}
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <Paper sx={{ p: 3, height: '100%' }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Próximos Compromissos</Typography>
                 {resumo?.compromissos && resumo.compromissos.length > 0 ? (
@@ -174,7 +171,7 @@ function Dashboard() {
             </Grid>
 
             {/* Últimas Conquistas */}
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <Paper sx={{ p: 3, height: '100%' }}>
                   <Typography variant="h6" fontWeight="bold" gutterBottom>Últimas Conquistas</Typography>
                     {resumo?.conquistas && resumo.conquistas.length > 0 ? (
@@ -187,7 +184,7 @@ function Dashboard() {
                           ))}
                       </List>
                   ) : (
-                      <Typography color="text.secondary" sx={{pt: 2}}>Continue usando o app para desbloquear!</Typography>
+                      <Typography color="text.secondary" sx={{pt: 2}}>Continue a usar o app para desbloquear!</Typography>
                   )}
                   <Button component={RouterLink} to="/conquistas" endIcon={<ArrowForwardIcon />} sx={{ mt: 2 }}>Ver todas</Button>
               </Paper>
@@ -195,6 +192,7 @@ function Dashboard() {
           </Grid>
         </Grid>
       </Grid>
+      {/* --- FIM DA CORREÇÃO --- */}
     </Box>
   );
 }

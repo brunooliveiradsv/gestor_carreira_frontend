@@ -1,109 +1,74 @@
 // src/componentes/FormularioMusica.jsx
-
-import { useState, useEffect } from "react";
-import apiClient from "../api";
-import { useNotificacao } from "../contextos/NotificationContext.jsx";
-import {
-  Box, Button, TextField, Typography, CircularProgress,
-  Autocomplete, Chip, Grid
-} from "@mui/material";
-
-const estadoInicialFormulario = {
-  nome: "", artista: "", tom: "", duracao_minutos: "",
-  bpm: "", link_cifra: "", notas_adicionais: "",
-};
+import React, { useState, useEffect } from 'react';
+import apiClient from '../api';
+import { useNotificacao } from '../contextos/NotificationContext';
+import { Box, TextField, Button, CircularProgress, Typography, Grid } from '@mui/material';
 
 function FormularioMusica({ id, onSave, onCancel }) {
-  const [form, setForm] = useState(estadoInicialFormulario);
-  const [tagsSelecionadas, setTagsSelecionadas] = useState([]);
-  const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
+  const [musica, setMusica] = useState({ 
+    nome: '', artista: '', tom: '', bpm: '', duracao_minutos: '', 
+    link_cifra: '', notas_adicionais: '' 
+  });
   const [carregando, setCarregando] = useState(false);
   const { mostrarNotificacao } = useNotificacao();
-
-  useEffect(() => {
-    apiClient.get("/api/tags")
-      .then(res => setTagsDisponiveis(res.data))
-      .catch(() => mostrarNotificacao("Não foi possível carregar as tags.", "error"));
-  }, [mostrarNotificacao]);
 
   useEffect(() => {
     if (id) {
       setCarregando(true);
       apiClient.get(`/api/musicas/${id}`)
-        .then(({ data }) => {
-          const { tags, ...dadosMusica } = data;
-          setForm(dadosMusica);
-          setTagsSelecionadas(tags || []); 
-        })
-        .catch(() => mostrarNotificacao("Erro ao carregar dados da música.", "error"))
+        .then(res => setMusica(res.data))
+        .catch(() => mostrarNotificacao('Erro ao carregar dados da música.', 'error'))
         .finally(() => setCarregando(false));
-    } else {
-      setForm(estadoInicialFormulario);
-      setTagsSelecionadas([]);
     }
   }, [id, mostrarNotificacao]);
 
   const handleChange = (e) => {
-    setForm(dadosAtuais => ({ ...dadosAtuais, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setMusica(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!musica.nome || !musica.artista) {
+        mostrarNotificacao('Nome da música e artista são obrigatórios.', 'warning');
+        return;
+    }
     setCarregando(true);
-
-    const tagIds = tagsSelecionadas.map(tag => tag.id);
-    const dadosParaEnviar = { ...form, tagIds };
-
     try {
-      if (id) {
-        await apiClient.put(`/api/musicas/${id}`, dadosParaEnviar);
-        mostrarNotificacao("Música atualizada com sucesso!", "success");
-      } else {
-        await apiClient.post("/api/musicas", dadosParaEnviar);
-        mostrarNotificacao("Música adicionada com sucesso!", "success");
-      }
+      const endpoint = id ? `/api/musicas/${id}` : '/api/musicas/manual';
+      const method = id ? 'put' : 'post';
+      await apiClient[method](endpoint, musica);
+      mostrarNotificacao(`Música ${id ? 'atualizada' : 'criada'} com sucesso!`, 'success');
       onSave();
-    } catch (erro) {
-      mostrarNotificacao(erro.response?.data?.mensagem || "Falha ao salvar a música.", "error");
+    } catch (error) {
+      mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao salvar música.', 'error');
+    } finally {
       setCarregando(false);
     }
   };
 
-  if (carregando) {
+  if (carregando && id) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Typography variant="h5" component="h2" fontWeight="bold">
-        {id ? "Editar Música" : "Nova Música"}
-      </Typography>
-
-      <TextField name="nome" label="Nome da Música" value={form.nome || ''} onChange={handleChange} required fullWidth />
-      <TextField name="artista" label="Artista" value={form.artista || ''} onChange={handleChange} required fullWidth />
+    <Box component="form" onSubmit={handleSubmit} sx={{ p: { xs: 2, md: 3 } }}>
+      <Typography variant="h5" sx={{ mb: 3 }}>{id ? 'Editar Música' : 'Nova Música'}</Typography>
       
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={4}><TextField name="tom" label="Tom" value={form.tom || ''} onChange={handleChange} fullWidth /></Grid>
-        <Grid item xs={12} sm={4}><TextField name="bpm" label="BPM" type="number" value={form.bpm || ''} onChange={handleChange} fullWidth /></Grid>
-        <Grid item xs={12} sm={4}><TextField name="duracao_minutos" label="Duração" placeholder="Ex: 3:45" value={form.duracao_minutos || ''} onChange={handleChange} fullWidth /></Grid>
-      </Grid>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <TextField id="nome_musica" name="nome" label="Nome da Música *" value={musica.nome} onChange={handleChange} fullWidth required variant="outlined" />
+        <TextField id="artista" name="artista" label="Artista *" value={musica.artista} onChange={handleChange} fullWidth required variant="outlined" />
+        <TextField id="tom" name="tom" label="Tom" value={musica.tom || ''} onChange={handleChange} fullWidth variant="outlined" />
+        <TextField id="bpm" name="bpm" label="BPM" value={musica.bpm || ''} onChange={handleChange} fullWidth variant="outlined" />
+        <TextField id="duracao" name="duracao_minutos" label="Duração" value={musica.duracao_minutos || ''} onChange={handleChange} fullWidth variant="outlined" />
+        <TextField id="link_cifra" name="link_cifra" label="Link para Cifra" value={musica.link_cifra || ''} onChange={handleChange} fullWidth variant="outlined" />
+        <TextField id="notas_adicionais" name="notas_adicionais" label="Anotações / Cifra" value={musica.notas_adicionais || ''} onChange={handleChange} fullWidth multiline rows={4} variant="outlined" />
+      </Box>
       
-      <Autocomplete multiple
-        options={tagsDisponiveis}
-        getOptionLabel={(option) => option.nome}
-        value={tagsSelecionadas}
-        isOptionEqualToValue={(option, value) => option.id === value.id}
-        onChange={(event, novoValor) => setTagsSelecionadas(novoValor)}
-        renderInput={(params) => <TextField {...params} label="Tags" />}
-      />
-      
-      <TextField name="link_cifra" label="Link para Cifra" value={form.link_cifra || ''} onChange={handleChange} fullWidth />
-      <TextField name="notas_adicionais" label="Anotações / Cifra" multiline rows={8} value={form.notas_adicionais || ''} onChange={handleChange} fullWidth />
-      
-      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-        <Button onClick={onCancel} disabled={carregando}>Cancelar</Button>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
+        <Button onClick={onCancel}>Cancelar</Button>
         <Button type="submit" variant="contained" disabled={carregando}>
-          {carregando ? <CircularProgress size={24} /> : "Salvar"}
+          {carregando ? <CircularProgress size={24} /> : 'Salvar'}
         </Button>
       </Box>
     </Box>

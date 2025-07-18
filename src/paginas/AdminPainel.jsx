@@ -1,48 +1,74 @@
 // src/paginas/AdminPainel.jsx
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Grid, Paper, Button } from '@mui/material';
+import { People as PeopleIcon, LibraryMusic as LibraryMusicIcon, Announcement as AnnouncementIcon } from '@mui/icons-material';
 
-import { useState } from 'react';
-import { Box, Tabs, Tab, Typography, Paper } from '@mui/material';
-import AdminUsuarios from './AdminUsuarios.jsx';
-import AdminSugestoes from './AdminSugestoes.jsx';
-import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
-import RateReviewIcon from '@mui/icons-material/RateReview';
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
+// Componente para os cartões de navegação do painel
+const AdminCard = ({ title, description, icon, linkTo }) => {
+  const navigate = useNavigate();
   return (
-    <div role="tabpanel" hidden={value !== index} id={`admin-tabpanel-${index}`} aria-labelledby={`admin-tab-${index}`} {...other}>
-      {value === index && (<Box sx={{ p: { xs: 2, md: 3 } }}>{children}</Box>)}
-    </div>
+    <Grid item xs={12} sm={6} md={4}>
+      <Paper 
+        sx={{ 
+          p: 3, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          textAlign: 'center',
+          height: '100%',
+          justifyContent: 'space-between'
+        }}
+      >
+        <Box>
+          {icon}
+          <Typography variant="h6" component="h2" fontWeight="bold" sx={{ mt: 2 }}>
+            {title}
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+            {description}
+          </Typography>
+        </Box>
+        <Button variant="contained" onClick={() => navigate(linkTo)}>
+          Acessar
+        </Button>
+      </Paper>
+    </Grid>
   );
-}
+};
 
 function AdminPainel() {
-  const [abaAtiva, setAbaAtiva] = useState(0);
-
-  const handleChange = (event, novaAba) => {
-    setAbaAtiva(novaAba);
-  };
-
   return (
     <Box>
-        <Box sx={{ mb: 4 }}>
-            <Typography variant="h4" component="h1" fontWeight="bold">Painel de Administração</Typography>
-            <Typography color="text.secondary">Gerencie usuários e modere o conteúdo do sistema.</Typography>
-        </Box>
-        <Paper>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={abaAtiva} onChange={handleChange} variant="fullWidth">
-                    <Tab icon={<SupervisorAccountIcon />} iconPosition="start" label="Gerenciar Usuários" />
-                    <Tab icon={<RateReviewIcon />} iconPosition="start" label="Moderar Sugestões" />
-                </Tabs>
-            </Box>
-            <TabPanel value={abaAtiva} index={0}>
-                <AdminUsuarios />
-            </TabPanel>
-            <TabPanel value={abaAtiva} index={1}>
-                <AdminSugestoes />
-            </TabPanel>
-        </Paper>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold">
+          Painel do Administrador
+        </Typography>
+        <Typography color="text.secondary">
+          Gerencie os recursos globais do sistema.
+        </Typography>
+      </Box>
+
+      <Grid container spacing={3}>
+        <AdminCard
+          title="Gerenciar Usuários"
+          description="Visualize, edite e remova usuários da plataforma."
+          icon={<PeopleIcon color="primary" sx={{ fontSize: 40 }} />}
+          linkTo="/admin/usuarios"
+        />
+        <AdminCard
+          title="Gerenciar Músicas"
+          description="Adicione ou edite as músicas do banco de dados mestre."
+          icon={<LibraryMusicIcon color="primary" sx={{ fontSize: 40 }} />}
+          linkTo="/admin/musicas"
+        />
+        <AdminCard
+          title="Gerenciar Sugestões"
+          description="Aprove ou rejeite as sugestões de melhoria enviadas pelos usuários."
+          icon={<AnnouncementIcon color="primary" sx={{ fontSize: 40 }} />}
+          linkTo="/admin/sugestoes" // Esta rota também precisará ser criada no App.jsx
+        />
+      </Grid>
     </Box>
   );
 }

@@ -6,7 +6,6 @@ import Financeiro from "./paginas/Financeiro.jsx";
 import Conquistas from "./paginas/Conquistas.jsx";
 import RotaProtegida from "./componentes/RotaProtegida.jsx";
 import LayoutPrincipal from "./componentes/LayoutPrincipal.jsx";
-import AdminUsuarios from "./paginas/AdminUsuarios.jsx";
 import Contatos from "./paginas/Contatos.jsx";
 import Configuracoes from "./paginas/Configuracoes.jsx";
 import Repertorio from "./paginas/Repertorio.jsx";
@@ -14,9 +13,11 @@ import Equipamentos from "./paginas/Equipamentos.jsx";
 import RecuperarSenha from "./paginas/RecuperarSenha.jsx";
 import Setlists from "./paginas/Setlists.jsx";
 import EditorDeSetlist from "./paginas/EditorDeSetlist.jsx";
+import PaginaVitrine from "./paginas/PaginaVitrine.jsx"; 
 import AdminPainel from "./paginas/AdminPainel.jsx";
-import PaginaVitrine from "./paginas/PaginaVitrine.jsx"; // <-- Importe a nova página
+import AdminUsuarios from "./paginas/AdminUsuarios.jsx";
 import AdminMusicas from "./paginas/AdminMusicas.jsx";
+import AdminSugestoes from "./paginas/AdminSugestoes.jsx";
 
 function App() {
   return (
@@ -39,7 +40,6 @@ function App() {
         <Route path="/agenda" element={<Agenda />} />
         <Route path="/financeiro" element={<Financeiro />} />
         <Route path="/conquistas" element={<Conquistas />} />
-        <Route path="/admin/usuarios" element={<AdminUsuarios />} />
         <Route path="/contatos" element={<Contatos />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/repertorio" element={<Repertorio />} />
@@ -47,7 +47,9 @@ function App() {
         <Route path="/setlists" element={<Setlists />} />
         <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
         <Route path="/admin" element={<AdminPainel />} />
+        <Route path="/admin/usuarios" element={<AdminUsuarios />} />
         <Route path="/admin/musicas" element={<AdminMusicas />} />
+        <Route path="/admin/sugestoes" element={<AdminSugestoes />} />
       </Route>
     </Routes>
   );
