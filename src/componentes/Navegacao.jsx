@@ -17,7 +17,7 @@ import {
   MonetizationOn as MonetizationOnIcon, LibraryMusic as LibraryMusicIcon, Piano as PianoIcon,
   Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon,
   EmojiEvents as EmojiEventsIcon,
-  Announcement as MuralIcon // <-- CORREÇÃO: Ícone importado com o apelido correto
+  Announcement as MuralIcon
 } from "@mui/icons-material";
 
 const iconMapNotificacao = {
@@ -138,11 +138,14 @@ function Navegacao() {
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
 
+  // --- LÓGICA DE URL CORRIGIDA E DEFINITIVA ---
   let fotoUrlCompleta = null;
   if (usuario?.foto_url) {
     if (usuario.foto_url.startsWith('http')) {
+      // Se for um URL completo (do Cloudinary), usa diretamente
       fotoUrlCompleta = usuario.foto_url;
     } else {
+      // Senão, assume que é um caminho local e junta com a base da API
       fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
     }
   }

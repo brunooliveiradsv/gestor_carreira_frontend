@@ -12,8 +12,7 @@ import { PhotoCamera, Link as LinkIcon, Instagram, YouTube, MusicNote } from "@m
 function Configuracoes() {
   const { usuario, setUsuario, logout } = useContext(AuthContext);
   const { mostrarNotificacao } = useNotificacao();
-
-  // Estados dos formulários
+  
   const [email, setEmail] = useState("");
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
@@ -23,7 +22,7 @@ function Configuracoes() {
   const [biografia, setBiografia] = useState("");
   const [urlUnica, setUrlUnica] = useState("");
   const [links, setLinks] = useState({ instagram: '', youtube: '', spotify: '' });
-
+  
   const [carregando, setCarregando] = useState({ email: false, senha: false, foto: false, publico: false });
   const [dialogoSenhaAberto, setDialogoSenhaAberto] = useState(false);
   const fileInputRef = useRef();
@@ -37,11 +36,11 @@ function Configuracoes() {
       
       let fotoUrlCompleta = null;
       if (usuario.foto_url) {
-          if (usuario.foto_url.startsWith('http')) {
-              fotoUrlCompleta = usuario.foto_url;
-          } else {
-              fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
-          }
+        if (usuario.foto_url.startsWith('http')) {
+          fotoUrlCompleta = usuario.foto_url;
+        } else {
+          fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
+        }
       }
       setPreviewFoto(fotoUrlCompleta);
     }
@@ -121,17 +120,19 @@ function Configuracoes() {
   };
   const fecharDialogoSenha = () => setDialogoSenhaAberto(false);
 
-  if (!usuario) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
-  
-  let fotoUrlCompleta = null;
-    if (usuario?.foto_url) {
-        if (usuario.foto_url.startsWith('http')) {
-            fotoUrlCompleta = usuario.foto_url;
-        } else {
-            fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
-        }
-    }
+  if (!usuario) {
+    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
+  }
 
+  let fotoUrlCompleta = null;
+  if (usuario?.foto_url) {
+      if (usuario.foto_url.startsWith('http')) {
+          fotoUrlCompleta = usuario.foto_url;
+      } else {
+          fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
+      }
+  }
+  
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
