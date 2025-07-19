@@ -18,6 +18,7 @@ import AdminPainel from "./paginas/AdminPainel.jsx";
 import AdminUsuarios from "./paginas/AdminUsuarios.jsx";
 import AdminMusicas from "./paginas/AdminMusicas.jsx";
 import AdminSugestoes from "./paginas/AdminSugestoes.jsx";
+import AdminLogs from "./paginas/AdminLogs.jsx";
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
         <Route path="/admin/usuarios" element={<AdminUsuarios />} />
         <Route path="/admin/musicas" element={<AdminMusicas />} />
         <Route path="/admin/sugestoes" element={<AdminSugestoes />} />
+        <Route path="/admin/logs" element={<AdminLogs />} />
       </Route>
     </Routes>
   );

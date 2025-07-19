@@ -2,9 +2,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Grid, Paper, Button } from '@mui/material';
-import { People as PeopleIcon, LibraryMusic as LibraryMusicIcon, Announcement as AnnouncementIcon } from '@mui/icons-material';
+import { People as PeopleIcon, LibraryMusic as LibraryMusicIcon, Announcement as AnnouncementIcon, History as HistoryIcon } from '@mui/icons-material';
 
-// Componente para os cartões de navegação do painel
 const AdminCard = ({ title, description, icon, linkTo }) => {
   const navigate = useNavigate();
   return (
@@ -45,7 +44,7 @@ function AdminPainel() {
           Painel do Administrador
         </Typography>
         <Typography color="text.secondary">
-          Gerencie os recursos globais do sistema.
+          Gerencie os recursos globais e monitore a atividade do sistema.
         </Typography>
       </Box>
 
@@ -64,9 +63,15 @@ function AdminPainel() {
         />
         <AdminCard
           title="Gerenciar Sugestões"
-          description="Aprove ou rejeite as sugestões de melhoria enviadas pelos usuários."
+          description="Aprove ou rejeite as sugestões enviadas pelos usuários."
           icon={<AnnouncementIcon color="primary" sx={{ fontSize: 40 }} />}
-          linkTo="/admin/sugestoes" // Esta rota também precisará ser criada no App.jsx
+          linkTo="/admin/sugestoes"
+        />
+        <AdminCard
+          title="Log de Atividades"
+          description="Visualize as ações recentes dos usuários na plataforma."
+          icon={<HistoryIcon color="primary" sx={{ fontSize: 40 }} />}
+          linkTo="/admin/logs"
         />
       </Grid>
     </Box>
