@@ -140,10 +140,16 @@ function Navegacao() {
   ];
 
   // Constrói a URL completa da foto do usuário a partir do contexto
-  const fotoUrlCompleta = usuario?.foto_url
-    ? `${apiClient.defaults.baseURL}${usuario.foto_url}`
-    : null;
-
+  let fotoUrlCompleta = null;
+  if (usuario?.foto_url) {
+    if (usuario.foto_url.startsWith('http')) {
+      // Se for um URL completo (do Cloudinary), usa diretamente
+      fotoUrlCompleta = usuario.foto_url;
+    } else {
+      // Senão, assume que é um caminho local e junta com a base da API
+      fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
+    }
+  }
   const drawerContent = (
     <div>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
