@@ -12,7 +12,7 @@ import { PhotoCamera, Link as LinkIcon, Instagram, YouTube, MusicNote } from "@m
 function Configuracoes() {
   const { usuario, setUsuario, logout } = useContext(AuthContext);
   const { mostrarNotificacao } = useNotificacao();
-  
+
   const [email, setEmail] = useState("");
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");

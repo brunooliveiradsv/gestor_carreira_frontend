@@ -138,14 +138,11 @@ function Navegacao() {
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
 
-  // --- LÓGICA DE URL CORRIGIDA E DEFINITIVA ---
   let fotoUrlCompleta = null;
   if (usuario?.foto_url) {
     if (usuario.foto_url.startsWith('http')) {
-      // Se for um URL completo (do Cloudinary), usa diretamente
       fotoUrlCompleta = usuario.foto_url;
     } else {
-      // Senão, assume que é um caminho local e junta com a base da API
       fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
     }
   }
