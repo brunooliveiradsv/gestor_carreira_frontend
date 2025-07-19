@@ -18,7 +18,7 @@ import {
   AdminPanelSettings as AdminPanelSettingsIcon, Dashboard as DashboardIcon, CalendarMonth as CalendarMonthIcon,
   MonetizationOn as MonetizationOnIcon, LibraryMusic as LibraryMusicIcon, Piano as PianoIcon,
   Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon,
-  EmojiEvents as EmojiEventsIcon,
+  EmojiEvents as EmojiEventsIcon, Announcement as MuralIcon
 } from "@mui/icons-material";
 
 const iconMapNotificacao = {
@@ -130,6 +130,7 @@ function Navegacao() {
   const navLinks = [
     { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
+    { to: "/mural", text: "Mural", icon: <MuralIcon /> },
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
