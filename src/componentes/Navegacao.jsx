@@ -17,6 +17,7 @@ import {
   MonetizationOn as MonetizationOnIcon, LibraryMusic as LibraryMusicIcon, Piano as PianoIcon,
   Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon,
   EmojiEvents as EmojiEventsIcon,
+  Announcement as MuralIcon // <-- CORREÇÃO: Ícone importado com o apelido correto
 } from "@mui/icons-material";
 
 const iconMapNotificacao = {
@@ -131,20 +132,17 @@ function Navegacao() {
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
-    { to: "/mural", text: "Mural", icon: <AnnouncementIcon /> },
+    { to: "/mural", text: "Mural", icon: <MuralIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
 
-  // --- LÓGICA DE URL CORRIGIDA ---
   let fotoUrlCompleta = null;
   if (usuario?.foto_url) {
     if (usuario.foto_url.startsWith('http')) {
-      // Se for um URL completo (do Cloudinary), usa diretamente
       fotoUrlCompleta = usuario.foto_url;
     } else {
-      // Senão, assume que é um caminho local e junta com a base da API
       fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
     }
   }
@@ -157,14 +155,8 @@ function Navegacao() {
             <Typography variant="h5" component="span" sx={{ fontWeight: 'normal', color: 'text.primary' }}>Gest</Typography>
           </Box>
         <Avatar
-          src={fotoUrlCompleta} // Usa a variável com a lógica corrigida
-          sx={{
-            width: 80,
-            height: 80,
-            mb: 2,
-            bgcolor: 'primary.main',
-            fontSize: '2.5rem'
-          }}
+          src={fotoUrlCompleta}
+          sx={{ width: 80, height: 80, mb: 2, bgcolor: 'primary.main', fontSize: '2.5rem' }}
         >
           {usuario?.nome?.charAt(0).toUpperCase()}
         </Avatar>
