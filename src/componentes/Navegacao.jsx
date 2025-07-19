@@ -3,14 +3,12 @@ import React, { useContext, useState, useEffect } from "react";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext.jsx";
 import apiClient from "../api";
-
 import {
   AppBar, Toolbar, Typography, Box, IconButton, Badge, Menu,
   MenuItem, Tooltip, Divider, ListItemIcon, ListItemText, Dialog,
   DialogActions, DialogContent, DialogContentText, DialogTitle,
   useTheme, Drawer, List, ListItem, ListItemButton, Avatar, Button
 } from "@mui/material";
-
 import {
   Notifications as NotificationsIcon, Close as CloseIcon, MilitaryTech as MilitaryTechIcon,
   MusicNote as MusicNoteIcon, AttachMoney as AttachMoneyIcon, People as PeopleIcon,
@@ -18,7 +16,7 @@ import {
   AdminPanelSettings as AdminPanelSettingsIcon, Dashboard as DashboardIcon, CalendarMonth as CalendarMonthIcon,
   MonetizationOn as MonetizationOnIcon, LibraryMusic as LibraryMusicIcon, Piano as PianoIcon,
   Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon,
-  EmojiEvents as EmojiEventsIcon, Announcement as MuralIcon
+  EmojiEvents as EmojiEventsIcon,
 } from "@mui/icons-material";
 
 const iconMapNotificacao = {
@@ -130,16 +128,16 @@ function Navegacao() {
   const navLinks = [
     { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
-    { to: "/mural", text: "Mural", icon: <MuralIcon /> },
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
+    { to: "/mural", text: "Mural", icon: <AnnouncementIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
 
-  // Constrói a URL completa da foto do usuário a partir do contexto
+  // --- LÓGICA DE URL CORRIGIDA ---
   let fotoUrlCompleta = null;
   if (usuario?.foto_url) {
     if (usuario.foto_url.startsWith('http')) {
@@ -150,6 +148,7 @@ function Navegacao() {
       fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
     }
   }
+
   const drawerContent = (
     <div>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -158,7 +157,7 @@ function Navegacao() {
             <Typography variant="h5" component="span" sx={{ fontWeight: 'normal', color: 'text.primary' }}>Gest</Typography>
           </Box>
         <Avatar
-          src={fotoUrlCompleta} // Usa a URL completa da foto
+          src={fotoUrlCompleta} // Usa a variável com a lógica corrigida
           sx={{
             width: 80,
             height: 80,
@@ -212,7 +211,7 @@ function Navegacao() {
               }}
             >
               <ListItemIcon><AdminPanelSettingsIcon /></ListItemIcon>
-              <ListItemText primary="Painel Administrador" />
+              <ListItemText primary="Painel Admin" />
             </ListItemButton>
           </ListItem>
         )}
