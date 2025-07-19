@@ -19,7 +19,6 @@
     "cheerio": "^1.1.0",
     "jwt-decode": "^4.0.0",
     "react": "^19.1.0",
-    "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3",
     "use-places-autocomplete": "^4.0.1"
