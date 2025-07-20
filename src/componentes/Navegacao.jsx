@@ -148,7 +148,10 @@ function Navegacao() {
   }
 
   const drawerContent = (
-    <div>
+    // --- CORREÇÃO AQUI ---
+    // Adicionado display flex, flexDirection column e height 100%
+    // para que o conteúdo se ajuste à altura do ecrã.
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
          <Box component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', mb: 3 }}>
             <Typography variant="h4" component="span" sx={{ mr: 0.5, fontWeight: 'bold', color: 'primary.main' }}>VOX</Typography>
@@ -164,23 +167,11 @@ function Navegacao() {
         <Typography variant="body2" color="text.secondary">{usuario?.email}</Typography>
       </Box>
       <Divider />
-      <List sx={{ p: 1 }}>
+      {/* O overflowY: 'auto' garante que a barra de scroll apareça apenas na lista se necessário */}
+      <List sx={{ p: 1, overflowY: 'auto', flexGrow: 1 }}>
         {navLinks.map((link) => (
           <ListItem key={link.text} disablePadding sx={{ my: 0.5 }}>
-            <ListItemButton
-              component={RouterLink}
-              to={link.to}
-              sx={{
-                borderRadius: theme.shape.borderRadius,
-                '&.active': {
-                  backgroundColor: theme.palette.action.selected,
-                  color: theme.palette.primary.main,
-                  '& .MuiListItemIcon-root': {
-                    color: theme.palette.primary.main,
-                  },
-                },
-              }}
-            >
+            <ListItemButton component={RouterLink} to={link.to} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
               <ListItemIcon>{link.icon}</ListItemIcon>
               <ListItemText primary={link.text} />
             </ListItemButton>
@@ -188,29 +179,18 @@ function Navegacao() {
         ))}
         {usuario?.role === "admin" && (
           <ListItem disablePadding sx={{ my: 0.5 }}>
-            <ListItemButton
-              component={RouterLink}
-              to="/admin"
-              sx={{
-                borderRadius: theme.shape.borderRadius,
-                '&.active': {
-                  backgroundColor: theme.palette.action.selected,
-                  color: theme.palette.primary.main,
-                   '& .MuiListItemIcon-root': {
-                    color: theme.palette.primary.main,
-                  },
-                },
-              }}
-            >
+            <ListItemButton component={RouterLink} to="/admin" sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
               <ListItemIcon><AdminPanelSettingsIcon /></ListItemIcon>
               <ListItemText primary="Painel Admin" />
             </ListItemButton>
           </ListItem>
         )}
       </List>
-      <Box sx={{ flexGrow: 1 }} />
+      
+      {/* O Box com flexGrow: 1 foi removido daqui e a lógica foi aplicada à List */}
+      
       <Divider />
-      <List sx={{ p: 1 }}>
+      <List sx={{ p: 1, flexShrink: 0 }}>
         <ListItem disablePadding>
           <ListItemButton component={RouterLink} to="/configuracoes" sx={{ borderRadius: theme.shape.borderRadius }}>
             <ListItemIcon><SettingsIcon /></ListItemIcon>
@@ -224,32 +204,17 @@ function Navegacao() {
           </ListItemButton>
         </ListItem>
       </List>
-    </div>
+    </Box>
   );
 
   return (
     <>
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          borderBottom: `1px solid ${theme.palette.divider}`
-        }}
-      >
+      <AppBar position="fixed" elevation={0} sx={{ width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` }, borderBottom: `1px solid ${theme.palette.divider}` }}>
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
-          >
+          <IconButton color="inherit" aria-label="open drawer" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2, display: { md: 'none' } }} >
             <MenuIcon />
           </IconButton>
            <Box sx={{ flexGrow: 1 }} />
-
           <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}>
             <Badge badgeContent={naoLidasCount} color="error">
               <NotificationsIcon />
@@ -257,35 +222,14 @@ function Navegacao() {
           </IconButton>
         </Toolbar>
       </AppBar>
-
-      <Box
-        component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
+      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+        <Drawer variant="temporary" open={mobileOpen} onClose={handleDrawerToggle} ModalProps={{ keepMounted: true }} sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth } }}>
           {drawerContent}
         </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none' },
-          }}
-          open
-        >
+        <Drawer variant="permanent" sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none' } }} open>
           {drawerContent}
         </Drawer>
       </Box>
-
       <Menu anchorEl={anchorElNotificacoes} open={openNotificacoes} onClose={handleMenuNotificacoesClose} PaperProps={{ sx: { maxHeight: 400, width: { xs: "calc(100vw - 32px)", sm: "400px" }, mt: 1, bgcolor: "background.paper", boxShadow: theme.shadows[6] } }}>
         <Box sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Typography variant="subtitle1" fontWeight="bold" sx={{ color: "text.primary" }}>Notificações</Typography>
@@ -314,7 +258,6 @@ function Navegacao() {
           </Box>
         )}
       </Menu>
-
       <Dialog open={dialogoLimparAberto} onClose={fecharDialogoLimpar} PaperProps={{ sx: { bgcolor: "background.paper", boxShadow: theme.shadows[6] } }}>
         <DialogTitle sx={{ color: "text.primary" }}>Limpar Todas as Notificações?</DialogTitle>
         <DialogContent>
