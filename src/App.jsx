@@ -20,6 +20,7 @@ import AdminMusicas from "./paginas/AdminMusicas.jsx";
 import AdminSugestoes from "./paginas/AdminSugestoes.jsx";
 import AdminLogs from "./paginas/AdminLogs.jsx";
 import Mural from "./paginas/Mural.jsx";
+import Assinatura from "./paginas/Assinatura.jsx"; // <-- Importando a nova página de Assinatura
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
         <Route path="/admin/sugestoes" element={<AdminSugestoes />} />
         <Route path="/admin/logs" element={<AdminLogs />} />
         <Route path="/mural" element={<Mural />} />
+        <Route path="/assinatura" element={<Assinatura />} /> {/* <-- ROTA PROTEGIDA NOVA */}
         
       </Route>
     </Routes>
