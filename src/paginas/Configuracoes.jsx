@@ -1,17 +1,23 @@
 // src/paginas/Configuracoes.jsx
 import React, { useState, useEffect, useContext, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from '../api';
 import { useNotificacao } from "../contextos/NotificationContext";
 import { AuthContext } from "../contextos/AuthContext";
 import {
   Box, Button, Typography, CircularProgress, Paper, TextField,
-  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, Avatar, Badge, IconButton, Link, Alert
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, 
+  Grid, Avatar, Badge, IconButton, Chip
 } from "@mui/material";
-import { PhotoCamera, Link as LinkIcon, Instagram, YouTube, MusicNote } from "@mui/icons-material";
+import { 
+    PhotoCamera, 
+    WorkspacePremium as WorkspacePremiumIcon 
+} from "@mui/icons-material";
 
 function Configuracoes() {
   const { usuario, setUsuario, logout } = useContext(AuthContext);
   const { mostrarNotificacao } = useNotificacao();
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [senhaAtual, setSenhaAtual] = useState("");
@@ -19,20 +25,14 @@ function Configuracoes() {
   const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
   const [novaFoto, setNovaFoto] = useState(null);
   const [previewFoto, setPreviewFoto] = useState(null);
-  const [biografia, setBiografia] = useState("");
-  const [urlUnica, setUrlUnica] = useState("");
-  const [links, setLinks] = useState({ instagram: '', youtube: '', spotify: '' });
   
-  const [carregando, setCarregando] = useState({ email: false, senha: false, foto: false, publico: false });
+  const [carregando, setCarregando] = useState({ email: false, senha: false, foto: false });
   const [dialogoSenhaAberto, setDialogoSenhaAberto] = useState(false);
   const fileInputRef = useRef();
 
   useEffect(() => {
     if (usuario) {
       setEmail(usuario.email || "");
-      setBiografia(usuario.biografia || "");
-      setUrlUnica(usuario.url_unica || "");
-      setLinks(usuario.links_redes || { instagram: '', youtube: '', spotify: '' });
       
       let fotoUrlCompleta = null;
       if (usuario.foto_url) {
@@ -46,25 +46,23 @@ function Configuracoes() {
     }
   }, [usuario]);
   
-  const handleLinkChange = (plataforma, valor) => setLinks(prev => ({ ...prev, [plataforma]: valor }));
-  
-  const handleSalvar = async (campo, payload) => {
-    setCarregando(prev => ({ ...prev, [campo]: true }));
-    try {
-      const endpoint = campo === 'publico' ? '/api/usuarios/perfil/publico' : `/api/usuarios/perfil/${campo}`;
-      const { data } = await apiClient.put(endpoint, payload);
-      setUsuario(data);
-      mostrarNotificacao(`Dados de ${campo} atualizados com sucesso!`, "success");
-    } catch (error) {
-      mostrarNotificacao(error.response?.data?.mensagem || `Falha ao atualizar dados.`, "error");
-    } finally {
-      setCarregando(prev => ({ ...prev, [campo]: false }));
-    }
+  const capitalizar = (texto) => {
+    if (!texto) return '';
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
   };
   
-  const handleSalvarPerfilPublico = (e) => {
+  const handleSalvarEmail = async (e) => {
     e.preventDefault();
-    handleSalvar('publico', { biografia, url_unica: urlUnica, links_redes: links });
+    setCarregando(prev => ({ ...prev, email: true }));
+    try {
+      const { data } = await apiClient.put('/api/usuarios/perfil/email', { email });
+      setUsuario(data);
+      mostrarNotificacao(`E-mail atualizado com sucesso!`, "success");
+    } catch (error) {
+      mostrarNotificacao(error.response?.data?.mensagem || `Falha ao atualizar e-mail.`, "error");
+    } finally {
+      setCarregando(prev => ({ ...prev, email: false }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -137,26 +135,35 @@ function Configuracoes() {
     <Box>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" fontWeight="bold">Configurações</Typography>
-        <Typography color="text.secondary">Gerencie as suas informações de acesso e perfil público.</Typography>
+        <Typography color="text.secondary">Gerencie as suas informações de acesso e assinatura.</Typography>
       </Box>
 
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-        <Typography variant="h6" component="h2" gutterBottom>Perfil Público (Sua Vitrine)</Typography>
-        {usuario.url_unica && (
-            <Link href={`/vitrine/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <LinkIcon sx={{ mr: 1 }} /> {`${window.location.origin}/vitrine/${usuario.url_unica}`}
-            </Link>
-        )}
-        <Box component="form" onSubmit={handleSalvarPerfilPublico} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
-            <TextField id="url_unica" name="url_unica" label="URL Única" helperText="Ex: o-nome-da-sua-banda" value={urlUnica} onChange={(e) => setUrlUnica(e.target.value.toLowerCase().replace(/\s+/g, '-'))} fullWidth />
-            <TextField id="biografia" name="biografia" label="Biografia" multiline rows={4} value={biografia} onChange={(e) => setBiografia(e.target.value)} fullWidth />
-            <Typography color="text.secondary" sx={{ mt: 2 }}>Links e Redes Sociais</Typography>
-            <TextField id="link_instagram" name="link_instagram" label="Instagram" value={links.instagram} onChange={(e) => handleLinkChange('instagram', e.target.value)} InputProps={{ startAdornment: <Instagram sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            <TextField id="link_youtube" name="link_youtube" label="YouTube" value={links.youtube} onChange={(e) => handleLinkChange('youtube', e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            <TextField id="link_spotify" name="link_spotify" label="Spotify" value={links.spotify} onChange={(e) => handleLinkChange('spotify', e.target.value)} InputProps={{ startAdornment: <MusicNote sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            <Button type="submit" variant="contained" disabled={carregando.publico} sx={{ alignSelf: "flex-start", mt: 2 }}>
-                {carregando.publico ? <CircularProgress size={24} /> : "Salvar Perfil Público"}
-            </Button>
+        <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Typography>
+            Seu plano atual:
+          </Typography>
+          <Chip 
+            icon={<WorkspacePremiumIcon />} 
+            label={capitalizar(usuario.plano) || 'Nenhum'} 
+            color={usuario.plano === 'premium' ? 'primary' : 'default'} 
+            variant="outlined" 
+          />
+          {usuario.status_assinatura === 'teste' && (
+            <Chip 
+              label={`Em teste até ${new Date(usuario.teste_termina_em).toLocaleDateString('pt-BR')}`}
+              color="secondary"
+              size="small"
+            />
+          )}
+          <Button 
+            variant="contained" 
+            onClick={() => navigate('/assinatura')}
+            sx={{ ml: 'auto' }}
+          >
+            Gerir Assinatura
+          </Button>
         </Box>
       </Paper>
 
@@ -177,7 +184,7 @@ function Configuracoes() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <Paper sx={{ p: { xs: 2, md: 3 }}}>
                 <Typography variant="h6" component="h2" gutterBottom>Alterar E-mail</Typography>
-                <Box component="form" onSubmit={(e) => { e.preventDefault(); handleSalvar('email', { email }); }} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+                <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
                   <TextField id="email" name="email" label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
                   <Button type="submit" variant="contained" disabled={carregando.email} sx={{ alignSelf: "flex-start" }}>{carregando.email ? <CircularProgress size={24} /> : "Salvar E-mail"}</Button>
                 </Box>
