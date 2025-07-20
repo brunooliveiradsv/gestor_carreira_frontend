@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
-import { Box, TextField, Button, CircularProgress, Typography, Grid } from '@mui/material';
+import { Box, TextField, Button, CircularProgress, Typography, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 
 function FormularioMusica({ id, onSave, onCancel }) {
   const [musica, setMusica] = useState({ 
@@ -47,30 +47,30 @@ function FormularioMusica({ id, onSave, onCancel }) {
     }
   };
 
-  if (carregando && id) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
-  }
-
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ p: { xs: 2, md: 3 } }}>
-      <Typography variant="h5" sx={{ mb: 3 }}>{id ? 'Editar Música' : 'Nova Música'}</Typography>
-      
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField id="nome_musica" name="nome" label="Nome da Música *" value={musica.nome} onChange={handleChange} fullWidth required variant="outlined" />
-        <TextField id="artista" name="artista" label="Artista *" value={musica.artista} onChange={handleChange} fullWidth required variant="outlined" />
-        <TextField id="tom" name="tom" label="Tom" value={musica.tom || ''} onChange={handleChange} fullWidth variant="outlined" />
-        <TextField id="bpm" name="bpm" label="BPM" value={musica.bpm || ''} onChange={handleChange} fullWidth variant="outlined" />
-        <TextField id="duracao" name="duracao_minutos" label="Duração" value={musica.duracao_minutos || ''} onChange={handleChange} fullWidth variant="outlined" />
-        <TextField id="link_cifra" name="link_cifra" label="Link para Cifra" value={musica.link_cifra || ''} onChange={handleChange} fullWidth variant="outlined" />
-        <TextField id="notas_adicionais" name="notas_adicionais" label="Anotações / Cifra" value={musica.notas_adicionais || ''} onChange={handleChange} fullWidth multiline rows={4} variant="outlined" />
-      </Box>
-      
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
+    <Box component="form" onSubmit={handleSubmit}>
+      <DialogTitle>{id ? 'Editar Música' : 'Nova Música'}</DialogTitle>
+      <DialogContent>
+        {carregando && id ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <TextField id="nome_musica" name="nome" label="Nome da Música *" value={musica.nome} onChange={handleChange} fullWidth required variant="outlined" />
+            <TextField id="artista" name="artista" label="Artista *" value={musica.artista} onChange={handleChange} fullWidth required variant="outlined" />
+            <TextField id="tom" name="tom" label="Tom" value={musica.tom || ''} onChange={handleChange} fullWidth variant="outlined" />
+            <TextField id="bpm" name="bpm" label="BPM" value={musica.bpm || ''} onChange={handleChange} fullWidth variant="outlined" />
+            <TextField id="duracao" name="duracao_minutos" label="Duração" value={musica.duracao_minutos || ''} onChange={handleChange} fullWidth variant="outlined" />
+            <TextField id="link_cifra" name="link_cifra" label="Link para Cifra" value={musica.link_cifra || ''} onChange={handleChange} fullWidth variant="outlined" />
+            <TextField id="notas_adicionais" name="notas_adicionais" label="Anotações / Cifra" value={musica.notas_adicionais || ''} onChange={handleChange} fullWidth multiline rows={4} variant="outlined" />
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
         <Button onClick={onCancel}>Cancelar</Button>
         <Button type="submit" variant="contained" disabled={carregando}>
           {carregando ? <CircularProgress size={24} /> : 'Salvar'}
         </Button>
-      </Box>
+      </DialogActions>
     </Box>
   );
 }
