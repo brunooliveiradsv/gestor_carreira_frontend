@@ -53,12 +53,10 @@ function PaginaVitrine() {
         setVitrine(data);
         setTotalAplausos(data.artista.aplausos || 0);
 
-        // Verifica no localStorage se o visitante já aplaudiu este artista
         if (localStorage.getItem(`aplauso_${url_unica}`)) {
           setJaAplaudido(true);
         }
 
-        // Carrega as reações aos posts guardadas no localStorage
         const reacoesGuardadas = {};
         if (data.postsRecentes) {
             data.postsRecentes.forEach(post => {
@@ -139,7 +137,16 @@ function PaginaVitrine() {
   if (!vitrine) return null;
 
   const { artista, proximosShows, contatoPublico, setlistPublico, musicasPopulares, estatisticas, postsRecentes } = vitrine;
-  const fotoUrlCompleta = artista.foto_url ? `${apiClient.defaults.baseURL}${artista.foto_url}` : null;
+  
+  let fotoUrlCompleta = null;
+  if (artista.foto_url) {
+    if (artista.foto_url.startsWith('http')) {
+      fotoUrlCompleta = artista.foto_url;
+    } else {
+      fotoUrlCompleta = `${apiClient.defaults.baseURL}${artista.foto_url}`;
+    }
+  }
+
   const { links_redes } = artista;
 
   return (
@@ -157,9 +164,7 @@ function PaginaVitrine() {
                 <Typography variant="h3" component="h1" fontWeight="bold">{artista.nome}</Typography>
                 <Tooltip title={jaAplaudido ? "Você já aplaudiu!" : "Apoie este artista!"}>
                     <span>
-                        <IconButton onClick={handleAplaudir} disabled={jaAplaudido} color={jaAplaudido ? "error" : "default"}>
-                            <FavoriteIcon />
-                        </IconButton>
+                        <IconButton onClick={handleAplaudir} disabled={jaAplaudido} color={jaAplaudido ? "error" : "default"}><FavoriteIcon /></IconButton>
                     </span>
                 </Tooltip>
                  <Typography variant="h6" color="text.secondary">{totalAplausos}</Typography>
@@ -189,24 +194,13 @@ function PaginaVitrine() {
                     const reacaoDoUtilizador = reacoesPosts[post.id];
                     return (<ListItem key={post.id} disablePadding secondaryAction={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Tooltip title="Gostei"><span>
-                                <IconButton size="small" onClick={() => handleReacao(post.id, 'like')} disabled={!!reacaoDoUtilizador}>
-                                    <ThumbUp fontSize="small" color={reacaoDoUtilizador === 'like' ? 'primary' : 'inherit'} />
-                                </IconButton>
-                            </span></Tooltip>
+                            <Tooltip title="Gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'like')} disabled={!!reacaoDoUtilizador}><ThumbUp fontSize="small" color={reacaoDoUtilizador === 'like' ? 'primary' : 'inherit'} /></IconButton></span></Tooltip>
                             <Typography variant="body2">{post.likes}</Typography>
-                            <Tooltip title="Não gostei"><span>
-                                <IconButton size="small" onClick={() => handleReacao(post.id, 'dislike')} disabled={!!reacaoDoUtilizador}>
-                                    <ThumbDown fontSize="small" color={reacaoDoUtilizador === 'dislike' ? 'error' : 'inherit'} />
-                                </IconButton>
-                            </span></Tooltip>
+                            <Tooltip title="Não gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'dislike')} disabled={!!reacaoDoUtilizador}><ThumbDown fontSize="small" color={reacaoDoUtilizador === 'dislike' ? 'error' : 'inherit'} /></IconButton></span></Tooltip>
                             <Typography variant="body2">{post.dislikes}</Typography>
                         </Box>
                     }><ListItemIcon><AnnouncementIcon color="primary" /></ListItemIcon>
-                      <ListItemText
-                        primary={post.content}
-                        secondary={post.link ? (<Link href={post.link} target="_blank" rel="noopener noreferrer" sx={{display: 'flex', alignItems: 'center', mt: 0.5}}><LinkIcon fontSize="small" sx={{mr: 0.5}}/> Ver mais</Link>) : new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
-                      /></ListItem>
+                      <ListItemText primary={post.content} secondary={post.link ? (<Link href={post.link} target="_blank" rel="noopener noreferrer" sx={{display: 'flex', alignItems: 'center', mt: 0.5}}><LinkIcon fontSize="small" sx={{mr: 0.5}}/> Ver mais</Link>) : new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}/></ListItem>
                     );
                 })}</List>
             </Box></>
