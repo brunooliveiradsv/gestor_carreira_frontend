@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import apiClient from "../api.js";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
-  Box, Button, Typography, CircularProgress, Paper, Grid, TextField, 
-  InputAdornment, Chip, IconButton, Tooltip, Dialog, Card, 
+  Box, Button, Typography, CircularProgress, Paper, Grid, TextField,
+  InputAdornment, Chip, IconButton, Tooltip, Dialog, Card,
   CardContent, CardActions, List, ListItem, ListItemText
 } from "@mui/material";
 import {
-  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon, 
+  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon,
   Delete as DeleteIcon, MusicNote as MusicNoteIcon, PlaylistAddCheck as SuggestionIcon,
   ImportExport as ImportExportIcon
 } from "@mui/icons-material";
@@ -29,7 +29,7 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
         try {
             const resposta = await apiClient.get(`/api/musicas/buscar-publicas?termoBusca=${termoBusca}`);
             setResultados(resposta.data);
-        } catch (error) { mostrarNotificacao("Erro ao buscar músicas.", "error"); } 
+        } catch (error) { mostrarNotificacao("Erro ao buscar músicas.", "error"); }
         finally { setBuscando(false); }
     };
 
@@ -94,7 +94,7 @@ function Repertorio() {
       if (buscaGeral) {
         params.append('buscaGeral', buscaGeral);
       }
-      
+
       const resposta = await apiClient.get(`/api/musicas?${params.toString()}`);
       setMusicas(resposta.data);
     } catch (erro) {
@@ -149,8 +149,8 @@ function Repertorio() {
     <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
             <Box>
-                <Typography variant="h4" component="h1" fontWeight="bold">Repertório Geral</Typography>
-                <Typography color="text.secondary">Adicione e gerencie todas as suas músicas.</Typography>
+                <Typography variant="h4" component="h1" fontWeight="bold">Repertório</Typography>
+                <Typography color="text.secondary">Adicione, filtre e gerencie todas as suas músicas.</Typography>
             </Box>
             <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => handleAbrirFormulario()}>
             Adicionar Música
@@ -158,11 +158,11 @@ function Repertorio() {
         </Box>
 
         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-            <TextField 
-                fullWidth 
-                name="buscaGeral" 
+            <TextField
+                fullWidth
+                name="buscaGeral"
                 label="Buscar por nome, artista, tom ou BPM..."
-                value={buscaGeral} 
+                value={buscaGeral}
                 onChange={(e) => setBuscaGeral(e.target.value)}
                 InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
             />
@@ -207,7 +207,7 @@ function Repertorio() {
             )}
             </Grid>
         )}
-      
+
       <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="md">
         {musicaEmEdicaoId ? (
             <Box sx={{p: {xs: 2, md: 3}}}>
@@ -217,7 +217,7 @@ function Repertorio() {
             <SeletorDeMusica onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} />
         )}
       </Dialog>
-      
+
       {musicaParaSugerir && (
         <FormularioSugestao open={dialogoSugestaoAberto} onClose={() => setDialogoSugestaoAberto(false)} musica={musicaParaSugerir} />
       )}
