@@ -5,7 +5,7 @@ import apiClient from '../api';
 import YouTube from 'react-youtube';
 import {
   Box, Typography, CircularProgress, Container, Paper, Avatar,
-  Grid, Divider, List, ListItem, ListItemIcon, ListItemText, Button, Chip, IconButton, Tooltip, Link
+  Divider, List, ListItem, ListItemIcon, ListItemText, Button, Chip, IconButton, Tooltip, Link
 } from '@mui/material';
 import {
   CalendarMonth as CalendarMonthIcon,
@@ -27,7 +27,7 @@ import {
 // --- COMPONENTES INTERNOS PARA MELHORAR A ORGANIZAÇÃO ---
 
 const StatCard = ({ icon, value, label }) => (
-    <Box sx={{ textAlign: 'center', flex: '1 1 0', minWidth: '100px' }}>
+    <Box sx={{ textAlign: 'center', flex: '1 1 0', minWidth: '90px', p: 1 }}>
         {icon}
         <Typography variant="h5" component="p" fontWeight="bold">{Number.isFinite(value) ? value : 0}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>{label}</Typography>
@@ -81,7 +81,7 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
 
                 <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }} />
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-around', width: { xs: '100%', md: 'auto' }, gap: 2, p: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-around', width: { xs: '100%', md: 'auto' }, gap: 2, p: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
                     <StatCard icon={<MicIcon color="primary" />} value={estatisticas?.shows} label="Shows"/>
                     <StatCard icon={<LibraryMusicIcon color="primary" />} value={estatisticas?.musicas} label="Músicas"/>
                     <StatCard icon={<EmojiEventsIcon color="primary" />} value={estatisticas?.conquistas} label="Conquistas"/>
@@ -90,6 +90,43 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
         </Paper>
     );
 };
+
+const PostsSection = ({ posts, reacoes, handleReacao }) => {
+    return (
+        <Paper sx={{ p: 3 }}>
+            <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Últimas Atualizações</Typography>
+            <List>{posts.map(post => {
+                const reacaoDoUtilizador = reacoes[post.id];
+                const dataPost = post.created_at ? new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) : null;
+
+                return (
+                    <ListItem key={post.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 2, '&:not(:last-child)': { borderBottom: '1px solid', borderColor: 'divider' } }} disablePadding>
+                        <Box sx={{ display: 'flex', width: '100%' }}>
+                            <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}><AnnouncementIcon color="primary" /></ListItemIcon>
+                            <ListItemText primary={post.content} />
+                        </Box>
+                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, pl: '40px' }}>
+                            {post.link ? (
+                                <Link href={post.link} target="_blank" rel="noopener noreferrer" sx={{display: 'flex', alignItems: 'center', fontSize: '0.875rem'}}>
+                                    <LinkIcon fontSize="small" sx={{mr: 0.5}}/> Ver mais
+                                </Link>
+                            ) : (
+                                <Typography variant="caption" color="text.secondary">{dataPost || ''}</Typography>
+                            )}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Tooltip title="Gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'like')} disabled={!!reacaoDoUtilizador}><ThumbUp fontSize="small" color={reacaoDoUtilizador === 'like' ? 'primary' : 'inherit'} /></IconButton></span></Tooltip>
+                                <Typography variant="body2">{post.likes}</Typography>
+                                <Tooltip title="Não gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'dislike')} disabled={!!reacaoDoUtilizador}><ThumbDown fontSize="small" color={reacaoDoUtilizador === 'dislike' ? 'error' : 'inherit'} /></IconButton></span></Tooltip>
+                                <Typography variant="body2">{post.dislikes}</Typography>
+                            </Box>
+                        </Box>
+                    </ListItem>
+                );
+            })}</List>
+        </Paper>
+    );
+};
+
 
 function PaginaVitrine() {
   const { url_unica } = useParams();
@@ -214,7 +251,7 @@ function PaginaVitrine() {
                 
                 <Box sx={{ flex: '2 1 60%', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {videoDestaqueId && (
-                        <Paper sx={{ p: 2, aspectRatio: '16/9' }}>
+                        <Paper sx={{ p: {xs: 1, sm: 2}, aspectRatio: '16/9' }}>
                             <YouTube
                                 videoId={videoDestaqueId}
                                 opts={{ height: '100%', width: '100%' }}
@@ -223,13 +260,7 @@ function PaginaVitrine() {
                         </Paper>
                     )}
                     {postsRecentes && postsRecentes.length > 0 && (
-                       <Paper sx={{ p: 3 }}>
-                            <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Últimas Atualizações</Typography>
-                            <List>{postsRecentes.map(post => {
-                                const reacaoDoUtilizador = reacoesPosts[post.id];
-                                return ( <ListItem key={post.id} disablePadding sx={{ py: 1 }} secondaryAction={ <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> <Tooltip title="Gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'like')} disabled={!!reacaoDoUtilizador}><ThumbUp fontSize="small" color={reacaoDoUtilizador === 'like' ? 'primary' : 'inherit'} /></IconButton></span></Tooltip> <Typography variant="body2">{post.likes}</Typography> <Tooltip title="Não gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'dislike')} disabled={!!reacaoDoUtilizador}><ThumbDown fontSize="small" color={reacaoDoUtilizador === 'dislike' ? 'error' : 'inherit'} /></IconButton></span></Tooltip> <Typography variant="body2">{post.dislikes}</Typography> </Box> }> <ListItemIcon><AnnouncementIcon color="primary" /></ListItemIcon> <ListItemText primary={post.content} secondary={post.link ? (<Link href={post.link} target="_blank" rel="noopener noreferrer" sx={{display: 'flex', alignItems: 'center', mt: 0.5}}><LinkIcon fontSize="small" sx={{mr: 0.5}}/> Ver mais</Link>) : new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}/> </ListItem> );
-                            })}</List>
-                        </Paper>
+                       <PostsSection posts={postsRecentes} reacoes={reacoesPosts} handleReacao={handleReacao} />
                     )}
                 </Box>
 
