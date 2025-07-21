@@ -167,7 +167,7 @@ function Configuracoes() {
       <Grid container spacing={4}>
         {/* ASSINATURA */}
         <Grid item xs={12}>
-            <Paper sx={{ p: { xs: 2, md: 3, lg: 12}}}>
+            <Paper sx={{ p: { xs: 2, md: 3, lg: 1 }}}>
                 <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                     <Typography>Seu plano atual:</Typography>
