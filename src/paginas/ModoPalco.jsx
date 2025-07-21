@@ -5,12 +5,14 @@ import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { 
     Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container, 
-    AppBar, Toolbar 
+    Dialog, DialogTitle, DialogContent, DialogActions, AppBar, Toolbar 
 } from '@mui/material';
 import { 
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
     PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
-    Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon
+    Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon,
+    Notes as NotesIcon,
+    ZoomIn as ZoomInIcon, ZoomOut as ZoomOutIcon
 } from '@mui/icons-material';
 
 const formatarCifra = (textoCifra, theme) => {
@@ -46,6 +48,7 @@ function ModoPalco() {
   const scrollAnimationRef = useRef();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fontSize, setFontSize] = useState(1.8);
 
   const handleToggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -63,16 +66,27 @@ function ModoPalco() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  const buscarSetlist = useCallback(async () => {
-      try {
-        const resposta = await apiClient.get(`/api/setlists/${id}`);
-        setSetlist(resposta.data);
-      } catch (error) {
-        console.error("Erro ao carregar setlist para o Modo Palco", error);
-        navigate('/setlists');
-      } finally {
-        setCarregando(false);
+  // --- NOVA LÓGICA ADICIONADA AQUI ---
+  // Este useEffect garante que, ao sair do componente, a tela cheia seja desativada.
+  useEffect(() => {
+    // A função de retorno (cleanup) é executada quando o componente é desmontado
+    return () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
       }
+    };
+  }, []); // O array vazio [] significa que este efeito só corre na montagem e desmontagem
+
+  const buscarSetlist = useCallback(async () => {
+    try {
+      const resposta = await apiClient.get(`/api/setlists/${id}`);
+      setSetlist(resposta.data);
+    } catch (error) {
+      console.error("Erro ao carregar setlist para o Modo Palco", error);
+      navigate('/setlists');
+    } finally {
+      setCarregando(false);
+    }
   }, [id, navigate]);
 
   useEffect(() => {
@@ -112,7 +126,6 @@ function ModoPalco() {
         clearTimeout(scrollAnimationRef.current);
         return;
     }
-
     const step = () => {
       element.scrollTop += 1;
       if (element.scrollTop < element.scrollHeight - element.clientHeight) {
@@ -170,23 +183,28 @@ function ModoPalco() {
                 flexGrow: 1, 
                 overflowY: 'auto', 
                 p: {xs: 2, md: 4},
-                pb: '80px', // Espaço para o rodapé fixo
+                pb: '80px',
                 '&::-webkit-scrollbar': { display: 'none' }, 
                 scrollbarWidth: 'none' 
             }}
         >
             <Container maxWidth="md">
-                <Typography sx={{ fontSize: { xs: '1.2rem', md: '1.8rem' }, lineHeight: 2, fontFamily: 'monospace', textAlign: 'center', whiteSpace: 'pre-wrap' }}>
+                <Typography sx={{ 
+                    fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` }, 
+                    lineHeight: 2, 
+                    fontFamily: 'monospace', 
+                    textAlign: 'center', 
+                    whiteSpace: 'pre-wrap',
+                    transition: 'font-size 0.2s ease-in-out'
+                }}>
                     {formatarCifra(musicaAtual.notas_adicionais, theme)}
                 </Typography>
             </Container>
         </Box>
       
-      {/* Botões laterais de navegação */}
       <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowBackIos /></IconButton>
       <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowForwardIos /></IconButton>
       
-      {/* Rodapé fixo com controlos do teleprompter */}
       <Paper sx={{ 
             position: 'fixed',
             bottom: 0,
@@ -201,13 +219,18 @@ function ModoPalco() {
             borderColor: 'divider',
             zIndex: 10
         }}>
-          <Typography sx={{ flexGrow: 1, textAlign: 'right', display: {xs: 'none', sm: 'block'} }}>Velocidade:</Typography>
-          <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
-          <IconButton onClick={() => setIsScrolling(!isScrolling)} color="secondary" size="large">
-              {isScrolling ? <PauseIcon fontSize="large" /> : <PlayIcon fontSize="large" />}
-          </IconButton>
-          <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
-          <Box sx={{ flexGrow: 1 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', position: 'absolute', left: 16 }}>
+                <IconButton onClick={() => setFontSize(s => Math.max(1, s - 0.1))}><ZoomOutIcon /></IconButton>
+                <IconButton onClick={() => setFontSize(s => Math.min(4, s + 0.1))}><ZoomInIcon /></IconButton>
+            </Box>
+            
+            <Typography sx={{ flexGrow: 1, textAlign: 'right', display: {xs: 'none', sm: 'block'} }}>Velocidade:</Typography>
+            <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
+            <IconButton onClick={() => setIsScrolling(!isScrolling)} color="secondary" size="large">
+                {isScrolling ? <PauseIcon fontSize="large" /> : <PlayIcon fontSize="large" />}
+            </IconButton>
+            <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
+            <Box sx={{ flexGrow: 1 }} />
       </Paper>
     </Box>
   );
