@@ -1,88 +1,62 @@
 // src/componentes/Anuncio.jsx
 import React, { useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contextos/AuthContext';
+import Adsense from 'react-adsense'; // <-- 1. Importe o componente de anúncio
 import { 
-    Dialog, DialogTitle, DialogContent, DialogContentText, 
-    DialogActions, Button, Box, Typography, IconButton 
+    Dialog, DialogTitle, DialogContent, 
+    IconButton, Typography
 } from '@mui/material';
-import { WorkspacePremium as WorkspacePremiumIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 function Anuncio() {
   const { usuario } = useContext(AuthContext);
-  const navigate = useNavigate();
-
-  // 1. Estado para controlar se o Dialog está aberto ou fechado
   const [dialogAberto, setDialogAberto] = useState(false);
 
-  // 2. Lógica para decidir se o anúncio deve ser mostrado
   useEffect(() => {
-    // Verifica se o utilizador tem o plano 'padrao'
     const temPlanoPadrao = usuario?.plano === 'padrao';
-    // Verifica se o anúncio já foi visto nesta sessão
     const anuncioJaVisto = sessionStorage.getItem('anuncioVisto');
 
     if (temPlanoPadrao && !anuncioJaVisto) {
-      // Se tiver o plano padrão e ainda não viu o anúncio, abre o dialog
       setDialogAberto(true);
-      // E marca como visto para não mostrar novamente na mesma sessão
       sessionStorage.setItem('anuncioVisto', 'true');
     }
-  }, [usuario]); // Este efeito corre sempre que as informações do 'usuario' mudam
+  }, [usuario]);
 
   const handleFechar = () => {
     setDialogAberto(false);
   };
 
-  const handleVerPlanos = () => {
-    navigate('/assinatura');
-    handleFechar();
-  };
+  // Se o utilizador não tiver o plano padrão, o componente não faz nada
+  if (usuario?.plano !== 'padrao') {
+    return null;
+  }
 
-  // 3. O componente agora retorna um Dialog em vez de um Paper
   return (
     <Dialog
       open={dialogAberto}
       onClose={handleFechar}
-      PaperProps={{
-        sx: {
-          border: '1px solid',
-          borderColor: 'primary.main',
-        }
-      }}
+      PaperProps={{ sx: { maxWidth: '728px', width: '100%' } }} // Largura comum para banners
     >
       <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" component="div" fontWeight="bold">Uma Oportunidade para Si</Typography>
+        <Typography variant="body2" color="text.secondary">Publicidade</Typography>
         <IconButton
           aria-label="close"
           onClick={handleFechar}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
+          sx={{ color: (theme) => theme.palette.grey[500] }}
         >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers>
-        <DialogContentText>
-          Desbloqueie todo o potencial do VOXGest com o plano Premium. Navegue sem anúncios e tenha acesso a funcionalidades exclusivas para levar a sua carreira ao próximo nível.
-        </DialogContentText>
+      <DialogContent sx={{ p: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {/* --- 2. Componente do AdSense --- */}
+        <Adsense
+          client="pub-6978134622596714" // <-- SUBSTITUA
+          slot="6578217682"   // <-- SUBSTITUA
+          style={{ display: 'block' }}
+          layout="in-article"
+          format="fluid"
+        />
       </DialogContent>
-      <DialogActions sx={{ p: '16px 24px' }}>
-        <Button onClick={handleFechar}>
-          Continuar com Anúncios
-        </Button>
-        <Button 
-            onClick={handleVerPlanos} 
-            variant="contained"
-            startIcon={<WorkspacePremiumIcon />}
-        >
-          Ver Planos Premium
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
