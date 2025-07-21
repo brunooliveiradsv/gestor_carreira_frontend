@@ -1,29 +1,25 @@
 // src/contextos/NotificationContext.jsx
-
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react'; // 1. Importar useCallback
 import { Snackbar, Alert } from '@mui/material';
 
-// 1. Cria o contexto
 const NotificationContext = createContext({});
 
-// 2. Cria o componente Provedor
 export function NotificationProvider({ children }) {
   const [notificacao, setNotificacao] = useState({
     open: false,
     mensagem: '',
-    severidade: 'success' // pode ser 'success', 'error', 'warning', 'info'
+    severidade: 'success'
   });
 
-  // Função para MOSTRAR uma notificação
-  const mostrarNotificacao = (mensagem, severidade = 'success') => {
+  // 2. Envolver a função com useCallback para a estabilizar
+  const mostrarNotificacao = useCallback((mensagem, severidade = 'success') => {
     setNotificacao({
       open: true,
       mensagem,
       severidade,
     });
-  };
+  }, []); // O array vazio [] significa que esta função nunca será recriada
 
-  // Função para FECHAR a notificação
   const handleClose = (event, reason) => {
     if (reason === 'clickaway') {
       return;
@@ -32,18 +28,14 @@ export function NotificationProvider({ children }) {
   };
 
   return (
-    // Disponibiliza a função 'mostrarNotificacao' para toda a aplicação
     <NotificationContext.Provider value={{ mostrarNotificacao }}>
       {children}
-      
-      {/* O componente Snackbar que será a nossa "Alert Box" */}
       <Snackbar
         open={notificacao.open}
-        autoHideDuration={6000} // Fecha sozinho após 6 segundos
+        autoHideDuration={6000}
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} // Posição na tela
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        {/* O Alert do MUI que mostra a mensagem com a cor correta */}
         <Alert onClose={handleClose} severity={notificacao.severidade} sx={{ width: '100%' }}>
           {notificacao.mensagem}
         </Alert>
@@ -52,7 +44,6 @@ export function NotificationProvider({ children }) {
   );
 }
 
-// 3. Cria um "hook" customizado para facilitar o uso
 export const useNotificacao = () => {
   return useContext(NotificationContext);
 };
