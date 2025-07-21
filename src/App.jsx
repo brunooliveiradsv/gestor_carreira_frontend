@@ -22,6 +22,7 @@ import AdminLogs from "./paginas/AdminLogs.jsx";
 import Mural from "./paginas/Mural.jsx";
 import Assinatura from "./paginas/Assinatura.jsx";
 import VerificarAssinatura from "./componentes/VerificarAssinatura.jsx";
+import ModoPalco from "./paginas/ModoPalco.jsx"; // Importa o novo componente ModoPalco
 
 function App() {
   return (
@@ -31,7 +32,8 @@ function App() {
       <Route path="/cadastro" element={<Autenticacao />} />
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/vitrine/:url_unica" element={<PaginaVitrine />} />
-
+      
+<Route path="/setlists/palco/:id" element={<RotaProtegida><ModoPalco /></RotaProtegida>} />
       {/* Rotas Protegidas (exigem apenas login) */}
       <Route
         element={
