@@ -1,3 +1,4 @@
+// src/App.jsx
 import { Routes, Route } from "react-router-dom";
 import Autenticacao from "./paginas/Autenticacao.jsx";
 import Dashboard from "./paginas/Dashboard.jsx";
@@ -33,7 +34,19 @@ function App() {
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/vitrine/:url_unica" element={<PaginaVitrine />} />
 
-      {/* Rotas Protegidas (exigem apenas login) */}
+      {/* --- ROTA DE TELA CHEIA (SEM LAYOUT) --- */}
+      {/* Esta rota é protegida, mas renderiza APENAS o ModoPalco, sem o menu lateral */}
+      <Route
+        path="/setlists/palco/:id"
+        element={
+          <RotaProtegida>
+            <ModoPalco />
+          </RotaProtegida>
+        }
+      />
+
+      {/* --- ROTAS COM O LAYOUT PRINCIPAL --- */}
+      {/* Todas as outras páginas que devem ter o menu lateral e o cabeçalho ficam aqui dentro */}
       <Route
         element={
           <RotaProtegida>
@@ -41,33 +54,27 @@ function App() {
           </RotaProtegida>
         }
       >
-        {/* --- 2. ROTAS QUE NÃO PRECISAM DE ASSINATURA ATIVA --- */}
-        {/* O usuário sempre pode aceder a estas páginas para gerir a sua conta */}
-        <Route path="/assinatura" element={<Assinatura />} />
-        <Route path="/configuracoes" element={<Configuracoes />} />
-
-        {/* --- 3. ROTAS QUE EXIGEM ASSINATURA ATIVA --- */}
-        {/* O novo componente "abraça" todas as rotas que precisam de pagamento */}
         <Route element={<VerificarAssinatura />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/agenda" element={<Agenda />} />
-          <Route path="/financeiro" element={<Financeiro />} />
-          <Route path="/conquistas" element={<Conquistas />} />
-          <Route path="/contatos" element={<Contatos />} />
-          <Route path="/repertorio" element={<Repertorio />} />
-          <Route path="/equipamentos" element={<Equipamentos />} />
-          <Route path="/setlists" element={<Setlists />} />
-         <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
-          <Route path="/setlists/palco/:id" element={<ModoPalco />} />
-          <Route path="/mural" element={<Mural />} />
-          
-          {/* As rotas de Admin também podem ser colocadas aqui dentro se exigirem assinatura */}
-          <Route path="/admin" element={<AdminPainel />} />
-          <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-          <Route path="/admin/musicas" element={<AdminMusicas />} />
-          <Route path="/admin/sugestoes" element={<AdminSugestoes />} />
-          <Route path="/admin/logs" element={<AdminLogs />} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/agenda" element={<Agenda />} />
+            <Route path="/financeiro" element={<Financeiro />} />
+            <Route path="/repertorio" element={<Repertorio />} />
+            <Route path="/setlists" element={<Setlists />} />
+            <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
+            <Route path="/mural" element={<Mural />} />
+            <Route path="/equipamentos" element={<Equipamentos />} />
+            <Route path="/contatos" element={<Contatos />} />
+            <Route path="/conquistas" element={<Conquistas />} />
+            <Route path="/admin" element={<AdminPainel />} />
+            <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+            <Route path="/admin/musicas" element={<AdminMusicas />} />
+            <Route path="/admin/sugestoes" element={<AdminSugestoes />} />
+            <Route path="/admin/logs" element={<AdminLogs />} />
         </Route>
+        
+        {/* Rotas que não precisam de assinatura ativa, mas precisam de login */}
+        <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/assinatura" element={<Assinatura />} />
       </Route>
     </Routes>
   );

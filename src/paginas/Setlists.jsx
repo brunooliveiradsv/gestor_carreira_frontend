@@ -1,6 +1,6 @@
 // src/paginas/Setlists.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom'; // Importe o useNavigate
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
@@ -11,16 +11,16 @@ import {
   AddCircleOutline as AddCircleOutlineIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  PlaylistPlay as PlaylistPlayIcon
+  PlaylistPlay as PlaylistPlayIcon,
+  MusicVideo as MusicVideoIcon // <-- 1. Importe o ícone novo
 } from '@mui/icons-material';
 
 function Setlists() {
   const [setlists, setSetlists] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
-  const navigate = useNavigate(); // Hook para navegação
+  const navigate = useNavigate();
 
-  // Estados para o novo Dialog de CRIAR setlist
   const [dialogoCriarAberto, setDialogoCriarAberto] = useState(false);
   const [novoNomeSetlist, setNovoNomeSetlist] = useState('');
 
@@ -39,7 +39,6 @@ function Setlists() {
     buscarSetlists();
   }, [buscarSetlists]);
 
-  // Função para navegar para a página de edição
   const handleEditar = (id) => {
     navigate(`/setlists/editar/${id}`);
   };
@@ -62,7 +61,6 @@ function Setlists() {
           const resposta = await apiClient.post('/api/setlists', { nome: novoNomeSetlist });
           mostrarNotificacao('Setlist criado com sucesso!', 'success');
           handleFecharCriarDialogo();
-          // Navega para a página de edição do setlist recém-criado
           navigate(`/setlists/editar/${resposta.data.id}`);
       } catch (error) {
           mostrarNotificacao('Erro ao criar o setlist.', 'error');
@@ -79,7 +77,7 @@ function Setlists() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
-          <Typography color="text.secondary">Crie e organize as sequências de músicas para seus shows.</Typography>
+          <Typography color="text.secondary">Crie e organize as sequências de músicas para os seus shows.</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirCriarDialogo}>
           Novo Setlist
@@ -112,8 +110,13 @@ function Setlists() {
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
+                  {/* --- 2. BOTÃO "MODO PALCO" ADICIONADO AQUI --- */}
+                  <Tooltip title="Modo Palco">
+                    <IconButton color="secondary" onClick={() => navigate(`/setlists/palco/${setlist.id}`)}>
+                      <MusicVideoIcon />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Editar Músicas e Detalhes">
-                    {/* Botão de edição agora navega para a página do editor */}
                     <IconButton onClick={() => handleEditar(setlist.id)}>
                       <EditIcon />
                     </IconButton>
@@ -130,7 +133,6 @@ function Setlists() {
         </Grid>
       )}
 
-      {/* Dialog para CRIAR um novo setlist */}
       <Dialog open={dialogoCriarAberto} onClose={handleFecharCriarDialogo} fullWidth maxWidth="sm">
         <DialogTitle>Criar Novo Setlist</DialogTitle>
         <DialogContent>

@@ -11,8 +11,8 @@ import {
 } from "@mui/material";
 import {
   Save as SaveIcon, ArrowBack as ArrowBackIcon, Search as SearchIcon,
-  PlaylistAdd as PlaylistAddIcon, Delete as DeleteIcon, DragIndicator as DragIndicatorIcon,
-  MusicVideo as MusicVideoIcon
+  PlaylistAdd as PlaylistAddIcon, Delete as DeleteIcon, DragIndicator as DragIndicatorIcon
+  // O MusicVideoIcon foi removido das importações
 } from "@mui/icons-material";
 
 const reorder = (list, startIndex, endIndex) => {
@@ -111,21 +111,17 @@ function EditorDeSetlist() {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 112px)' }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexShrink: 0, flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexShrink: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Tooltip title="Voltar para Setlists">
               <IconButton onClick={() => navigate("/setlists")}><ArrowBackIcon /></IconButton>
             </Tooltip>
             <Typography variant="h5" fontWeight="bold">{nomeSetlist}</Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button variant="outlined" startIcon={<MusicVideoIcon />} onClick={() => navigate(`/setlists/palco/${id}`)}>
-                Modo Palco
-            </Button>
-            <Button variant="contained" startIcon={salvando ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} onClick={handleSalvar} disabled={salvando}>
-                Salvar
-            </Button>
-          </Box>
+          {/* --- O BOTÃO "MODO PALCO" FOI REMOVIDO DAQUI --- */}
+          <Button variant="contained" startIcon={salvando ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} onClick={handleSalvar} disabled={salvando}>
+            Salvar
+          </Button>
         </Box>
 
         <Paper sx={{ p: 2, mb: 3, flexShrink: 0 }}>
