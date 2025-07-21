@@ -6,8 +6,7 @@ import apiClient from '../api';
 import { Box, Typography, Paper, Grid, Button, CircularProgress, Chip, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import { CheckCircle as CheckCircleIcon, WorkspacePremium as WorkspacePremiumIcon } from '@mui/icons-material';
 
-// Componente para exibir cada plano
-const PlanoCard = ({ title, price, description, features, planType, currentPlan, statusAssinatura, onStartTrial, loading }) => (
+const PlanoCard = ({ title, price, description, features, planType, currentPlan, statusAssinatura, onStartTrial, onSwitchPlan, loading }) => (
   <Paper
     variant="outlined"
     sx={{
@@ -34,21 +33,20 @@ const PlanoCard = ({ title, price, description, features, planType, currentPlan,
         ))}
       </List>
     </Box>
-    {currentPlan === planType && statusAssinatura !== 'inativa' ? (
-        <Chip label="Seu Plano Atual" color="primary" sx={{ mt: 2 }} />
-    ) : (
-      planType === 'premium' && statusAssinatura === 'inativa' && (
-        <Button
-          variant="contained"
-          fullWidth
-          sx={{ mt: 2 }}
-          onClick={onStartTrial}
-          disabled={loading}
-        >
+    {/* Lógica de Botões Atualizada */}
+    <Box sx={{ mt: 2 }}>
+      {currentPlan === planType && statusAssinatura !== 'inativa' ? (
+        <Chip label="Seu Plano Atual" color="primary" sx={{ width: '100%' }} />
+      ) : statusAssinatura === 'ativa' ? (
+        <Button variant="contained" fullWidth onClick={() => onSwitchPlan(planType)} disabled={loading}>
+          {loading ? <CircularProgress size={24} color="inherit" /> : `Mudar para ${title}`}
+        </Button>
+      ) : planType === 'premium' && statusAssinatura === 'inativa' ? (
+        <Button variant="contained" fullWidth onClick={onStartTrial} disabled={loading}>
           {loading ? <CircularProgress size={24} color="inherit" /> : 'Iniciar 7 dias grátis'}
         </Button>
-      )
-    )}
+      ) : null}
+    </Box>
   </Paper>
 );
 
@@ -71,6 +69,20 @@ function Assinatura() {
     }
   };
 
+  // --- NOVA FUNÇÃO ADICIONADA ---
+  const handleTrocarPlano = async (novoPlano) => {
+    setCarregando(true);
+    try {
+        const resposta = await apiClient.put('/api/assinatura/trocar-plano', { novoPlano });
+        setUsuario(resposta.data.usuario); // Atualiza o usuário no contexto
+        mostrarNotificacao(resposta.data.mensagem, 'success');
+    } catch (error) {
+        mostrarNotificacao(error.response?.data?.mensagem || 'Não foi possível alterar o plano.', 'error');
+    } finally {
+        setCarregando(false);
+    }
+  };
+
   const isTrialActive = usuario?.status_assinatura === 'teste';
   const trialEndDate = isTrialActive ? new Date(usuario.teste_termina_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : null;
 
@@ -78,7 +90,7 @@ function Assinatura() {
     <Box>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" fontWeight="bold">Assinatura</Typography>
-        <Typography color="text.secondary">Escolha o plano que melhor se adapta à sua carreira.</Typography>
+        <Typography color="text.secondary">Escolha ou altere o plano que melhor se adapta à sua carreira.</Typography>
       </Box>
 
       {isTrialActive && (
@@ -92,18 +104,20 @@ function Assinatura() {
       <Grid container spacing={4} alignItems="stretch">
         <Grid item xs={12} md={6}>
           <PlanoCard
-            title="Plano Padrão"
+            title="Padrão"
             price="R$ 19,90"
             description="Todas as ferramentas essenciais para a sua gestão, com exibição de anúncios."
             features={['Agenda Completa', 'Controlo Financeiro', 'Gestão de Repertório', 'Suporte por E-mail']}
             planType="padrao"
             currentPlan={usuario?.plano}
             statusAssinatura={usuario?.status_assinatura}
+            onSwitchPlan={handleTrocarPlano}
+            loading={carregando}
           />
         </Grid>
         <Grid item xs={12} md={6}>
           <PlanoCard
-            title="Plano Premium"
+            title="Premium"
             price="R$ 29,90"
             description="A experiência completa do VOXGest, sem interrupções e com recursos avançados."
             features={['Todos os recursos do Padrão', 'Experiência sem Anúncios', 'Sugestão de Músicas (Em breve)', 'Suporte Prioritário']}
@@ -111,6 +125,7 @@ function Assinatura() {
             currentPlan={usuario?.plano}
             statusAssinatura={usuario?.status_assinatura}
             onStartTrial={handleIniciarTeste}
+            onSwitchPlan={handleTrocarPlano}
             loading={carregando}
           />
         </Grid>
