@@ -2,10 +2,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
-import { Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button } from '@mui/material';
+import { Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container } from '@mui/material';
 import { 
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
-    PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon 
+    PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
+    Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon
 } from '@mui/icons-material';
 
 // Função para analisar o texto e colorir as linhas de cifra
@@ -48,36 +49,54 @@ function ModoPalco() {
   const letraRef = useRef(null);
   const scrollAnimationRef = useRef();
 
-  // Busca os dados do setlist da API
+  // Estado para a tela cheia
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  };
+
   useEffect(() => {
-    const buscarSetlist = async () => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+
+  const buscarSetlist = useCallback(async () => {
       try {
         const resposta = await apiClient.get(`/api/setlists/${id}`);
         setSetlist(resposta.data);
       } catch (error) {
         console.error("Erro ao carregar setlist para o Modo Palco", error);
-        navigate('/setlists'); // Volta se não encontrar
+        navigate('/setlists');
       } finally {
         setCarregando(false);
       }
-    };
-    buscarSetlist();
   }, [id, navigate]);
 
-  // Funções para navegar entre as músicas
+  useEffect(() => {
+    buscarSetlist();
+  }, [buscarSetlist]);
+
   const irParaProxima = useCallback(() => {
     if (!setlist) return;
     setIndiceAtual((prev) => (prev + 1) % setlist.musicas.length);
-    setIsScrolling(false); // Para o scroll ao mudar de música
+    setIsScrolling(false);
   }, [setlist]);
 
   const irParaAnterior = useCallback(() => {
     if (!setlist) return;
     setIndiceAtual((prev) => (prev - 1 + setlist.musicas.length) % setlist.musicas.length);
-    setIsScrolling(false); // Para o scroll ao mudar de música
+    setIsScrolling(false);
   }, [setlist]);
 
-  // Efeito para controlar a navegação com as setas do teclado
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'ArrowRight') {
@@ -94,29 +113,21 @@ function ModoPalco() {
     };
   }, [irParaProxima, irParaAnterior, navigate, id]);
   
-  // Lógica do auto-scroll
   useEffect(() => {
     const element = letraRef.current;
     if (!element) return;
-
-    // Reseta o scroll para o topo sempre que a música ou o estado de scroll muda
     element.scrollTop = 0;
-
     const step = () => {
       element.scrollTop += 1;
-      // Verifica se o scroll ainda não chegou ao fim
       if (element.scrollTop < element.scrollHeight - element.clientHeight) {
         scrollAnimationRef.current = setTimeout(step, scrollSpeed);
       } else {
-        setIsScrolling(false); // Para quando chegar ao fim
+        setIsScrolling(false);
       }
     };
-
     if (isScrolling) {
       scrollAnimationRef.current = setTimeout(step, scrollSpeed);
     }
-
-    // Limpeza: para a animação se o componente for desmontado ou o estado mudar
     return () => clearTimeout(scrollAnimationRef.current);
   }, [isScrolling, scrollSpeed, indiceAtual]);
 
@@ -139,49 +150,50 @@ function ModoPalco() {
   return (
     <Box sx={{
       position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-      bgcolor: '#000', color: '#FFF', // Fundo preto para máximo contraste
-      display: 'flex', flexDirection: 'column', p: { xs: 2, sm: 4 }
+      bgcolor: '#000', color: '#FFF',
+      display: 'flex', flexDirection: 'column', p: { xs: 1, sm: 2 }
     }}>
-      {/* Botões de Navegação e Fechar */}
-      <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
+      <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
         <ArrowBackIos />
       </IconButton>
-      <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
+      <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
         <ArrowForwardIos />
       </IconButton>
-      <IconButton onClick={() => navigate(`/setlists/editar/${id}`)} sx={{ position: 'fixed', right: 16, top: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
+      <IconButton onClick={() => navigate(`/setlists/editar/${id}`)} sx={{ position: 'fixed', left: 16, top: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
         <CloseIcon />
       </IconButton>
+      <IconButton onClick={handleToggleFullscreen} sx={{ position: 'fixed', right: 16, top: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
+        {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+      </IconButton>
       
-      {/* Conteúdo da Música */}
-      <Box sx={{ textAlign: 'center', mb: 2 }}>
-        <Typography variant="h2" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', md: '4rem' } }}>{musicaAtual.nome}</Typography>
-        <Typography variant="h5" color="text.secondary" sx={{ fontSize: { xs: '1.2rem', md: '1.5rem' } }}>{musicaAtual.artista}</Typography>
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1 }}>
-            {musicaAtual.tom && <Chip label={`Tom: ${musicaAtual.tom}`} variant="outlined" />}
-            {musicaAtual.bpm && <Chip label={`BPM: ${musicaAtual.bpm}`} variant="outlined" />}
+      <Container maxWidth="md" sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, py: 2 }}>
+        <Box sx={{ textAlign: 'center', mb: 2 }}>
+          <Typography variant="h2" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2rem', sm: '3rem', md: '4rem' } }}>{musicaAtual.nome}</Typography>
+          <Typography variant="h5" color="text.secondary" sx={{ fontSize: { xs: '1.1rem', md: '1.5rem' } }}>{musicaAtual.artista}</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2 }}>
+              {musicaAtual.tom && <Chip label={`Tom: ${musicaAtual.tom}`} variant="outlined" />}
+              {musicaAtual.bpm && <Chip label={`BPM: ${musicaAtual.bpm}`} variant="outlined" />}
+          </Box>
         </Box>
-      </Box>
-      
-      {/* Cifra/Letra */}
-      <Paper variant="outlined" sx={{ flexGrow: 1, overflow: 'hidden', p: 3, bgcolor: 'transparent', borderColor: 'rgba(255,255,255,0.2)' }}>
-        <Box ref={letraRef} sx={{ height: '100%', overflowY: 'auto', '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
-            <Typography sx={{ fontSize: { xs: '1.1rem', md: '1.5rem' }, lineHeight: 1.9, fontFamily: 'monospace' }}>
-                {formatarCifra(musicaAtual.notas_adicionais, theme)}
-            </Typography>
+        
+        <Paper variant="outlined" sx={{ flexGrow: 1, overflow: 'hidden', p: {xs: 2, md: 3}, bgcolor: 'transparent', borderColor: 'rgba(255,255,255,0.2)' }}>
+          <Box ref={letraRef} sx={{ height: '100%', overflowY: 'auto', '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+              <Typography sx={{ fontSize: { xs: '1.1rem', md: '1.5rem' }, lineHeight: 1.9, fontFamily: 'monospace', textAlign: 'center' }}>
+                  {formatarCifra(musicaAtual.notas_adicionais, theme)}
+              </Typography>
+          </Box>
+        </Paper>
+        
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2 }}>
+          <Typography sx={{ flexGrow: 1, textAlign: 'right' }}>Velocidade:</Typography>
+          <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
+          <IconButton onClick={() => setIsScrolling(!isScrolling)} color="secondary" size="large">
+              {isScrolling ? <PauseIcon fontSize="large" /> : <PlayIcon fontSize="large" />}
+          </IconButton>
+          <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
+          <Typography sx={{ flexGrow: 1, textAlign: 'left' }}>Música {indiceAtual + 1} de {setlist.musicas.length}</Typography>
         </Box>
-      </Paper>
-      
-      {/* Controlos do Teleprompter */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2 }}>
-        <Typography sx={{ flexGrow: 1, textAlign: 'right' }}>Velocidade:</Typography>
-        <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
-        <IconButton onClick={() => setIsScrolling(!isScrolling)} color="secondary" size="large">
-            {isScrolling ? <PauseIcon fontSize="large" /> : <PlayIcon fontSize="large" />}
-        </IconButton>
-        <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
-        <Typography sx={{ flexGrow: 1, textAlign: 'left' }}>Música {indiceAtual + 1} de {setlist.musicas.length}</Typography>
-      </Box>
+      </Container>
     </Box>
   );
 }
