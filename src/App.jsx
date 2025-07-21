@@ -22,6 +22,7 @@ import AdminLogs from "./paginas/AdminLogs.jsx";
 import Mural from "./paginas/Mural.jsx";
 import Assinatura from "./paginas/Assinatura.jsx";
 import VerificarAssinatura from "./componentes/VerificarAssinatura.jsx";
+import ModoPalco from "./paginas/ModoPalco.jsx";
 
 function App() {
   return (
