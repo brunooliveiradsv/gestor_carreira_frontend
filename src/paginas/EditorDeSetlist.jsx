@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import {
   Save as SaveIcon, ArrowBack as ArrowBackIcon, Search as SearchIcon,
-  PlaylistAdd as PlaylistAddIcon, Delete as DeleteIcon, DragIndicator as DragIndicatorIcon,
+  PlaylistAdd as PlaylistAddIcon, Delete as DeleteIcon, DragIndicator as DragIndicatorIcon
 } from "@mui/icons-material";
 
 const reorder = (list, startIndex, endIndex) => {
@@ -90,13 +90,13 @@ function EditorDeSetlist() {
     try {
       const musicasIds = musicasNoSetlist.map((m) => m.id);
       
-      // Executa as duas requisições de salvamento em paralelo
       await Promise.all([
         apiClient.put(`/api/setlists/${id}`, { nome: nomeSetlist, notas_adicionais: notasSetlist }),
         apiClient.put(`/api/setlists/${id}/musicas`, { musicasIds })
       ]);
 
       mostrarNotificacao("Setlist salvo com sucesso!", "success");
+      navigate("/setlists");
     } catch (error) {
       mostrarNotificacao("Erro ao salvar o setlist.", "error");
     } finally {
@@ -123,7 +123,6 @@ function EditorDeSetlist() {
           </Button>
         </Box>
 
-        {/* --- NOVOS CAMPOS DE EDIÇÃO --- */}
         <Paper sx={{ p: 2, mb: 3, flexShrink: 0 }}>
             <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
@@ -146,7 +145,6 @@ function EditorDeSetlist() {
         </Paper>
 
         <Grid container spacing={3} sx={{ flexGrow: 1, overflow: 'hidden' }}>
-          {/* Coluna do Repertório Geral */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
             <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <Typography variant="h6" gutterBottom>Repertório Geral</Typography>
@@ -182,7 +180,6 @@ function EditorDeSetlist() {
             </Paper>
           </Grid>
 
-          {/* Coluna do Setlist Atual */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
             <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'action.selected' }}>
               <Typography variant="h6" gutterBottom>Músicas no Setlist ({musicasNoSetlist.length})</Typography>

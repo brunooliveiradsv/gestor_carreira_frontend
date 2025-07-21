@@ -72,14 +72,14 @@ function AdminSugestoes() {
             </Typography>
           )}
           {sugestoes.map((sugestao, index) => {
-            // Pega o valor antigo diretamente do objeto da música
             const valorAntigo = sugestao.musica[sugestao.campo_sugerido] || '(vazio)';
             
             return (
               <React.Fragment key={sugestao.id}>
                 <ListItem
+                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
                   secondaryAction={
-                    <Box>
+                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
                       <Tooltip title="Aprovar Sugestão">
                         <IconButton color="success" onClick={() => handleAprovar(sugestao.id)}>
                           <ApproveIcon />
@@ -94,23 +94,37 @@ function AdminSugestoes() {
                   }
                 >
                   <ListItemText
+                    sx={{ width: '100%', mb: 2 }}
                     primary={`Sugestão para: ${sugestao.musica.nome} - ${sugestao.musica.artista}`}
                     secondary={
                       <>
-                        <Typography component="div" variant="body2" sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <Typography component="div" variant="body2">
                           <strong>Campo:</strong>&nbsp;<Chip label={sugestao.campo_sugerido} size="small" />
                         </Typography>
-                        <Typography component="div" variant="body2" sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', mt: 1 }}>
-                          <Chip label={valorAntigo} size="small" variant="outlined" title="Valor Antigo" />
-                          <ArrowIcon sx={{ mx: 1 }} />
-                          <Chip label={sugestao.valor_sugerido} size="small" variant="outlined" color="primary" title="Novo Valor" />
-                        </Typography>
-                        <Typography component="div" variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                        <Typography component="div" variant="caption" color="text.secondary">
                           Sugerido por: {sugestao.autor.nome} ({sugestao.autor.email})
                         </Typography>
                       </>
                     }
                   />
+
+                  {/* --- LAYOUT DE COMPARAÇÃO CORRIGIDO --- */}
+                  <Box sx={{ display: 'flex', width: '100%', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
+                      {/* Valor Antigo */}
+                      <Box sx={{ flex: 1 }}>
+                          <Typography variant="overline" color="text.secondary">Valor Antigo</Typography>
+                          <Paper variant="outlined" sx={{ p: 1.5, maxHeight: 150, overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                              {valorAntigo}
+                          </Paper>
+                      </Box>
+                      {/* Valor Sugerido */}
+                      <Box sx={{ flex: 1 }}>
+                          <Typography variant="overline" color="primary.main">Valor Sugerido</Typography>
+                          <Paper variant="outlined" sx={{ p: 1.5, maxHeight: 150, overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'monospace', fontSize: '0.8rem', borderColor: 'primary.main' }}>
+                              {sugestao.valor_sugerido}
+                          </Paper>
+                      </Box>
+                  </Box>
                 </ListItem>
                 {index < sugestoes.length - 1 && <Divider />}
               </React.Fragment>

@@ -186,41 +186,39 @@ function Repertorio() {
         {carregando ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>
         ) : (
-            <Grid container spacing={3}>
-            {musicas.length > 0 ? (
-                musicas.map((musica) => (
-                <Grid item xs={12} sm={6} md={4} key={musica.id}>
-                    <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                        <CardContent sx={{flexGrow: 1}}>
-                            <Typography variant="h6" fontWeight="medium">{musica.nome}</Typography>
-                            <Typography component="div" color="text.secondary" variant="body2">
-                              {musica.artista}
-                              {musica.master_id && <Chip label="Importada" size="small" variant="outlined" color="primary" sx={{ ml: 1 }} />}
-                              {musica.is_modificada && <Chip label="Modificada" size="small" variant="outlined" color="secondary" sx={{ ml: 1 }} />}
-                            </Typography>
-                            <Typography color="text.secondary" variant="body2" sx={{mt: 0.5}}>Tom: {musica.tom || "N/A"} | BPM: {musica.bpm || "N/A"}</Typography>
-                            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {musica.tags?.map((tag) => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
-                            </Box>
-                        </CardContent>
-                        <CardActions sx={{justifyContent: 'flex-end'}}>
-                            {musica.master_id && <Tooltip title="Sugerir Melhoria"><IconButton onClick={() => handleAbrirSugestao(musica)}><SuggestionIcon /></IconButton></Tooltip>}
-                            <Tooltip title="Editar"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
-                            <Tooltip title="Apagar"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
-                        </CardActions>
-                    </Card>
-                </Grid>
-                ))
+            musicas.length > 0 ? (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                    {musicas.map((musica) => (
+                        <Box key={musica.id} sx={{ flex: '1 1 350px', minWidth: '300px' }}>
+                            <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+                                <CardContent sx={{flexGrow: 1}}>
+                                    <Typography variant="h6" fontWeight="medium">{musica.nome}</Typography>
+                                    <Typography component="div" color="text.secondary" variant="body2">
+                                    {musica.artista}
+                                    {musica.master_id && <Chip label="Importada" size="small" variant="outlined" color="primary" sx={{ ml: 1 }} />}
+                                    {musica.is_modificada && <Chip label="Modificada" size="small" variant="outlined" color="secondary" sx={{ ml: 1 }} />}
+                                    </Typography>
+                                    <Typography color="text.secondary" variant="body2" sx={{mt: 0.5}}>Tom: {musica.tom || "N/A"} | BPM: {musica.bpm || "N/A"}</Typography>
+                                    <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                        {musica.tags?.map((tag) => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
+                                    </Box>
+                                </CardContent>
+                                <CardActions sx={{justifyContent: 'flex-end'}}>
+                                    {musica.master_id && <Tooltip title="Sugerir Melhoria"><IconButton onClick={() => handleAbrirSugestao(musica)}><SuggestionIcon /></IconButton></Tooltip>}
+                                    <Tooltip title="Editar"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
+                                    <Tooltip title="Apagar"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
+                                </CardActions>
+                            </Card>
+                        </Box>
+                    ))}
+                </Box>
             ) : (
-                <Grid item xs={12}>
-                    <Paper variant="outlined" sx={{p: 4, textAlign: 'center'}}>
-                        <MusicNoteIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
-                        <Typography variant="h6">Nenhuma música encontrada</Typography>
-                        <Typography color="text.secondary">Adicione uma música ou ajuste a sua busca.</Typography>
-                    </Paper>
-                </Grid>
-            )}
-            </Grid>
+                <Paper variant="outlined" sx={{p: 4, textAlign: 'center', width: '100%'}}>
+                    <MusicNoteIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
+                    <Typography variant="h6">Nenhuma música encontrada</Typography>
+                    <Typography color="text.secondary">Adicione uma música ou ajuste a sua busca.</Typography>
+                </Paper>
+            )
         )}
       
       <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="md">

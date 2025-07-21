@@ -24,8 +24,6 @@ import {
   ThumbDown
 } from '@mui/icons-material';
 
-// --- COMPONENTES INTERNOS PARA MELHORAR A ORGANIZAÇÃO ---
-
 const StatCard = ({ icon, value, label }) => (
     <Box sx={{ textAlign: 'center', flex: '1 1 0', minWidth: '90px', p: 1 }}>
         {icon}
@@ -61,7 +59,7 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
                 
                 <Box sx={{ flexGrow: 1, width: '100%' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, justifyContent: {xs: 'center', md: 'flex-start'} }}>
-                        <Typography variant="h3" component="h1" fontWeight="bold">{artista.nome}</Typography>
+                        <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', sm: '3rem' } }}>{artista.nome}</Typography>
                         <Tooltip title={jaAplaudido ? "Você já aplaudiu!" : "Apoie este artista!"}>
                             <span>
                                 <IconButton onClick={handleAplaudir} disabled={jaAplaudido} color={jaAplaudido ? "error" : "default"}><FavoriteIcon /></IconButton>
@@ -81,6 +79,7 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
 
                 <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }} />
 
+                {/* --- CORREÇÃO AQUI (Estatísticas) --- */}
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-around', width: { xs: '100%', md: 'auto' }, gap: 2, p: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
                     <StatCard icon={<MicIcon color="primary" />} value={estatisticas?.shows} label="Shows"/>
                     <StatCard icon={<LibraryMusicIcon color="primary" />} value={estatisticas?.musicas} label="Músicas"/>
@@ -100,13 +99,14 @@ const PostsSection = ({ posts, reacoes, handleReacao }) => {
                 const dataPost = post.created_at ? new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) : null;
 
                 return (
+                    // --- CORREÇÃO AQUI (Layout do Post) ---
                     <ListItem key={post.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 2, '&:not(:last-child)': { borderBottom: '1px solid', borderColor: 'divider' } }} disablePadding>
                         <Box sx={{ display: 'flex', width: '100%' }}>
                             <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}><AnnouncementIcon color="primary" /></ListItemIcon>
                             <ListItemText primary={post.content} />
                         </Box>
                         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, pl: '40px' }}>
-                            {post.link ? (
+                             {post.link ? (
                                 <Link href={post.link} target="_blank" rel="noopener noreferrer" sx={{display: 'flex', alignItems: 'center', fontSize: '0.875rem'}}>
                                     <LinkIcon fontSize="small" sx={{mr: 0.5}}/> Ver mais
                                 </Link>
@@ -127,7 +127,6 @@ const PostsSection = ({ posts, reacoes, handleReacao }) => {
     );
 };
 
-
 function PaginaVitrine() {
   const { url_unica } = useParams();
   const [vitrine, setVitrine] = useState(null);
@@ -142,7 +141,7 @@ function PaginaVitrine() {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
-  }
+  };
 
   const buscarDadosVitrine = useCallback(async () => {
       try {
@@ -231,7 +230,7 @@ function PaginaVitrine() {
 
   if (!vitrine) return null;
 
-  const { artista, proximosShows, contatoPublico, postsRecentes, musicasPopulares, setlistPublico } = vitrine;
+  const { artista, proximosShows, contatoPublico, postsRecentes } = vitrine;
 
   const urlFotoCapa = artista.foto_capa_url || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80';
   const videoDestaqueId = getYoutubeVideoId(artista.video_destaque_url);
