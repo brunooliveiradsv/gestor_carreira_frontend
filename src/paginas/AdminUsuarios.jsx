@@ -88,18 +88,27 @@ function AdminUsuarios() {
       handleFecharDialogoConfirmacao();
     }
   };
-  
+
+  // --- ALTERAÇÃO AQUI ---
   const handleGerirAssinatura = async (acao, plano = null) => {
     try {
         await apiClient.put(`/api/admin/usuarios/${usuarioParaGerir.id}/assinatura`, { acao, plano });
-        mostrarNotificacao(`Assinatura de ${usuarioParaGerir.nome} atualizada!`, "success");
+        let mensagemSucesso = "";
+        if (acao === "conceder") {
+            mensagemSucesso = `Plano ${capitalizar(plano)} concedido a ${usuarioParaGerir.nome}!`;
+        } else if (acao === "remover") {
+            mensagemSucesso = `Assinatura de ${usuarioParaGerir.nome} removida com sucesso!`;
+        }
+        mostrarNotificacao(mensagemSucesso, "success");
         buscarUsuarios();
     } catch (error) {
-        mostrarNotificacao(error.response?.data?.mensagem || 'Falha ao gerir assinatura.', 'error');
+        // Melhorando a mensagem de erro
+        mostrarNotificacao(error.response?.data?.mensagem || 'Falha ao gerir assinatura. Por favor, tente novamente.', 'error');
     } finally {
         handleFecharDialogoAssinatura();
     }
   };
+  // --- FIM DA ALTERAÇÃO ---
 
   const abrirDialogoConfirmacao = (tipo, dados) => { setAcaoPendente({ tipo, dados }); setDialogoConfirmacaoAberto(true); };
   const handleFecharDialogoConfirmacao = () => { setDialogoConfirmacaoAberto(false); setAcaoPendente(null); };
@@ -184,10 +193,10 @@ function AdminUsuarios() {
                 <Typography variant="body2" color="text.secondary">{usuario.email}</Typography>
               </TableCell>
               <TableCell>
-                <Chip 
-                    label={usuario.plano ? `${capitalizar(usuario.plano)} (${capitalizar(usuario.status_assinatura)})` : 'Nenhuma'} 
-                    color={usuario.status_assinatura === 'ativa' || usuario.status_assinatura === 'teste' ? 'success' : 'default'} 
-                    size="small" 
+                <Chip
+                    label={usuario.plano ? `${capitalizar(usuario.plano)} (${capitalizar(usuario.status_assinatura)})` : 'Nenhuma'}
+                    color={usuario.status_assinatura === 'ativa' || usuario.status_assinatura === 'teste' ? 'success' : 'default'}
+                    size="small"
                 />
               </TableCell>
               <TableCell><Chip label={capitalizar(usuario.role)} color={usuario.role === "admin" ? "primary" : "default"} size="small" /></TableCell>
@@ -231,7 +240,7 @@ function AdminUsuarios() {
                 />
               </Box>
             </Box>
-            
+
             {isMobile ? renderizarVisaoMobile() : renderizarVisaoDesktop()}
           </>
         )}
