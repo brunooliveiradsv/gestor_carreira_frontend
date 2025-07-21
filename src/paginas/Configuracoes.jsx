@@ -149,7 +149,6 @@ function Configuracoes() {
         window.location.href = resposta.data.url;
     } catch (error) {
         mostrarNotificacao(error.response?.data?.mensagem || "Não foi possível aceder ao portal de gestão.", "error");
-    } finally {
         setCarregando(prev => ({ ...prev, portal: false }));
     }
   };
@@ -183,12 +182,14 @@ function Configuracoes() {
             </Paper>
         </Grid>
         
+        {/* --- LAYOUT CORRIGIDO PARA OS CARDS SEGUINTES --- */}
+
         {/* FOTO DE PERFIL */}
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid item xs={12} sm={6} md={4} lg={3}>
             <FormCard title="Foto de Perfil">
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
                     <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<IconButton color="primary" onClick={() => fileInputRef.current.click()}><PhotoCamera /></IconButton>}>
-                        <Avatar src={previewFoto} sx={{ width: 150, height: 150, mb: 2, fontSize: '4rem' }}>{usuario?.nome?.charAt(0).toUpperCase()}</Avatar>
+                        <Avatar src={previewFoto} sx={{ width: 120, height: 120, mb: 2, fontSize: '3rem' }}>{usuario?.nome?.charAt(0).toUpperCase()}</Avatar>
                     </Badge>
                     <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleFileChange} />
                     <Button variant="contained" sx={{mt: 2}} disabled={!novaFoto || carregando.foto} onClick={handleSalvarFoto}>
@@ -199,7 +200,7 @@ function Configuracoes() {
         </Grid>
 
         {/* ALTERAR NOME */}
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid item xs={12} sm={6} md={4} lg={3}>
             <FormCard title="Alterar Nome">
                 <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                     <TextField id="nome" name="nome" label="Nome Artístico" value={nome} onChange={(e) => setNome(e.target.value)} fullWidth />
@@ -211,7 +212,7 @@ function Configuracoes() {
         </Grid>
 
         {/* ALTERAR E-MAIL */}
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid item xs={12} sm={6} md={4} lg={3}>
             <FormCard title="Alterar E-mail">
                 <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                     <TextField id="email" name="email" label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
@@ -223,12 +224,14 @@ function Configuracoes() {
         </Grid>
 
         {/* ALTERAR SENHA */}
-        <Grid item xs={12} md={6} lg={8}>
+        <Grid item xs={12} sm={6} md={12} lg={3}>
             <FormCard title="Alterar Senha">
-                <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <TextField id="senha_atual" name="senha_atual" label="Senha Atual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} fullWidth />
-                    <TextField id="nova_senha" name="nova_senha" label="Nova Senha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} fullWidth />
-                    <TextField id="confirmar_nova_senha" name="confirmar_nova_senha" label="Confirmar Nova Senha" type="password" value={confirmarNovaSenha} onChange={(e) => setConfirmarNovaSenha(e.target.value)} fullWidth />
+                <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <TextField id="senha_atual" name="senha_atual" label="Senha Atual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} fullWidth />
+                        <TextField id="nova_senha" name="nova_senha" label="Nova Senha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} fullWidth />
+                        <TextField id="confirmar_nova_senha" name="confirmar_nova_senha" label="Confirmar Nova Senha" type="password" value={confirmarNovaSenha} onChange={(e) => setConfirmarNovaSenha(e.target.value)} fullWidth />
+                    </Box>
                     <Button type="submit" variant="contained" disabled={carregando.senha} sx={{ alignSelf: "flex-end", mt: 2 }}>
                         {carregando.senha ? <CircularProgress size={24} /> : "Alterar Senha"}
                     </Button>
