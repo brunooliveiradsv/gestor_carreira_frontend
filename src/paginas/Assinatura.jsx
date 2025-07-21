@@ -118,7 +118,7 @@ function Assinatura() {
           sx={{ mt: 3 }}
         >
           <ToggleButton value="mensal">Mensal</ToggleButton>
-          <ToggleButton value="anual">Anual (2 meses grátis)</ToggleButton>
+          <ToggleButton value="anual">Anual</ToggleButton>
         </ToggleButtonGroup>
       </Box>
 
