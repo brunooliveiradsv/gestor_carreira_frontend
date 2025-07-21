@@ -136,7 +136,7 @@ function Navegacao() {
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
-    { to: "/mural", text: "Mural", icon: <MuralIcon /> },
+    { to: "/mural", text: "Vitrine", icon: <MuralIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },

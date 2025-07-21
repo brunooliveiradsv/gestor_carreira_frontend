@@ -1,5 +1,5 @@
 // src/paginas/Mural.jsx
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { AuthContext } from '../contextos/AuthContext';
@@ -14,23 +14,30 @@ import {
     Link as LinkIcon,
     Instagram, 
     YouTube, 
-    MusicNote
+    MusicNote,
+    PhotoCamera as PhotoCameraIcon
 } from '@mui/icons-material';
 
 function Mural() {
-  const { usuario, setUsuario } = useContext(AuthContext); // <-- Adicionado para obter e atualizar o usuário
+  const { usuario, setUsuario } = useContext(AuthContext);
+  const { mostrarNotificacao } = useNotificacao();
+  
   const [posts, setPosts] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const { mostrarNotificacao } = useNotificacao();
 
   // Estados para o formulário de nova publicação
   const [dialogoAberto, setDialogoAberto] = useState(false);
   const [novoPost, setNovoPost] = useState({ content: '', link: '' });
 
-  // --- Estados movidos de Configurações para cá ---
+  // Estados para o formulário de perfil público
   const [biografia, setBiografia] = useState("");
   const [urlUnica, setUrlUnica] = useState("");
   const [links, setLinks] = useState({ instagram: '', youtube: '', spotify: '' });
+  const [videoDestaque, setVideoDestaque] = useState("");
+  const [novaFotoCapa, setNovaFotoCapa] = useState(null);
+  const [previewFotoCapa, setPreviewFotoCapa] = useState(null);
+  const fileInputCapaRef = useRef();
+
   const [carregandoPublico, setCarregandoPublico] = useState(false);
   
   // Popula os campos do perfil público quando o componente carrega
@@ -39,12 +46,14 @@ function Mural() {
       setBiografia(usuario.biografia || "");
       setUrlUnica(usuario.url_unica || "");
       setLinks(usuario.links_redes || { instagram: '', youtube: '', spotify: '' });
+      setVideoDestaque(usuario.video_destaque_url || "");
+      setPreviewFotoCapa(usuario.foto_capa_url || null);
     }
   }, [usuario]);
 
   const buscarPosts = useCallback(async () => {
     try {
-      setCarregando(true);
+      // Já está a carregar, não precisa de definir de novo
       const resposta = await apiClient.get('/api/posts');
       setPosts(resposta.data);
     } catch (error) {
@@ -55,6 +64,7 @@ function Mural() {
   }, [mostrarNotificacao]);
 
   useEffect(() => {
+    setCarregando(true);
     buscarPosts();
   }, [buscarPosts]);
 
@@ -67,19 +77,45 @@ function Mural() {
   
   const handleLinkChange = (plataforma, valor) => setLinks(prev => ({ ...prev, [plataforma]: valor }));
 
-  // --- Função movida de Configurações para cá ---
   const handleSalvarPerfilPublico = async (e) => {
     e.preventDefault();
     setCarregandoPublico(true);
     try {
-      const payload = { biografia, url_unica: urlUnica, links_redes: links };
-      const { data } = await apiClient.put('/api/usuarios/perfil/publico', payload);
-      setUsuario(data); // Atualiza o usuário globalmente
+      const payload = { biografia, url_unica: urlUnica, links_redes: links, video_destaque_url: videoDestaque };
+      // Primeiro, atualiza os dados de texto
+      const { data: dadosAtualizados } = await apiClient.put('/api/usuarios/perfil/publico', payload);
+      
+      let finalUserData = dadosAtualizados;
+
+      // Se uma nova foto de capa foi selecionada, faz o upload
+      if (novaFotoCapa) {
+        const formData = new FormData();
+        formData.append('capa', novaFotoCapa);
+        // O servidor responderá com os dados do utilizador já incluindo o novo URL da foto de capa
+        const { data: dataFoto } = await apiClient.put('/api/usuarios/perfil/capa', formData);
+        finalUserData = dataFoto; // Usa os dados mais recentes que incluem a nova foto
+        setNovaFotoCapa(null); // Limpa o estado da foto após o upload
+      }
+      
+      // Atualiza o estado global do utilizador com os dados finais
+      setUsuario(finalUserData);
       mostrarNotificacao(`Perfil público atualizado com sucesso!`, "success");
     } catch (error) {
       mostrarNotificacao(error.response?.data?.mensagem || `Falha ao atualizar perfil.`, "error");
     } finally {
       setCarregandoPublico(false);
+    }
+  };
+
+  const handleFotoCapaChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB
+        mostrarNotificacao('A imagem de capa é muito grande (máx 5MB).', 'error');
+        return;
+      }
+      setNovaFotoCapa(file);
+      setPreviewFotoCapa(URL.createObjectURL(file));
     }
   };
 
@@ -130,21 +166,53 @@ function Mural() {
         </Button>
       </Box>
 
-      {/* --- Secção de Perfil Público movida para cá --- */}
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
         <Typography variant="h6" component="h2" gutterBottom>Configurações da Vitrine</Typography>
-        {usuario?.url_unica && (
-            <Link href={`/vitrine/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <LinkIcon sx={{ mr: 1 }} /> Visualizar minha página pública
-            </Link>
-        )}
-        <Box component="form" onSubmit={handleSalvarPerfilPublico} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+        <Box component="form" onSubmit={handleSalvarPerfilPublico} noValidate sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
+            
+            <Box>
+                <Typography color="text.secondary" gutterBottom>Foto de Capa</Typography>
+                <Paper 
+                    variant="outlined" 
+                    onClick={() => fileInputCapaRef.current.click()}
+                    sx={{ 
+                        height: 200, 
+                        backgroundSize: 'cover', 
+                        backgroundPosition: 'center',
+                        backgroundImage: `url(${previewFotoCapa})`,
+                        bgcolor: 'action.hover',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'common.white',
+                        position: 'relative',
+                        '&:hover .overlay': { opacity: 1 }
+                    }}
+                >
+                    <input ref={fileInputCapaRef} type="file" hidden accept="image/*" onChange={handleFotoCapaChange} />
+                    <Box className="overlay" sx={{
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                        bgcolor: 'rgba(0,0,0,0.5)', opacity: 0, transition: 'opacity 0.3s',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <PhotoCameraIcon />
+                        <Typography>Alterar Capa</Typography>
+                    </Box>
+                    {!previewFotoCapa && <Typography>Clique para adicionar uma capa</Typography>}
+                </Paper>
+            </Box>
+
             <TextField id="url_unica" name="url_unica" label="URL Única" helperText="Ex: o-nome-da-sua-banda" value={urlUnica} onChange={(e) => setUrlUnica(e.target.value.toLowerCase().replace(/\s+/g, '-'))} fullWidth />
             <TextField id="biografia" name="biografia" label="Biografia" multiline rows={4} value={biografia} onChange={(e) => setBiografia(e.target.value)} fullWidth />
-            <Typography color="text.secondary" sx={{ mt: 2 }}>Links e Redes Sociais</Typography>
+            
+            <TextField id="video_destaque" name="video_destaque" label="Link do Vídeo Destaque (YouTube)" value={videoDestaque} onChange={(e) => setVideoDestaque(e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+
+            <Typography color="text.secondary">Links e Redes Sociais</Typography>
             <TextField id="link_instagram" name="link_instagram" label="Instagram" value={links.instagram} onChange={(e) => handleLinkChange('instagram', e.target.value)} InputProps={{ startAdornment: <Instagram sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            <TextField id="link_youtube" name="link_youtube" label="YouTube" value={links.youtube} onChange={(e) => handleLinkChange('youtube', e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+            <TextField id="link_youtube" name="link_youtube" label="YouTube (Canal)" value={links.youtube} onChange={(e) => handleLinkChange('youtube', e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
             <TextField id="link_spotify" name="link_spotify" label="Spotify" value={links.spotify} onChange={(e) => handleLinkChange('spotify', e.target.value)} InputProps={{ startAdornment: <MusicNote sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+            
             <Button type="submit" variant="contained" disabled={carregandoPublico} sx={{ alignSelf: "flex-start", mt: 2 }}>
                 {carregandoPublico ? <CircularProgress size={24} /> : "Salvar Informações da Vitrine"}
             </Button>
@@ -152,6 +220,9 @@ function Mural() {
       </Paper>
 
       <Paper>
+        <Typography variant="h6" component="h2" sx={{ p: { xs: 2, md: 3 }, pb: 0 }}>
+          Publicações do Mural
+        </Typography>
         <List>
           {posts.length === 0 ? (
             <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>

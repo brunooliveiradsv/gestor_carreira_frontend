@@ -28,8 +28,7 @@ import {
   EmojiEvents as EmojiEventsIcon,
   ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
-import Anuncio from '../componentes/Anuncio';
-
+import Anuncio from '../componentes/Anuncio'; // Assumindo que o componente de anúncio existe
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
 
@@ -41,7 +40,9 @@ function Dashboard() {
   const navigate = useNavigate();
 
   const abrirFormulario = (path) => {
-    navigate(path, { state: { abrirFormulario: true } });
+    // A navegação para abrir formulário em outra página pode ser mais complexa,
+    // por enquanto, vamos apenas navegar para a página.
+    navigate(path);
   };
 
   useEffect(() => {
@@ -54,7 +55,7 @@ function Dashboard() {
         ]);
         
         if (!resumoFinanceiro.data && !proximosCompromissos.data && !ultimasConquistas.data) {
-          setErro("Não foi possível carregar os dados do dashboard. Verifique se o backend está a ser executado.");
+          setErro("Não foi possível carregar os dados do dashboard.");
         }
         
         setResumo({
@@ -85,116 +86,105 @@ function Dashboard() {
       <Typography color="text.secondary" sx={{ mb: 4 }}>
         Aqui está um resumo da sua carreira hoje.
       </Typography>
-<Anuncio />
+
+      <Anuncio />
+
       {erro && <Alert severity="warning" sx={{ mb: 4 }}>{erro}</Alert>}
 
-      {/* --- CORREÇÃO DO GRID V2 COMEÇA AQUI --- */}
-      <Grid container spacing={4}>
-        {/* Coluna Principal */}
-        <Grid xs={12} lg={8}>
-          <Grid container spacing={4}>
-            {/* Balanço do Mês */}
-            <Grid xs={12}>
-                <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>Balanço do Mês</Typography>
-                    {resumo?.financeiro ? (
-                        <Grid container spacing={3} mt={1}>
-                            <Grid xs={12} sm={4}>
-                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                    <Avatar sx={{ bgcolor: 'success.dark', mr: 2 }}><TrendingUpIcon /></Avatar>
-                                    <Box>
-                                        <Typography color="text.secondary" variant="body2">Receitas</Typography>
-                                        <Typography variant="h6" fontWeight="bold">{formatarMoeda(resumo.financeiro.totalReceitas)}</Typography>
-                                    </Box>
-                                </Box>
-                            </Grid>
-                             <Grid xs={12} sm={4}>
-                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                    <Avatar sx={{ bgcolor: 'error.main', mr: 2 }}><TrendingDownIcon /></Avatar>
-                                    <Box>
-                                        <Typography color="text.secondary" variant="body2">Despesas</Typography>
-                                        <Typography variant="h6" fontWeight="bold">{formatarMoeda(resumo.financeiro.totalDespesas)}</Typography>
-                                    </Box>
-                                </Box>
-                            </Grid>
-                             <Grid xs={12} sm={4}>
-                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                    <Avatar sx={{ bgcolor: resumo.financeiro.saldo >= 0 ? 'primary.dark' : 'error.dark', mr: 2 }}><AccountBalanceWalletIcon /></Avatar>
-                                    <Box>
-                                        <Typography color="text.secondary" variant="body2">Saldo</Typography>
-                                        <Typography variant="h6" fontWeight="bold" color={resumo.financeiro.saldo >= 0 ? 'text.primary' : 'error.light'}>{formatarMoeda(resumo.financeiro.saldo)}</Typography>
-                                    </Box>
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    ) : (
-                        <Typography color="text.secondary" sx={{pt: 2}}>Não foi possível carregar o resumo financeiro.</Typography>
-                    )}
-                </Paper>
-            </Grid>
-
-            {/* Ações Rápidas */}
-             <Grid xs={12}>
-                <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>Ações Rápidas</Typography>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 2 }}>
-                        <Button variant="contained" color="secondary" onClick={() => abrirFormulario('/agenda')} startIcon={<AddCircleOutlineIcon/>}>Novo Compromisso</Button>
-                        <Button variant="outlined" onClick={() => abrirFormulario('/financeiro')} startIcon={<AddCircleOutlineIcon/>}>Nova Transação</Button>
-                        <Button variant="outlined" onClick={() => abrirFormulario('/repertorio')} startIcon={<AddCircleOutlineIcon/>}>Nova Música</Button>
-                    </Box>
-                </Paper>
-            </Grid>
-
-          </Grid>
-        </Grid>
+      {/* --- LAYOUT ATUALIZADO COM FLEXBOX --- */}
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4 }}>
         
-        {/* Coluna da Direita */}
-        <Grid xs={12} lg={4}>
-          <Grid container spacing={4}>
-            {/* Próximos Compromissos */}
-            <Grid xs={12}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>Próximos Compromissos</Typography>
-                {resumo?.compromissos && resumo.compromissos.length > 0 ? (
-                  <List dense>
-                    {resumo.compromissos.map(c => (
-                      <ListItem key={c.id} disablePadding sx={{ my: 1 }}>
-                        <ListItemIcon sx={{minWidth: 40}}><EventIcon color="primary" /></ListItemIcon>
-                        <ListItemText primary={c.nome_evento} secondary={c.local || 'Local a definir'} />
-                        <Chip label={new Date(c.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} size="small" />
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Typography color="text.secondary" sx={{pt: 2}}>Nenhum compromisso agendado.</Typography>
-                )}
-                 <Button component={RouterLink} to="/agenda" endIcon={<ArrowForwardIcon />} sx={{ mt: 2 }}>Ver agenda completa</Button>
-              </Paper>
-            </Grid>
+        {/* Coluna Principal (Esquerda) */}
+        <Box sx={{ flex: '2 1 65%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* Balanço do Mês */}
+          <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>Balanço do Mês</Typography>
+              {resumo?.financeiro ? (
+                  <Grid container spacing={3} mt={1}>
+                      <Grid item xs={12} sm={4}>
+                          <Box sx={{display: 'flex', alignItems: 'center'}}>
+                              <Avatar sx={{ bgcolor: 'success.dark', mr: 2 }}><TrendingUpIcon /></Avatar>
+                              <Box>
+                                  <Typography color="text.secondary" variant="body2">Receitas</Typography>
+                                  <Typography variant="h6" fontWeight="bold">{formatarMoeda(resumo.financeiro.totalReceitas)}</Typography>
+                              </Box>
+                          </Box>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                          <Box sx={{display: 'flex', alignItems: 'center'}}>
+                              <Avatar sx={{ bgcolor: 'error.main', mr: 2 }}><TrendingDownIcon /></Avatar>
+                              <Box>
+                                  <Typography color="text.secondary" variant="body2">Despesas</Typography>
+                                  <Typography variant="h6" fontWeight="bold">{formatarMoeda(resumo.financeiro.totalDespesas)}</Typography>
+                              </Box>
+                          </Box>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                          <Box sx={{display: 'flex', alignItems: 'center'}}>
+                              <Avatar sx={{ bgcolor: resumo.financeiro.saldo >= 0 ? 'primary.dark' : 'error.dark', mr: 2 }}><AccountBalanceWalletIcon /></Avatar>
+                              <Box>
+                                  <Typography color="text.secondary" variant="body2">Saldo</Typography>
+                                  <Typography variant="h6" fontWeight="bold" color={resumo.financeiro.saldo >= 0 ? 'text.primary' : 'error.light'}>{formatarMoeda(resumo.financeiro.saldo)}</Typography>
+                              </Box>
+                          </Box>
+                      </Grid>
+                  </Grid>
+              ) : (
+                  <Typography color="text.secondary" sx={{pt: 2}}>Não foi possível carregar o resumo financeiro.</Typography>
+              )}
+          </Paper>
 
-            {/* Últimas Conquistas */}
-            <Grid xs={12}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>Últimas Conquistas</Typography>
-                    {resumo?.conquistas && resumo.conquistas.length > 0 ? (
-                      <List dense>
-                          {resumo.conquistas.map(c => (
-                          <ListItem key={c.id} disablePadding sx={{ my: 1 }}>
-                              <ListItemIcon sx={{minWidth: 40}}><EmojiEventsIcon sx={{color: '#FFD700'}} /></ListItemIcon>
-                              <ListItemText primary={c.nome} primaryTypographyProps={{fontWeight: 'medium'}} />
-                          </ListItem>
-                          ))}
-                      </List>
-                  ) : (
-                      <Typography color="text.secondary" sx={{pt: 2}}>Continue a usar o app para desbloquear!</Typography>
-                  )}
-                  <Button component={RouterLink} to="/conquistas" endIcon={<ArrowForwardIcon />} sx={{ mt: 2 }}>Ver todas</Button>
-              </Paper>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
-      {/* --- FIM DA CORREÇÃO --- */}
+          {/* Ações Rápidas */}
+          <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>Ações Rápidas</Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 2 }}>
+                  <Button variant="contained" color="secondary" onClick={() => abrirFormulario('/agenda')} startIcon={<AddCircleOutlineIcon/>}>Novo Compromisso</Button>
+                  <Button variant="outlined" onClick={() => abrirFormulario('/financeiro')} startIcon={<AddCircleOutlineIcon/>}>Nova Transação</Button>
+                  <Button variant="outlined" onClick={() => abrirFormulario('/repertorio')} startIcon={<AddCircleOutlineIcon/>}>Nova Música</Button>
+              </Box>
+          </Paper>
+        </Box>
+        
+        {/* Coluna Secundária (Direita) */}
+        <Box sx={{ flex: '1 1 35%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* Próximos Compromissos */}
+          <Paper sx={{ p: 3, flexGrow: 1 }}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>Próximos Compromissos</Typography>
+            {resumo?.compromissos && resumo.compromissos.length > 0 ? (
+              <List dense>
+                {resumo.compromissos.map(c => (
+                  <ListItem key={c.id} disablePadding sx={{ my: 1 }}>
+                    <ListItemIcon sx={{minWidth: 40}}><EventIcon color="primary" /></ListItemIcon>
+                    <ListItemText primary={c.nome_evento} secondary={c.local || 'Local a definir'} />
+                    <Chip label={new Date(c.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} size="small" />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography color="text.secondary" sx={{pt: 2}}>Nenhum compromisso agendado.</Typography>
+            )}
+              <Button component={RouterLink} to="/agenda" endIcon={<ArrowForwardIcon />} sx={{ mt: 2 }}>Ver agenda completa</Button>
+          </Paper>
+
+          {/* Últimas Conquistas */}
+          <Paper sx={{ p: 3, flexGrow: 1 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>Últimas Conquistas</Typography>
+                {resumo?.conquistas && resumo.conquistas.length > 0 ? (
+                  <List dense>
+                      {resumo.conquistas.map(c => (
+                      <ListItem key={c.id} disablePadding sx={{ my: 1 }}>
+                          <ListItemIcon sx={{minWidth: 40}}><EmojiEventsIcon sx={{color: '#FFD700'}} /></ListItemIcon>
+                          <ListItemText primary={c.nome} primaryTypographyProps={{fontWeight: 'medium'}} />
+                      </ListItem>
+                      ))}
+                  </List>
+              ) : (
+                  <Typography color="text.secondary" sx={{pt: 2}}>Continue a usar o app para desbloquear!</Typography>
+              )}
+              <Button component={RouterLink} to="/conquistas" endIcon={<ArrowForwardIcon />} sx={{ mt: 2 }}>Ver todas</Button>
+          </Paper>
+        </Box>
+      </Box>
     </Box>
   );
 }
