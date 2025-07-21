@@ -56,7 +56,8 @@ function App() {
           <Route path="/repertorio" element={<Repertorio />} />
           <Route path="/equipamentos" element={<Equipamentos />} />
           <Route path="/setlists" element={<Setlists />} />
-          <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
+         <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
+          <Route path="/setlists/palco/:id" element={<ModoPalco />} />
           <Route path="/mural" element={<Mural />} />
           
           {/* As rotas de Admin também podem ser colocadas aqui dentro se exigirem assinatura */}
