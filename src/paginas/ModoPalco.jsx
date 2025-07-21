@@ -53,8 +53,10 @@ function ModoPalco() {
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(90);
   const [fontSize, setFontSize] = useState(1.8);
+  const [countdown, setCountdown] = useState(null);
   const letraRef = useRef(null);
   const scrollAnimationRef = useRef();
+  const countdownIntervalRef = useRef();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -75,12 +77,7 @@ function ModoPalco() {
   }, []);
 
   useEffect(() => {
-    // Função de limpeza que é executada quando o componente é desmontado
-    return () => {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      }
-    };
+    return () => { if (document.fullscreenElement) document.exitFullscreen(); };
   }, []);
 
   const buscarSetlist = useCallback(async () => {
@@ -119,12 +116,53 @@ function ModoPalco() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [irParaProxima, irParaAnterior, navigate]);
   
-  useEffect(() => {
-    if (letraRef.current) {
-        letraRef.current.scrollTop = 0;
+  const iniciarContagemParaScroll = () => {
+    clearInterval(countdownIntervalRef.current);
+    setCountdown(3);
+    let count = 3;
+    
+    countdownIntervalRef.current = setInterval(() => {
+      count -= 1;
+      setCountdown(count);
+      if (count <= 0) {
+        clearInterval(countdownIntervalRef.current);
+        setCountdown(null);
+        setIsScrolling(true);
+      }
+    }, 1000);
+  };
+
+  const handleToggleScroll = () => {
+    clearInterval(countdownIntervalRef.current);
+    setCountdown(null);
+    if (!isScrolling) {
+        // Se a letra não estiver no topo, recomeça do início. Caso contrário, inicia a contagem.
+        if (letraRef.current && letraRef.current.scrollTop > 0) {
+            letraRef.current.scrollTop = 0;
+            setIsScrolling(true);
+        } else {
+            iniciarContagemParaScroll();
+        }
+    } else {
+        setIsScrolling(false);
     }
+  };
+
+  useEffect(() => {
+    const musicaAtual = setlist?.musicas?.[indiceAtual];
+    if (musicaAtual?.bpm) {
+      const calculatedSpeed = Math.round(12000 / musicaAtual.bpm);
+      setScrollSpeed(calculatedSpeed);
+      mostrarNotificacao(`Velocidade sincronizada para ${musicaAtual.bpm} BPM`, 'info');
+    } else {
+      setScrollSpeed(90);
+    }
+
+    if (letraRef.current) letraRef.current.scrollTop = 0;
     setIsScrolling(false);
-  }, [indiceAtual]);
+    clearInterval(countdownIntervalRef.current);
+    setCountdown(null);
+  }, [indiceAtual, setlist, mostrarNotificacao]);
 
   useEffect(() => {
     const element = letraRef.current;
@@ -138,12 +176,15 @@ function ModoPalco() {
         scrollAnimationRef.current = setTimeout(step, scrollSpeed);
       } else {
         setIsScrolling(false);
-        mostrarNotificacao('Fim da música', 'info');
+        mostrarNotificacao('Fim da música, a avançar...', 'info');
+        setTimeout(() => {
+          irParaProxima();
+        }, 2000);
       }
     };
     scrollAnimationRef.current = setTimeout(step, scrollSpeed);
     return () => clearTimeout(scrollAnimationRef.current);
-  }, [isScrolling, scrollSpeed, mostrarNotificacao]);
+  }, [isScrolling, scrollSpeed, mostrarNotificacao, irParaProxima]);
 
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: 'background.default' }}><CircularProgress /></Box>;
@@ -186,10 +227,11 @@ function ModoPalco() {
         <Box 
             ref={letraRef}
             sx={{ 
+                position: 'relative', // Necessário para o posicionamento absoluto da contagem
                 flexGrow: 1, 
                 overflowY: 'auto', 
                 p: {xs: 2, md: 4},
-                pb: '80px', // Espaço para o rodapé fixo
+                pb: '80px',
                 '&::-webkit-scrollbar': { display: 'none' }, 
                 scrollbarWidth: 'none' 
             }}
@@ -199,6 +241,23 @@ function ModoPalco() {
                     {formatarCifra(musicaAtual.notas_adicionais, theme, fontSize)}
                 </Box>
             </Container>
+            
+            {countdown !== null && countdown > 0 && (
+                <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 20 }}>
+                    <Typography sx={{ fontSize: '25rem', fontWeight: 'bold', color: 'white', animation: 'countdown-zoom 1s infinite' }}>
+                        {countdown}
+                    </Typography>
+                    <style>
+                        {`
+                        @keyframes countdown-zoom {
+                            0% { transform: scale(1); opacity: 1; }
+                            50% { transform: scale(1.1); opacity: 0.7; }
+                            100% { transform: scale(1); opacity: 1; }
+                        }
+                        `}
+                    </style>
+                </Box>
+            )}
         </Box>
       
       <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowBackIos /></IconButton>
@@ -225,7 +284,7 @@ function ModoPalco() {
             
             <Typography sx={{ flexGrow: 1, textAlign: 'right', display: {xs: 'none', sm: 'block'} }}>Velocidade:</Typography>
             <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
-            <IconButton onClick={() => setIsScrolling(!isScrolling)} color="secondary" size="large">
+            <IconButton onClick={handleToggleScroll} color="secondary" size="large">
                 {isScrolling ? <PauseIcon fontSize="large" /> : <PlayIcon fontSize="large" />}
             </IconButton>
             <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
