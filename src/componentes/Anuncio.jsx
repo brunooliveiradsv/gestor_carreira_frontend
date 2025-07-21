@@ -1,53 +1,89 @@
 // src/componentes/Anuncio.jsx
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contextos/AuthContext';
-import { Paper, Typography, Button, Box } from '@mui/material';
-import { WorkspacePremium as WorkspacePremiumIcon } from '@mui/icons-material';
+import { 
+    Dialog, DialogTitle, DialogContent, DialogContentText, 
+    DialogActions, Button, Box, Typography, IconButton 
+} from '@mui/material';
+import { WorkspacePremium as WorkspacePremiumIcon, Close as CloseIcon } from '@mui/icons-material';
 
 function Anuncio() {
-  // 1. Obtém os dados do utilizador a partir do contexto
   const { usuario } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // 2. Condição de exibição: só mostra se o plano for 'padrao'
-  if (usuario?.plano !== 'padrao') {
-    return null; // Não renderiza nada para utilizadores premium, em teste ou sem plano
-  }
+  // 1. Estado para controlar se o Dialog está aberto ou fechado
+  const [dialogAberto, setDialogAberto] = useState(false);
 
-  // 3. Se a condição for cumprida, renderiza o banner do anúncio
+  // 2. Lógica para decidir se o anúncio deve ser mostrado
+  useEffect(() => {
+    // Verifica se o utilizador tem o plano 'padrao'
+    const temPlanoPadrao = usuario?.plano === 'padrao';
+    // Verifica se o anúncio já foi visto nesta sessão
+    const anuncioJaVisto = sessionStorage.getItem('anuncioVisto');
+
+    if (temPlanoPadrao && !anuncioJaVisto) {
+      // Se tiver o plano padrão e ainda não viu o anúncio, abre o dialog
+      setDialogAberto(true);
+      // E marca como visto para não mostrar novamente na mesma sessão
+      sessionStorage.setItem('anuncioVisto', 'true');
+    }
+  }, [usuario]); // Este efeito corre sempre que as informações do 'usuario' mudam
+
+  const handleFechar = () => {
+    setDialogAberto(false);
+  };
+
+  const handleVerPlanos = () => {
+    navigate('/assinatura');
+    handleFechar();
+  };
+
+  // 3. O componente agora retorna um Dialog em vez de um Paper
   return (
-    <Paper 
-      variant="outlined" 
-      sx={{ 
-        p: 2, 
-        mb: 4, 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        flexWrap: 'wrap',
-        gap: 2,
-        backgroundColor: 'action.hover',
-        borderColor: 'primary.dark'
+    <Dialog
+      open={dialogAberto}
+      onClose={handleFechar}
+      PaperProps={{
+        sx: {
+          border: '1px solid',
+          borderColor: 'primary.main',
+        }
       }}
     >
-      <Box>
-        <Typography variant="h6" component="h3" fontWeight="bold">
-          Apoie o VOXGest!
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Faça o upgrade para o plano Premium e navegue sem anúncios.
-        </Typography>
-      </Box>
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<WorkspacePremiumIcon />}
-        onClick={() => navigate('/assinatura')}
-      >
-        Ver Planos Premium
-      </Button>
-    </Paper>
+      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" component="div" fontWeight="bold">Uma Oportunidade para Si</Typography>
+        <IconButton
+          aria-label="close"
+          onClick={handleFechar}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        <DialogContentText>
+          Desbloqueie todo o potencial do VOXGest com o plano Premium. Navegue sem anúncios e tenha acesso a funcionalidades exclusivas para levar a sua carreira ao próximo nível.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions sx={{ p: '16px 24px' }}>
+        <Button onClick={handleFechar}>
+          Continuar com Anúncios
+        </Button>
+        <Button 
+            onClick={handleVerPlanos} 
+            variant="contained"
+            startIcon={<WorkspacePremiumIcon />}
+        >
+          Ver Planos Premium
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
