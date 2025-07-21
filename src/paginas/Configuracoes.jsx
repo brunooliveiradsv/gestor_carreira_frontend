@@ -14,20 +14,13 @@ import {
     WorkspacePremium as WorkspacePremiumIcon 
 } from "@mui/icons-material";
 
-// Componente interno para os cartões para manter o código limpo
-const FormCard = ({ title, children }) => (
-    <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="h6" component="h2" gutterBottom>{title}</Typography>
-        {children}
-    </Paper>
-);
+// O componente FormCard foi removido, os estilos serão aplicados diretamente.
 
 function Configuracoes() {
   const { usuario, setUsuario, logout } = useContext(AuthContext);
   const { mostrarNotificacao } = useNotificacao();
   const navigate = useNavigate();
 
-  // Estados dos formulários
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senhaAtual, setSenhaAtual] = useState("");
@@ -36,7 +29,6 @@ function Configuracoes() {
   const [novaFoto, setNovaFoto] = useState(null);
   const [previewFoto, setPreviewFoto] = useState(null);
   
-  // Estados de carregamento
   const [carregando, setCarregando] = useState({ nome: false, email: false, senha: false, foto: false, portal: false });
   const [dialogoSenhaAberto, setDialogoSenhaAberto] = useState(false);
   const fileInputRef = useRef();
@@ -91,8 +83,7 @@ function Configuracoes() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const MAX_FILE_SIZE = 5 * 1024 * 1024;
-      if (file.size > MAX_FILE_SIZE) {
+      if (file.size > 5 * 1024 * 1024) {
         mostrarNotificacao('A imagem é muito grande. O limite máximo é de 5MB.', 'error');
         return;
       }
@@ -165,7 +156,6 @@ function Configuracoes() {
       </Box>
 
       <Grid container spacing={4}>
-        {/* ASSINATURA */}
         <Grid item xs={12}>
             <Paper sx={{ p: { xs: 2, md: 3 }}}>
                 <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
@@ -182,9 +172,9 @@ function Configuracoes() {
             </Paper>
         </Grid>
         
-        {/* FOTO DE PERFIL */}
         <Grid item xs={12} sm={6} lg={3}>
-            <FormCard title="Foto de Perfil">
+            <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="h6" component="h2" gutterBottom>Foto de Perfil</Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
                     <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<IconButton color="primary" onClick={() => fileInputRef.current.click()}><PhotoCamera /></IconButton>}>
                         <Avatar src={previewFoto} sx={{ width: 120, height: 120, mb: 2, fontSize: '3rem' }}>{usuario?.nome?.charAt(0).toUpperCase()}</Avatar>
@@ -194,36 +184,36 @@ function Configuracoes() {
                         {carregando.foto ? <CircularProgress size={24} /> : 'Salvar Foto'}
                     </Button>
                 </Box>
-            </FormCard>
+            </Paper>
         </Grid>
 
-        {/* ALTERAR NOME */}
         <Grid item xs={12} sm={6} lg={3}>
-            <FormCard title="Alterar Nome">
+            <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="h6" component="h2" gutterBottom>Alterar Nome</Typography>
                 <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                     <TextField id="nome" name="nome" label="Nome Artístico" value={nome} onChange={(e) => setNome(e.target.value)} fullWidth />
                     <Button type="submit" variant="contained" disabled={carregando.nome} sx={{ alignSelf: "flex-end", mt: 2 }}>
                         {carregando.nome ? <CircularProgress size={24} /> : "Salvar Nome"}
                     </Button>
                 </Box>
-            </FormCard>
+            </Paper>
         </Grid>
 
-        {/* ALTERAR E-MAIL */}
         <Grid item xs={12} sm={6} lg={3}>
-            <FormCard title="Alterar E-mail">
+            <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="h6" component="h2" gutterBottom>Alterar E-mail</Typography>
                 <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                     <TextField id="email" name="email" label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
                     <Button type="submit" variant="contained" disabled={carregando.email} sx={{ alignSelf: "flex-end", mt: 2 }}>
                         {carregando.email ? <CircularProgress size={24} /> : "Salvar E-mail"}
                     </Button>
                 </Box>
-            </FormCard>
+            </Paper>
         </Grid>
 
-        {/* ALTERAR SENHA */}
         <Grid item xs={12} sm={6} lg={3}>
-            <FormCard title="Alterar Senha">
+            <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="h6" component="h2" gutterBottom>Alterar Senha</Typography>
                 <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         <TextField id="senha_atual" name="senha_atual" label="Senha Atual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} fullWidth />
@@ -234,7 +224,7 @@ function Configuracoes() {
                         {carregando.senha ? <CircularProgress size={24} /> : "Alterar Senha"}
                     </Button>
                 </Box>
-            </FormCard>
+            </Paper>
         </Grid>
       </Grid>
       
