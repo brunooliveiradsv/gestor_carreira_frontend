@@ -165,9 +165,9 @@ function Configuracoes() {
       </Box>
 
       <Grid container spacing={4}>
-        {/* ASSINATURA */}
+        {/* ASSINATURA - OCUPANDO A LARGURA TODA */}
         <Grid item xs={12}>
-            <Paper sx={{ p: { xs: 2, md: 3, lg: 1 }}}>
+            <Paper sx={{ p: { xs: 2, md: 3 }}}>
                 <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                     <Typography>Seu plano atual:</Typography>
@@ -182,10 +182,8 @@ function Configuracoes() {
             </Paper>
         </Grid>
         
-        {/* --- LAYOUT CORRIGIDO PARA OS CARDS SEGUINTES --- */}
-
         {/* FOTO DE PERFIL */}
-        <Grid item xs={12} sm={6} md={4} lg={3}>
+        <Grid item xs={12} sm={6} lg={3}>
             <FormCard title="Foto de Perfil">
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
                     <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<IconButton color="primary" onClick={() => fileInputRef.current.click()}><PhotoCamera /></IconButton>}>
@@ -200,7 +198,7 @@ function Configuracoes() {
         </Grid>
 
         {/* ALTERAR NOME */}
-        <Grid item xs={12} sm={6} md={4} lg={3}>
+        <Grid item xs={12} sm={6} lg={3}>
             <FormCard title="Alterar Nome">
                 <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                     <TextField id="nome" name="nome" label="Nome Artístico" value={nome} onChange={(e) => setNome(e.target.value)} fullWidth />
@@ -212,7 +210,7 @@ function Configuracoes() {
         </Grid>
 
         {/* ALTERAR E-MAIL */}
-        <Grid item xs={12} sm={6} md={4} lg={3}>
+        <Grid item xs={12} sm={6} lg={3}>
             <FormCard title="Alterar E-mail">
                 <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                     <TextField id="email" name="email" label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
@@ -224,7 +222,7 @@ function Configuracoes() {
         </Grid>
 
         {/* ALTERAR SENHA */}
-        <Grid item xs={12} sm={6} md={12} lg={3}>
+        <Grid item xs={12} sm={6} lg={3}>
             <FormCard title="Alterar Senha">
                 <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -240,7 +238,6 @@ function Configuracoes() {
         </Grid>
       </Grid>
       
-      {/* DIÁLOGO DE CONFIRMAÇÃO DE SENHA */}
       <Dialog open={dialogoSenhaAberto} onClose={fecharDialogoSenha}>
         <DialogTitle>Confirmar Alteração de Senha</DialogTitle>
         <DialogContent><DialogContentText>Após a alteração, você será desconectado e precisará fazer login com a nova senha.</DialogContentText></DialogContent>
