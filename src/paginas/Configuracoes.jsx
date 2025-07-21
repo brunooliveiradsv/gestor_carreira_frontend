@@ -7,7 +7,7 @@ import { AuthContext } from "../contextos/AuthContext";
 import {
   Box, Button, Typography, CircularProgress, Paper, TextField,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, 
-  Grid, Avatar, Badge, IconButton, Chip
+  Grid, Avatar, Badge, IconButton, Link, Chip
 } from "@mui/material";
 import { 
     PhotoCamera, 
@@ -26,6 +26,9 @@ function Configuracoes() {
   const [novaFoto, setNovaFoto] = useState(null);
   const [previewFoto, setPreviewFoto] = useState(null);
   
+  // Novo estado para o carregamento do botão do portal
+  const [carregandoPortal, setCarregandoPortal] = useState(false);
+  
   const [carregando, setCarregando] = useState({ email: false, senha: false, foto: false });
   const [dialogoSenhaAberto, setDialogoSenhaAberto] = useState(false);
   const fileInputRef = useRef();
@@ -36,11 +39,9 @@ function Configuracoes() {
       
       let fotoUrlCompleta = null;
       if (usuario.foto_url) {
-        if (usuario.foto_url.startsWith('http')) {
-          fotoUrlCompleta = usuario.foto_url;
-        } else {
-          fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
-        }
+        fotoUrlCompleta = usuario.foto_url.startsWith('http') 
+          ? usuario.foto_url 
+          : `${apiClient.defaults.baseURL}${usuario.foto_url}`;
       }
       setPreviewFoto(fotoUrlCompleta);
     }
@@ -68,8 +69,7 @@ function Configuracoes() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const MAX_FILE_SIZE = 5 * 1024 * 1024;
-      if (file.size > MAX_FILE_SIZE) {
+      if (file.size > 5 * 1024 * 1024) {
         mostrarNotificacao('A imagem é muito grande. O limite máximo é de 5MB.', 'error');
         return;
       }
@@ -118,17 +118,21 @@ function Configuracoes() {
   };
   const fecharDialogoSenha = () => setDialogoSenhaAberto(false);
 
+  // --- NOVA FUNÇÃO PARA ACEDER AO PORTAL DO STRIPE ---
+  const handleGerirAssinatura = async () => {
+    setCarregandoPortal(true);
+    try {
+        const resposta = await apiClient.post('/api/assinatura/criar-sessao-portal');
+        // Redireciona o utilizador para o URL seguro do portal do Stripe
+        window.location.href = resposta.data.url;
+    } catch (error) {
+        mostrarNotificacao(error.response?.data?.mensagem || "Não foi possível aceder ao portal de gestão.", "error");
+        setCarregandoPortal(false);
+    }
+  };
+
   if (!usuario) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
-  }
-
-  let fotoUrlCompleta = null;
-  if (usuario?.foto_url) {
-      if (usuario.foto_url.startsWith('http')) {
-          fotoUrlCompleta = usuario.foto_url;
-      } else {
-          fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
-      }
   }
   
   return (
@@ -147,7 +151,7 @@ function Configuracoes() {
           <Chip 
             icon={<WorkspacePremiumIcon />} 
             label={capitalizar(usuario.plano) || 'Nenhum'} 
-            color={usuario.plano === 'premium' ? 'primary' : 'default'} 
+            color={usuario.status_assinatura === 'ativa' || usuario.status_assinatura === 'teste' ? 'primary' : 'default'} 
             variant="outlined" 
           />
           {usuario.status_assinatura === 'teste' && (
@@ -157,13 +161,16 @@ function Configuracoes() {
               size="small"
             />
           )}
-          <Button 
-            variant="contained" 
-            onClick={() => navigate('/assinatura')}
-            sx={{ ml: 'auto' }}
-          >
-            Gerir Assinatura
-          </Button>
+          {/* --- LÓGICA DO BOTÃO ATUALIZADA --- */}
+          {usuario.status_assinatura === 'inativa' || usuario.status_assinatura === 'cancelada' ? (
+              <Button variant="contained" onClick={() => navigate('/assinatura')} sx={{ ml: 'auto' }}>
+                  Ver Planos
+              </Button>
+          ) : (
+              <Button variant="contained" onClick={handleGerirAssinatura} sx={{ ml: 'auto' }} disabled={carregandoPortal}>
+                  {carregandoPortal ? <CircularProgress size={24} color="inherit" /> : 'Gerir Assinatura'}
+              </Button>
+          )}
         </Box>
       </Paper>
 
@@ -172,7 +179,7 @@ function Configuracoes() {
           <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', textAlign: 'center' }}>
             <Typography variant="h6" component="h2" gutterBottom>Foto de Perfil</Typography>
             <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<IconButton color="primary" onClick={() => fileInputRef.current.click()}><PhotoCamera /></IconButton>}>
-              <Avatar src={previewFoto || fotoUrlCompleta} sx={{ width: 150, height: 150, margin: 'auto', mb: 2, fontSize: '4rem' }}>{usuario?.nome?.charAt(0).toUpperCase()}</Avatar>
+              <Avatar src={previewFoto} sx={{ width: 150, height: 150, margin: 'auto', mb: 2, fontSize: '4rem' }}>{usuario?.nome?.charAt(0).toUpperCase()}</Avatar>
             </Badge>
             <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleFileChange} />
             <Button variant="contained" sx={{mt: 2}} disabled={!novaFoto || carregando.foto} onClick={handleSalvarFoto}>
