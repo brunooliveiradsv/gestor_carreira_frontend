@@ -1,5 +1,5 @@
 // src/componentes/Navegacao.jsx
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useCallback } from "react"; // 1. Importar o useCallback
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext.jsx";
 import apiClient from "../api";
@@ -40,7 +40,9 @@ function Navegacao() {
   const naoLidasCount = notificacoes.filter((n) => !n.lida).length;
   const drawerWidth = 270;
 
-  const buscarNotificacoes = async () => {
+  // 2. Envolver a função buscarNotificacoes com o useCallback
+  // Isto garante que a função não é recriada em cada renderização
+  const buscarNotificacoes = useCallback(async () => {
     if (!usuario) return;
     try {
       const resposta = await apiClient.get("/api/notificacoes");
@@ -48,13 +50,14 @@ function Navegacao() {
     } catch (error) {
       console.error("Erro ao buscar notificações", error);
     }
-  };
+  }, [usuario]); // A função só será recriada se o 'usuario' mudar
 
+  // 3. O useEffect agora depende da função "memorizada"
   useEffect(() => {
     buscarNotificacoes();
     const intervalId = setInterval(buscarNotificacoes, 30000);
     return () => clearInterval(intervalId);
-  }, [usuario]);
+  }, [buscarNotificacoes]); // A dependência agora é a função estável
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -136,21 +139,17 @@ function Navegacao() {
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
+    { to: "/assinatura", text: "Assinatura", icon: <WorkspacePremiumIcon /> },
   ];
 
   let fotoUrlCompleta = null;
   if (usuario?.foto_url) {
-    if (usuario.foto_url.startsWith('http')) {
-      fotoUrlCompleta = usuario.foto_url;
-    } else {
-      fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
-    }
+    fotoUrlCompleta = usuario.foto_url.startsWith('http') 
+        ? usuario.foto_url 
+        : `${apiClient.defaults.baseURL}${usuario.foto_url}`;
   }
 
   const drawerContent = (
-    // --- CORREÇÃO AQUI ---
-    // Adicionado display flex, flexDirection column e height 100%
-    // para que o conteúdo se ajuste à altura do ecrã.
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
          <Box component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', mb: 3 }}>
@@ -167,7 +166,6 @@ function Navegacao() {
         <Typography variant="body2" color="text.secondary">{usuario?.email}</Typography>
       </Box>
       <Divider />
-      {/* O overflowY: 'auto' garante que a barra de scroll apareça apenas na lista se necessário */}
       <List sx={{ p: 1, overflowY: 'auto', flexGrow: 1 }}>
         {navLinks.map((link) => (
           <ListItem key={link.text} disablePadding sx={{ my: 0.5 }}>
@@ -186,8 +184,6 @@ function Navegacao() {
           </ListItem>
         )}
       </List>
-      
-      {/* O Box com flexGrow: 1 foi removido daqui e a lógica foi aplicada à List */}
       
       <Divider />
       <List sx={{ p: 1, flexShrink: 0 }}>
