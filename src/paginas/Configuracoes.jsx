@@ -15,7 +15,7 @@ import {
 } from "@mui/icons-material";
 
 const FormCard = ({ title, children }) => (
-    <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2, width:'100%' }}>
         <Typography variant="h6" component="h2" gutterBottom>{title}</Typography>
         {children}
     </Paper>
