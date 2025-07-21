@@ -5,13 +5,12 @@ import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { 
     Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container, 
-    Dialog, DialogTitle, DialogContent, DialogActions, AppBar, Toolbar 
+    AppBar, Toolbar 
 } from '@mui/material';
 import { 
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
     PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
-    Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon,
-    Notes as NotesIcon
+    Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon
 } from '@mui/icons-material';
 
 const formatarCifra = (textoCifra, theme) => {
@@ -41,7 +40,6 @@ function ModoPalco() {
   const [indiceAtual, setIndiceAtual] = useState(0);
   const [carregando, setCarregando] = useState(true);
   
-  const [cifraAberta, setCifraAberta] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(90);
   const letraRef = useRef(null);
@@ -93,21 +91,27 @@ function ModoPalco() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (cifraAberta) return;
       if (event.key === 'ArrowRight') irParaProxima();
       else if (event.key === 'ArrowLeft') irParaAnterior();
       else if (event.key === 'Escape') navigate(`/setlists`);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [irParaProxima, irParaAnterior, navigate, cifraAberta]);
+  }, [irParaProxima, irParaAnterior, navigate]);
   
   useEffect(() => {
-    const element = letraRef.current;
-    if (!element || !cifraAberta) return;
-    
-    element.scrollTop = 0;
+    if (letraRef.current) {
+        letraRef.current.scrollTop = 0;
+    }
     setIsScrolling(false);
+  }, [indiceAtual]);
+
+  useEffect(() => {
+    const element = letraRef.current;
+    if (!isScrolling || !element) {
+        clearTimeout(scrollAnimationRef.current);
+        return;
+    }
 
     const step = () => {
       element.scrollTop += 1;
@@ -118,19 +122,9 @@ function ModoPalco() {
         mostrarNotificacao('Fim da música', 'info');
       }
     };
-
-    if (isScrolling) {
-      scrollAnimationRef.current = setTimeout(step, scrollSpeed);
-    }
-
+    scrollAnimationRef.current = setTimeout(step, scrollSpeed);
     return () => clearTimeout(scrollAnimationRef.current);
-  }, [isScrolling, scrollSpeed, indiceAtual, cifraAberta, mostrarNotificacao]);
-
-  const handleAbrirCifra = () => setCifraAberta(true);
-  const handleFecharCifra = () => {
-    setCifraAberta(false);
-    setIsScrolling(false);
-  };
+  }, [isScrolling, scrollSpeed, mostrarNotificacao]);
 
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: 'background.default' }}><CircularProgress /></Box>;
@@ -150,38 +144,13 @@ function ModoPalco() {
   return (
     <Box sx={{
       position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-      bgcolor: '#000', color: '#FFF',
-      display: 'flex', flexDirection: 'column',
-      justifyContent: 'center', alignItems: 'center',
-      p: { xs: 2, sm: 4 }
+      bgcolor: '#000', color: '#FFF', display: 'flex', flexDirection: 'column'
     }}>
-      <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowBackIos /></IconButton>
-      <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowForwardIos /></IconButton>
-      <IconButton onClick={() => navigate(`/setlists`)} sx={{ position: 'fixed', right: 16, top: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><CloseIcon /></IconButton>
-      
-      <Box sx={{ textAlign: 'center' }}>
-        <Typography sx={{ color: 'text.secondary' }}>Música {indiceAtual + 1} de {setlist.musicas.length}</Typography>
-        <Typography variant="h1" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '3rem', sm: '4rem', md: '6rem' } }}>{musicaAtual.nome}</Typography>
-        <Typography variant="h4" color="text.secondary" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>{musicaAtual.artista}</Typography>
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
-            {musicaAtual.tom && <Chip label={`Tom: ${musicaAtual.tom}`} variant="outlined" />}
-            {musicaAtual.bpm && <Chip label={`BPM: ${musicaAtual.bpm}`} variant="outlined" />}
-        </Box>
-        <Button variant="contained" color="secondary" startIcon={<NotesIcon />} onClick={handleAbrirCifra} sx={{ mt: 4 }}>
-          Ver Cifra / Letra
-        </Button>
-      </Box>
-
-      <Dialog
-        fullScreen
-        open={cifraAberta}
-        onClose={handleFecharCifra}
-        PaperProps={{ sx: { bgcolor: '#000' } }}
-      >
-        <AppBar sx={{ position: 'relative', bgcolor: 'background.paper' }}>
+      <AppBar sx={{ position: 'relative', bgcolor: 'background.paper' }}>
           <Toolbar>
-            <Box sx={{ flex: 1, textAlign: 'left' }}>
-                <IconButton edge="start" color="inherit" onClick={handleFecharCifra} aria-label="close"><CloseIcon /></IconButton>
+            <Box sx={{ flex: 1, textAlign: 'left', display: 'flex', alignItems: 'center' }}>
+                <IconButton edge="start" color="inherit" onClick={() => navigate('/setlists')} aria-label="close"><CloseIcon /></IconButton>
+                <Typography sx={{ ml: 2, display: { xs: 'none', sm: 'block' } }}>Música {indiceAtual + 1} de {setlist.musicas.length}</Typography>
             </Box>
             <Box sx={{ flex: 2, textAlign: 'center' }}>
               <Typography variant="h6">{musicaAtual.nome}</Typography>
@@ -194,42 +163,52 @@ function ModoPalco() {
             </Box>
           </Toolbar>
         </AppBar>
-        <DialogContent sx={{ 
-            p: {xs: 2, md: 4},
-            // --- CORREÇÃO AQUI (Espaçamento) ---
-            // Adiciona um espaçamento no fundo para não ser tapado pelos controlos
-            pb: 12, 
-            '&::-webkit-scrollbar': { display: 'none' }, 
-            scrollbarWidth: 'none' 
-        }}>
-            <Container maxWidth="md" ref={letraRef} sx={{ height: '100%', overflowY: 'auto', '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+        
+        <Box 
+            ref={letraRef}
+            sx={{ 
+                flexGrow: 1, 
+                overflowY: 'auto', 
+                p: {xs: 2, md: 4},
+                pb: '80px', // Espaço para o rodapé fixo
+                '&::-webkit-scrollbar': { display: 'none' }, 
+                scrollbarWidth: 'none' 
+            }}
+        >
+            <Container maxWidth="md">
                 <Typography sx={{ fontSize: { xs: '1.2rem', md: '1.8rem' }, lineHeight: 2, fontFamily: 'monospace', textAlign: 'center', whiteSpace: 'pre-wrap' }}>
                     {formatarCifra(musicaAtual.notas_adicionais, theme)}
                 </Typography>
             </Container>
-        </DialogContent>
-        {/* --- CORREÇÃO AQUI (Posicionamento Fixo) --- */}
-        <DialogActions sx={{ 
+        </Box>
+      
+      {/* Botões laterais de navegação */}
+      <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowBackIos /></IconButton>
+      <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowForwardIos /></IconButton>
+      
+      {/* Rodapé fixo com controlos do teleprompter */}
+      <Paper sx={{ 
             position: 'fixed',
             bottom: 0,
             left: 0,
             right: 0,
+            display: 'flex',
             justifyContent: 'center', 
             alignItems: 'center', 
-            p: 2, 
+            p: 1, 
             bgcolor: 'background.paper',
             borderTop: '1px solid',
-            borderColor: 'divider'
+            borderColor: 'divider',
+            zIndex: 10
         }}>
-          <Typography sx={{ flexGrow: 1, textAlign: 'right' }}>Velocidade:</Typography>
+          <Typography sx={{ flexGrow: 1, textAlign: 'right', display: {xs: 'none', sm: 'block'} }}>Velocidade:</Typography>
           <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
           <IconButton onClick={() => setIsScrolling(!isScrolling)} color="secondary" size="large">
               {isScrolling ? <PauseIcon fontSize="large" /> : <PlayIcon fontSize="large" />}
           </IconButton>
           <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
           <Box sx={{ flexGrow: 1 }} />
-        </DialogActions>
-      </Dialog>
+      </Paper>
     </Box>
   );
 }
