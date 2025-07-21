@@ -6,7 +6,7 @@ import { Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, B
 import { 
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
     PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
-    Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon
+    Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon 
 } from '@mui/icons-material';
 
 // Função para analisar o texto e colorir as linhas de cifra
@@ -104,7 +104,7 @@ function ModoPalco() {
       } else if (event.key === 'ArrowLeft') {
         irParaAnterior();
       } else if (event.key === 'Escape') {
-        navigate(`/setlists/editar/${id}`);
+        navigate(`/setlists`); // Alterado para voltar para a lista
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -145,7 +145,7 @@ function ModoPalco() {
     );
   }
 
-  const musicaAtual = setlist.musicas[indiceAtual];
+  const musicaAtual = setlist.musicas?.[indiceAtual];
 
   return (
     <Box sx={{
@@ -159,7 +159,7 @@ function ModoPalco() {
       <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
         <ArrowForwardIos />
       </IconButton>
-      <IconButton onClick={() => navigate(`/setlists/editar/${id}`)} sx={{ position: 'fixed', left: 16, top: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
+      <IconButton onClick={() => navigate(`/setlists`)} sx={{ position: 'fixed', left: 16, top: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
         <CloseIcon />
       </IconButton>
       <IconButton onClick={handleToggleFullscreen} sx={{ position: 'fixed', right: 16, top: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
@@ -168,18 +168,18 @@ function ModoPalco() {
       
       <Container maxWidth="md" sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, py: 2 }}>
         <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <Typography variant="h2" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2rem', sm: '3rem', md: '4rem' } }}>{musicaAtual.nome}</Typography>
-          <Typography variant="h5" color="text.secondary" sx={{ fontSize: { xs: '1.1rem', md: '1.5rem' } }}>{musicaAtual.artista}</Typography>
+          <Typography variant="h2" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2rem', sm: '3rem', md: '4rem' } }}>{musicaAtual?.nome}</Typography>
+          <Typography variant="h5" color="text.secondary" sx={{ fontSize: { xs: '1.1rem', md: '1.5rem' } }}>{musicaAtual?.artista}</Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2 }}>
-              {musicaAtual.tom && <Chip label={`Tom: ${musicaAtual.tom}`} variant="outlined" />}
-              {musicaAtual.bpm && <Chip label={`BPM: ${musicaAtual.bpm}`} variant="outlined" />}
+              {musicaAtual?.tom && <Chip label={`Tom: ${musicaAtual.tom}`} variant="outlined" />}
+              {musicaAtual?.bpm && <Chip label={`BPM: ${musicaAtual.bpm}`} variant="outlined" />}
           </Box>
         </Box>
         
         <Paper variant="outlined" sx={{ flexGrow: 1, overflow: 'hidden', p: {xs: 2, md: 3}, bgcolor: 'transparent', borderColor: 'rgba(255,255,255,0.2)' }}>
           <Box ref={letraRef} sx={{ height: '100%', overflowY: 'auto', '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
               <Typography sx={{ fontSize: { xs: '1.1rem', md: '1.5rem' }, lineHeight: 1.9, fontFamily: 'monospace', textAlign: 'center' }}>
-                  {formatarCifra(musicaAtual.notas_adicionais, theme)}
+                  {formatarCifra(musicaAtual?.notas_adicionais, theme)}
               </Typography>
           </Box>
         </Paper>
@@ -191,7 +191,7 @@ function ModoPalco() {
               {isScrolling ? <PauseIcon fontSize="large" /> : <PlayIcon fontSize="large" />}
           </IconButton>
           <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
-          <Typography sx={{ flexGrow: 1, textAlign: 'left' }}>Música {indiceAtual + 1} de {setlist.musicas.length}</Typography>
+          <Typography sx={{ flexGrow: 1, textAlign: 'left' }}>Música {indiceAtual + 1} de {setlist?.musicas?.length}</Typography>
         </Box>
       </Container>
     </Box>

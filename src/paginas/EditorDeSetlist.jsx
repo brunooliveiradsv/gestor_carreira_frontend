@@ -12,7 +12,6 @@ import {
 import {
   Save as SaveIcon, ArrowBack as ArrowBackIcon, Search as SearchIcon,
   PlaylistAdd as PlaylistAddIcon, Delete as DeleteIcon, DragIndicator as DragIndicatorIcon
-  // O MusicVideoIcon foi removido das importações
 } from "@mui/icons-material";
 
 const reorder = (list, startIndex, endIndex) => {
@@ -97,6 +96,7 @@ function EditorDeSetlist() {
       ]);
 
       mostrarNotificacao("Setlist salvo com sucesso!", "success");
+      navigate("/setlists");
     } catch (error) {
       mostrarNotificacao("Erro ao salvar o setlist.", "error");
     } finally {
@@ -118,7 +118,6 @@ function EditorDeSetlist() {
             </Tooltip>
             <Typography variant="h5" fontWeight="bold">{nomeSetlist}</Typography>
           </Box>
-          {/* --- O BOTÃO "MODO PALCO" FOI REMOVIDO DAQUI --- */}
           <Button variant="contained" startIcon={salvando ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} onClick={handleSalvar} disabled={salvando}>
             Salvar
           </Button>
