@@ -3,14 +3,12 @@ import React, { useContext, useState, useEffect } from "react";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext.jsx";
 import apiClient from "../api";
-
 import {
   AppBar, Toolbar, Typography, Box, IconButton, Badge, Menu,
   MenuItem, Tooltip, Divider, ListItemIcon, ListItemText, Dialog,
   DialogActions, DialogContent, DialogContentText, DialogTitle,
   useTheme, Drawer, List, ListItem, ListItemButton, Avatar, Button
 } from "@mui/material";
-
 import {
   Notifications as NotificationsIcon, Close as CloseIcon, MilitaryTech as MilitaryTechIcon,
   MusicNote as MusicNoteIcon, AttachMoney as AttachMoneyIcon, People as PeopleIcon,
@@ -18,7 +16,8 @@ import {
   AdminPanelSettings as AdminPanelSettingsIcon, Dashboard as DashboardIcon, CalendarMonth as CalendarMonthIcon,
   MonetizationOn as MonetizationOnIcon, LibraryMusic as LibraryMusicIcon, Piano as PianoIcon,
   Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon,
-  EmojiEvents as EmojiEventsIcon, Announcement as MuralIcon
+  EmojiEvents as EmojiEventsIcon,
+  Announcement as MuralIcon
 } from "@mui/icons-material";
 
 const iconMapNotificacao = {
@@ -130,36 +129,37 @@ function Navegacao() {
   const navLinks = [
     { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
-    { to: "/mural", text: "Mural", icon: <MuralIcon /> },
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
+    { to: "/mural", text: "Mural", icon: <MuralIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
 
-  // Constrói a URL completa da foto do usuário a partir do contexto
-  const fotoUrlCompleta = usuario?.foto_url
-    ? `${apiClient.defaults.baseURL}${usuario.foto_url}`
-    : null;
+  let fotoUrlCompleta = null;
+  if (usuario?.foto_url) {
+    if (usuario.foto_url.startsWith('http')) {
+      fotoUrlCompleta = usuario.foto_url;
+    } else {
+      fotoUrlCompleta = `${apiClient.defaults.baseURL}${usuario.foto_url}`;
+    }
+  }
 
   const drawerContent = (
-    <div>
+    // --- CORREÇÃO AQUI ---
+    // Adicionado display flex, flexDirection column e height 100%
+    // para que o conteúdo se ajuste à altura do ecrã.
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
          <Box component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', mb: 3 }}>
             <Typography variant="h4" component="span" sx={{ mr: 0.5, fontWeight: 'bold', color: 'primary.main' }}>VOX</Typography>
             <Typography variant="h5" component="span" sx={{ fontWeight: 'normal', color: 'text.primary' }}>Gest</Typography>
           </Box>
         <Avatar
-          src={fotoUrlCompleta} // Usa a URL completa da foto
-          sx={{
-            width: 80,
-            height: 80,
-            mb: 2,
-            bgcolor: 'primary.main',
-            fontSize: '2.5rem'
-          }}
+          src={fotoUrlCompleta}
+          sx={{ width: 80, height: 80, mb: 2, bgcolor: 'primary.main', fontSize: '2.5rem' }}
         >
           {usuario?.nome?.charAt(0).toUpperCase()}
         </Avatar>
@@ -167,23 +167,11 @@ function Navegacao() {
         <Typography variant="body2" color="text.secondary">{usuario?.email}</Typography>
       </Box>
       <Divider />
-      <List sx={{ p: 1 }}>
+      {/* O overflowY: 'auto' garante que a barra de scroll apareça apenas na lista se necessário */}
+      <List sx={{ p: 1, overflowY: 'auto', flexGrow: 1 }}>
         {navLinks.map((link) => (
           <ListItem key={link.text} disablePadding sx={{ my: 0.5 }}>
-            <ListItemButton
-              component={RouterLink}
-              to={link.to}
-              sx={{
-                borderRadius: theme.shape.borderRadius,
-                '&.active': {
-                  backgroundColor: theme.palette.action.selected,
-                  color: theme.palette.primary.main,
-                  '& .MuiListItemIcon-root': {
-                    color: theme.palette.primary.main,
-                  },
-                },
-              }}
-            >
+            <ListItemButton component={RouterLink} to={link.to} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
               <ListItemIcon>{link.icon}</ListItemIcon>
               <ListItemText primary={link.text} />
             </ListItemButton>
@@ -191,29 +179,18 @@ function Navegacao() {
         ))}
         {usuario?.role === "admin" && (
           <ListItem disablePadding sx={{ my: 0.5 }}>
-            <ListItemButton
-              component={RouterLink}
-              to="/admin"
-              sx={{
-                borderRadius: theme.shape.borderRadius,
-                '&.active': {
-                  backgroundColor: theme.palette.action.selected,
-                  color: theme.palette.primary.main,
-                   '& .MuiListItemIcon-root': {
-                    color: theme.palette.primary.main,
-                  },
-                },
-              }}
-            >
+            <ListItemButton component={RouterLink} to="/admin" sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
               <ListItemIcon><AdminPanelSettingsIcon /></ListItemIcon>
-              <ListItemText primary="Painel Administrador" />
+              <ListItemText primary="Painel Admin" />
             </ListItemButton>
           </ListItem>
         )}
       </List>
-      <Box sx={{ flexGrow: 1 }} />
+      
+      {/* O Box com flexGrow: 1 foi removido daqui e a lógica foi aplicada à List */}
+      
       <Divider />
-      <List sx={{ p: 1 }}>
+      <List sx={{ p: 1, flexShrink: 0 }}>
         <ListItem disablePadding>
           <ListItemButton component={RouterLink} to="/configuracoes" sx={{ borderRadius: theme.shape.borderRadius }}>
             <ListItemIcon><SettingsIcon /></ListItemIcon>
@@ -227,32 +204,17 @@ function Navegacao() {
           </ListItemButton>
         </ListItem>
       </List>
-    </div>
+    </Box>
   );
 
   return (
     <>
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          borderBottom: `1px solid ${theme.palette.divider}`
-        }}
-      >
+      <AppBar position="fixed" elevation={0} sx={{ width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` }, borderBottom: `1px solid ${theme.palette.divider}` }}>
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
-          >
+          <IconButton color="inherit" aria-label="open drawer" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2, display: { md: 'none' } }} >
             <MenuIcon />
           </IconButton>
            <Box sx={{ flexGrow: 1 }} />
-
           <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}>
             <Badge badgeContent={naoLidasCount} color="error">
               <NotificationsIcon />
@@ -260,35 +222,14 @@ function Navegacao() {
           </IconButton>
         </Toolbar>
       </AppBar>
-
-      <Box
-        component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
+      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+        <Drawer variant="temporary" open={mobileOpen} onClose={handleDrawerToggle} ModalProps={{ keepMounted: true }} sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth } }}>
           {drawerContent}
         </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none' },
-          }}
-          open
-        >
+        <Drawer variant="permanent" sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none' } }} open>
           {drawerContent}
         </Drawer>
       </Box>
-
       <Menu anchorEl={anchorElNotificacoes} open={openNotificacoes} onClose={handleMenuNotificacoesClose} PaperProps={{ sx: { maxHeight: 400, width: { xs: "calc(100vw - 32px)", sm: "400px" }, mt: 1, bgcolor: "background.paper", boxShadow: theme.shadows[6] } }}>
         <Box sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Typography variant="subtitle1" fontWeight="bold" sx={{ color: "text.primary" }}>Notificações</Typography>
@@ -317,7 +258,6 @@ function Navegacao() {
           </Box>
         )}
       </Menu>
-
       <Dialog open={dialogoLimparAberto} onClose={fecharDialogoLimpar} PaperProps={{ sx: { bgcolor: "background.paper", boxShadow: theme.shadows[6] } }}>
         <DialogTitle sx={{ color: "text.primary" }}>Limpar Todas as Notificações?</DialogTitle>
         <DialogContent>

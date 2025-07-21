@@ -10,12 +10,17 @@ import {
   TableCell, TableContainer, TableHead, TableRow, IconButton,
   Tooltip, Chip, Button, Dialog, DialogActions, DialogContent,
   DialogContentText, DialogTitle, TextField, InputAdornment, useTheme,
-  useMediaQuery, Card, CardContent, CardActions, Avatar
+  useMediaQuery, Card, CardContent, CardActions, Avatar,
+  // --- Ícones novos ou atualizados ---
+  List, ListItem, ListItemButton, ListItemIcon, ListItemText
 } from "@mui/material";
 import {
   Delete as DeleteIcon, SupervisorAccount as SupervisorAccountIcon,
   CleaningServices as CleaningServicesIcon, AdminPanelSettings as AdminPanelSettingsIcon,
-  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Person as PersonIcon
+  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Person as PersonIcon,
+  WorkspacePremium as WorkspacePremiumIcon, // Ícone para assinatura
+  CheckCircle as CheckCircleIcon, // Ícone para conceder
+  RemoveCircle as RemoveCircleIcon // Ícone para remover
 } from "@mui/icons-material";
 
 import FormularioUsuario from "../componentes/FormularioUsuario.jsx";
@@ -27,14 +32,17 @@ function AdminUsuarios() {
   const { usuario: adminLogado } = useContext(AuthContext);
   const { mostrarNotificacao } = useNotificacao();
   const [termoBusca, setTermoBusca] = useState("");
-  const [dialogoAberto, setDialogoAberto] = useState(false);
+  const [dialogoConfirmacaoAberto, setDialogoConfirmacaoAberto] = useState(false);
   const [acaoPendente, setAcaoPendente] = useState(null);
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Alterado para 'md'
+  // --- NOVOS ESTADOS PARA O DIÁLOGO DE GESTÃO DE ASSINATURA ---
+  const [dialogoAssinaturaAberto, setDialogoAssinaturaAberto] = useState(false);
+  const [usuarioParaGerir, setUsuarioParaGerir] = useState(null);
 
-  // ... (Toda a lógica de busca e manipulação de dados permanece a mesma) ...
-   const buscarUsuarios = async () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const buscarUsuarios = async () => {
     if (modo === "lista" && !carregando) setCarregando(true);
     try {
       const resposta = await apiClient.get("/api/admin/usuarios");
@@ -77,16 +85,28 @@ function AdminUsuarios() {
     } catch (erro) {
       mostrarNotificacao(erro.response?.data?.mensagem || `Falha ao executar a ação.`, "error");
     } finally {
-      handleFecharDialogo();
+      handleFecharDialogoConfirmacao();
+    }
+  };
+  
+  const handleGerirAssinatura = async (acao, plano = null) => {
+    try {
+        await apiClient.put(`/api/admin/usuarios/${usuarioParaGerir.id}/assinatura`, { acao, plano });
+        mostrarNotificacao(`Assinatura de ${usuarioParaGerir.nome} atualizada!`, "success");
+        buscarUsuarios();
+    } catch (error) {
+        mostrarNotificacao(error.response?.data?.mensagem || 'Falha ao gerir assinatura.', 'error');
+    } finally {
+        handleFecharDialogoAssinatura();
     }
   };
 
-  const abrirDialogoConfirmacao = (tipo, dados) => {
-    setAcaoPendente({ tipo, dados });
-    setDialogoAberto(true);
-  };
+  const abrirDialogoConfirmacao = (tipo, dados) => { setAcaoPendente({ tipo, dados }); setDialogoConfirmacaoAberto(true); };
+  const handleFecharDialogoConfirmacao = () => { setDialogoConfirmacaoAberto(false); setAcaoPendente(null); };
 
-  const handleFecharDialogo = () => { setDialogoAberto(false); setAcaoPendente(null); };
+  const handleAbrirDialogoAssinatura = (usuario) => { setUsuarioParaGerir(usuario); setDialogoAssinaturaAberto(true); };
+  const handleFecharDialogoAssinatura = () => { setUsuarioParaGerir(null); setDialogoAssinaturaAberto(false); };
+
   const handleSalvarNovoUsuario = async (dadosDoFormulario) => {
     setCarregando(true);
     try {
@@ -113,6 +133,7 @@ function AdminUsuarios() {
     usuario.email.toLowerCase().includes(termoBusca.toLowerCase())
   );
 
+  const capitalizar = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1);
 
   const renderizarVisaoMobile = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -125,17 +146,16 @@ function AdminUsuarios() {
                 </Avatar>
                 <Box>
                     <Typography variant="h6" fontWeight="bold">{usuario.nome}</Typography>
-                     <Typography variant="body2" color="text.secondary" noWrap>{usuario.email}</Typography>
+                    <Typography variant="body2" color="text.secondary" noWrap>{usuario.email}</Typography>
                 </Box>
             </Box>
-             <Chip
-                label={usuario.role === "admin" ? "Admin" : "Usuário"}
-                color={usuario.role === "admin" ? "primary" : "default"}
-                size="small"
-                variant="outlined"
-              />
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Chip label={usuario.role} color={usuario.role === "admin" ? "primary" : "default"} size="small" variant="outlined" />
+                <Chip label={usuario.plano ? `Plano ${capitalizar(usuario.plano)}` : 'Sem Plano'} color={usuario.status_assinatura === 'ativa' || usuario.status_assinatura === 'teste' ? 'success' : 'default'} size="small" />
+            </Box>
           </CardContent>
-          <CardActions sx={{ justifyContent: 'flex-end' }}>
+          <CardActions sx={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <Tooltip title="Gerir Assinatura"><IconButton onClick={() => handleAbrirDialogoAssinatura(usuario)} color="success"><WorkspacePremiumIcon /></IconButton></Tooltip>
             <Tooltip title={usuario.role === "admin" ? "Rebaixar" : "Promover"}><IconButton onClick={() => handleAlternarRole(usuario)} disabled={adminLogado.id === usuario.id}><AdminPanelSettingsIcon /></IconButton></Tooltip>
             <Tooltip title="Limpar Dados"><IconButton color="warning" onClick={() => handleLimparDados(usuario)}><CleaningServicesIcon /></IconButton></Tooltip>
             <Tooltip title="Excluir"><IconButton color="error" onClick={() => handleApagarUsuario(usuario)} disabled={adminLogado.id === usuario.id}><DeleteIcon /></IconButton></Tooltip>
@@ -150,8 +170,8 @@ function AdminUsuarios() {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Nome</TableCell>
-            <TableCell>E-mail</TableCell>
+            <TableCell>Usuário</TableCell>
+            <TableCell>Assinatura</TableCell>
             <TableCell>Nível</TableCell>
             <TableCell align="right">Ações</TableCell>
           </TableRow>
@@ -159,10 +179,22 @@ function AdminUsuarios() {
         <TableBody>
           {usuariosFiltrados.map((usuario) => (
             <TableRow key={usuario.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-              <TableCell><Typography fontWeight="medium">{usuario.nome}</Typography></TableCell>
-              <TableCell>{usuario.email}</TableCell>
-              <TableCell><Chip label={usuario.role} color={usuario.role === "admin" ? "primary" : "default"} size="small" /></TableCell>
+              <TableCell>
+                <Typography fontWeight="medium">{usuario.nome}</Typography>
+                <Typography variant="body2" color="text.secondary">{usuario.email}</Typography>
+              </TableCell>
+              <TableCell>
+                <Chip 
+                    label={usuario.plano ? `${capitalizar(usuario.plano)} (${capitalizar(usuario.status_assinatura)})` : 'Nenhuma'} 
+                    color={usuario.status_assinatura === 'ativa' || usuario.status_assinatura === 'teste' ? 'success' : 'default'} 
+                    size="small" 
+                />
+              </TableCell>
+              <TableCell><Chip label={capitalizar(usuario.role)} color={usuario.role === "admin" ? "primary" : "default"} size="small" /></TableCell>
               <TableCell align="right">
+                <Tooltip title="Gerir Assinatura">
+                  <IconButton onClick={() => handleAbrirDialogoAssinatura(usuario)} color="success"><WorkspacePremiumIcon /></IconButton>
+                </Tooltip>
                 <Tooltip title={usuario.role === "admin" ? "Rebaixar para Usuário" : "Promover para Admin"}>
                   <span><IconButton onClick={() => handleAlternarRole(usuario)} disabled={adminLogado.id === usuario.id}><AdminPanelSettingsIcon /></IconButton></span>
                 </Tooltip>
@@ -204,19 +236,50 @@ function AdminUsuarios() {
           </>
         )}
 
-        <Dialog open={dialogoAberto} onClose={handleFecharDialogo}>
-          <DialogTitle>Confirmar Ação</DialogTitle>
-          <DialogContent>
+        <Dialog open={dialogoConfirmacaoAberto} onClose={handleFecharDialogoConfirmacao}>
+            <DialogTitle>Confirmar Ação</DialogTitle>
+            <DialogContent>
             <DialogContentText>
-              {acaoPendente?.tipo === "apagar" && `Tem certeza que deseja apagar o usuário ${acaoPendente.dados.nome}? Esta ação é irreversível.`}
-              {acaoPendente?.tipo === "limpar" && `Tem certeza que deseja limpar TODOS os dados do usuário ${acaoPendente.dados.nome}?`}
-              {acaoPendente?.tipo === "role" && `Tem certeza que deseja alterar o nível de ${acaoPendente.dados.nome} para ${acaoPendente.dados.novoRole}?`}
+                {acaoPendente?.tipo === "apagar" && `Tem certeza que deseja apagar o usuário ${acaoPendente.dados.nome}? Esta ação é irreversível.`}
+                {acaoPendente?.tipo === "limpar" && `Tem certeza que deseja limpar TODOS os dados do usuário ${acaoPendente.dados.nome}?`}
+                {acaoPendente?.tipo === "role" && `Tem certeza que deseja alterar o nível de ${acaoPendente.dados.nome} para ${acaoPendente.dados.novoRole}?`}
             </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleFecharDialogo}>Cancelar</Button>
+            </DialogContent>
+            <DialogActions>
+            <Button onClick={handleFecharDialogoConfirmacao}>Cancelar</Button>
             <Button onClick={executarAcaoConfirmada} color="primary" autoFocus>Confirmar</Button>
-          </DialogActions>
+            </DialogActions>
+        </Dialog>
+
+        {/* --- NOVO DIÁLOGO DE GESTÃO DE ASSINATURA --- */}
+        <Dialog open={dialogoAssinaturaAberto} onClose={handleFecharDialogoAssinatura} fullWidth maxWidth="xs">
+            <DialogTitle>Gerir Assinatura</DialogTitle>
+            <DialogContent>
+                <Typography>Selecione uma ação para **{usuarioParaGerir?.nome}**:</Typography>
+                <List>
+                    <ListItem disablePadding>
+                        <ListItemButton onClick={() => handleGerirAssinatura('conceder', 'padrao')}>
+                            <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
+                            <ListItemText primary="Conceder Plano Padrão" />
+                        </ListItemButton>
+                    </ListItem>
+                    <ListItem disablePadding>
+                        <ListItemButton onClick={() => handleGerirAssinatura('conceder', 'premium')}>
+                            <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
+                            <ListItemText primary="Conceder Plano Premium" />
+                        </ListItemButton>
+                    </ListItem>
+                    <ListItem disablePadding>
+                        <ListItemButton onClick={() => handleGerirAssinatura('remover')}>
+                            <ListItemIcon><RemoveCircleIcon color="error" /></ListItemIcon>
+                            <ListItemText primary="Remover Assinatura" />
+                        </ListItemButton>
+                    </ListItem>
+                </List>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleFecharDialogoAssinatura}>Cancelar</Button>
+            </DialogActions>
         </Dialog>
       </>
     }

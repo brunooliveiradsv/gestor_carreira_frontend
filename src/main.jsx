@@ -12,22 +12,23 @@ import darkTheme from './tema';
 
 import { NotificationProvider } from './contextos/NotificationContext.jsx';
 
-import { Provider } from 'react-redux'; // Importar Provider
-import store from './store'; // Importar o store
+import { Provider } from 'react-redux';
+import store from './store';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider theme={darkTheme}> 
       <CssBaseline />
-      <NotificationProvider>
-        <AuthProvider>
-          <Provider store={store}> {/* Adicione o Provider aqui */}
-            <BrowserRouter>
+      {/* --- CORREÇÃO AQUI: BrowserRouter agora está por fora --- */}
+      <BrowserRouter>
+        <NotificationProvider>
+          <AuthProvider>
+            <Provider store={store}>
               <App />
-            </BrowserRouter>
-          </Provider>
-        </AuthProvider>
-      </NotificationProvider>
+            </Provider>
+          </AuthProvider>
+        </NotificationProvider>
+      </BrowserRouter>
     </ThemeProvider>
   </React.StrictMode>,
 );

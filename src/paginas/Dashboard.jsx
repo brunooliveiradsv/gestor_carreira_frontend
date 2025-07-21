@@ -28,6 +28,8 @@ import {
   EmojiEvents as EmojiEventsIcon,
   ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
+import Anuncio from '../componentes/Anuncio';
+
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
 
@@ -83,7 +85,7 @@ function Dashboard() {
       <Typography color="text.secondary" sx={{ mb: 4 }}>
         Aqui está um resumo da sua carreira hoje.
       </Typography>
-
+<Anuncio />
       {erro && <Alert severity="warning" sx={{ mb: 4 }}>{erro}</Alert>}
 
       {/* --- CORREÇÃO DO GRID V2 COMEÇA AQUI --- */}

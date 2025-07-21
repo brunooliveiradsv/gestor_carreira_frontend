@@ -1,5 +1,6 @@
 // src/contextos/AuthContext.jsx
 import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useNotificacao } from './NotificationContext';
 
@@ -9,6 +10,7 @@ export const AuthProvider = ({ children }) => {
     const [usuario, setUsuario] = useState(null);
     const [carregando, setCarregando] = useState(true);
     const { mostrarNotificacao } = useNotificacao();
+    const navigate = useNavigate();
 
     const carregarUsuarioPeloToken = useCallback(async () => {
         const token = localStorage.getItem('token');
@@ -36,8 +38,24 @@ export const AuthProvider = ({ children }) => {
             const { data } = await apiClient.post('/api/usuarios/login', { email, senha });
             localStorage.setItem('token', data.token);
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-            setUsuario(data.usuario); // <-- Ponto chave: Atualiza o estado do usuário
+            
+            setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Login bem-sucedido!', 'success');
+
+            // LÓGICA DE REDIRECIONAMENTO PÓS-LOGIN
+            const user = data.usuario;
+            const hoje = new Date();
+            const dataTerminoTeste = user.teste_termina_em ? new Date(user.teste_termina_em) : null;
+
+            const isTesteValido = user.status_assinatura === 'teste' && dataTerminoTeste > hoje;
+            const isAssinaturaAtiva = user.status_assinatura === 'ativa';
+
+            if (isTesteValido || isAssinaturaAtiva) {
+                navigate('/');
+            } else {
+                navigate('/assinatura');
+            }
+            
             return true;
         } catch (error) {
             mostrarNotificacao(error.response?.data?.mensagem || 'Falha no login.', 'error');
@@ -50,8 +68,12 @@ export const AuthProvider = ({ children }) => {
             const { data } = await apiClient.post('/api/usuarios/registrar', { nome, email, senha });
             localStorage.setItem('token', data.token);
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-            setUsuario(data.usuario); // <-- Ponto chave: Atualiza o estado do usuário
+            
+            // Após o registo, o usuário já começa o teste, então vai para o dashboard
+            setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Cadastro realizado com sucesso!', 'success');
+            navigate('/'); // Redireciona para o dashboard, pois o teste já está ativo
+            
             return true;
         } catch (error) {
             mostrarNotificacao(error.response?.data?.mensagem || 'Falha no cadastro.', 'error');

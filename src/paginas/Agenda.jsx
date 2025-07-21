@@ -1,13 +1,15 @@
 // src/paginas/Agenda.jsx
 
 import { useState, useEffect } from 'react';
+// --- ETAPA 1: Importar useLocation e useNavigate ---
+import { useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
 
 import {
   Box, Button, Typography, CircularProgress, Card,
   CardContent, CardActions, Chip, IconButton, Paper, Dialog,
-  DialogTitle, DialogContent, Tooltip, useTheme, Grid, DialogContentText, DialogActions
+  DialogTitle, DialogContent, Tooltip, useTheme, Grid, DialogActions
 } from '@mui/material';
 import {
   Edit as EditIcon, Delete as DeleteIcon, Info as InfoIcon,
@@ -23,11 +25,16 @@ function Agenda() {
   const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
   const theme = useTheme();
+  
+  // --- ETAPA 2: Inicializar os hooks ---
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Estados para controlar os modais (Dialogs)
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [dialogoDetalhesAberto, setDialogoDetalhesAberto] = useState(false);
   const [compromissoSelecionado, setCompromissoSelecionado] = useState(null);
+  const [dialogoApagarAberto, setDialogoApagarAberto] = useState(false); // <-- ADICIONADO
+  const [compromissoParaApagar, setCompromissoParaApagar] = useState(null); // <-- ADICIONADO
 
 
   const buscarCompromissos = async () => {
@@ -45,16 +52,36 @@ function Agenda() {
   useEffect(() => {
     buscarCompromissos();
   }, []);
+  
+  // --- ETAPA 3: Adicionar useEffect para verificar o 'state' da navegação ---
+  useEffect(() => {
+    if (location.state?.abrirFormulario) {
+      handleAbrirFormulario();
+      // Limpa o state para que o formulário não abra novamente ao navegar pela página
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
-  const handleApagar = async (idDoCompromisso) => {
-    if (window.confirm("Tem certeza que deseja apagar este compromisso?")) {
-      try {
-        await apiClient.delete(`/api/compromissos/${idDoCompromisso}`);
-        buscarCompromissos();
-        mostrarNotificacao("Compromisso apagado com sucesso!", "success");
-      } catch (erro) {
-        mostrarNotificacao("Falha ao apagar o compromisso.", "error");
-      }
+  // --- LÓGICA DE APAGAR ATUALIZADA PARA USAR UM DIALOG DE CONFIRMAÇÃO ---
+  const handleAbrirApagarDialogo = (compromisso) => {
+    setCompromissoParaApagar(compromisso);
+    setDialogoApagarAberto(true);
+  };
+
+  const handleFecharApagarDialogo = () => {
+    setCompromissoParaApagar(null);
+    setDialogoApagarAberto(false);
+  };
+
+  const handleConfirmarApagar = async () => {
+    if (!compromissoParaApagar) return;
+    try {
+      await apiClient.delete(`/api/compromissos/${compromissoParaApagar.id}`);
+      handleFecharApagarDialogo();
+      buscarCompromissos();
+      mostrarNotificacao("Compromisso apagado com sucesso!", "success");
+    } catch (erro) {
+      mostrarNotificacao("Falha ao apagar o compromisso.", "error");
     }
   };
 
@@ -70,7 +97,7 @@ function Agenda() {
 
   const handleSucessoFormulario = () => {
     handleFecharFormulario();
-    buscarCompromissos(); // Atualiza a lista
+    buscarCompromissos();
   };
 
   const handleAbrirDetalhes = (compromisso) => {
@@ -166,7 +193,8 @@ function Agenda() {
                 <CardActions sx={{ justifyContent: 'flex-end', borderTop: `1px solid ${theme.palette.divider}` }}>
                   <Tooltip title="Detalhes"><IconButton onClick={() => handleAbrirDetalhes(c)}><InfoIcon /></IconButton></Tooltip>
                   <Tooltip title={c.status !== 'Agendado' ? 'Não é possível editar' : 'Editar'}><Box component="span"><IconButton onClick={() => handleAbrirFormulario(c)} disabled={c.status !== 'Agendado'}><EditIcon /></IconButton></Box></Tooltip>
-                  <Tooltip title={c.status === 'Realizado' ? 'Não é possível excluir' : 'Excluir'}><Box component="span"><IconButton onClick={() => handleApagar(c.id)} disabled={c.status === 'Realizado'} color="error"><DeleteIcon /></IconButton></Box></Tooltip>
+                  {/* --- BOTÃO DE APAGAR ATUALIZADO --- */}
+                  <Tooltip title={c.status === 'Realizado' ? 'Não é possível excluir' : 'Excluir'}><Box component="span"><IconButton onClick={() => handleAbrirApagarDialogo(c)} disabled={c.status === 'Realizado'} color="error"><DeleteIcon /></IconButton></Box></Tooltip>
                 </CardActions>
               </Card>
             </Grid>
@@ -183,6 +211,18 @@ function Agenda() {
                 onCancel={handleFecharFormulario}
             />
         </DialogContent>
+      </Dialog>
+      
+      {/* --- DIALOG DE APAGAR ADICIONADO --- */}
+      <Dialog open={dialogoApagarAberto} onClose={handleFecharApagarDialogo}>
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
+        <DialogContent>
+          <Typography>Tem certeza que deseja apagar o compromisso "{compromissoParaApagar?.nome_evento}"?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleFecharApagarDialogo}>Cancelar</Button>
+          <Button onClick={handleConfirmarApagar} color="error">Apagar</Button>
+        </DialogActions>
       </Dialog>
 
 
