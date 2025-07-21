@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import apiClient from "../api.js";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
-  Box, Button, Typography, CircularProgress, Paper, Grid, TextField, 
-  InputAdornment, Chip, IconButton, Tooltip, Dialog, Card, 
+  Box, Button, Typography, CircularProgress, Paper, Grid, TextField,
+  InputAdornment, Chip, IconButton, Tooltip, Dialog, Card,
   CardContent, CardActions, List, ListItem, ListItemText
 } from "@mui/material";
 import {
-  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon, 
+  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon,
   Delete as DeleteIcon, MusicNote as MusicNoteIcon, PlaylistAddCheck as SuggestionIcon,
   ImportExport as ImportExportIcon
 } from "@mui/icons-material";
@@ -30,7 +30,7 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
         try {
             const resposta = await apiClient.get(`/api/musicas/buscar-publicas?termoBusca=${termoBusca}`);
             setResultados(resposta.data);
-        } catch (error) { mostrarNotificacao("Erro ao buscar músicas.", "error"); } 
+        } catch (error) { mostrarNotificacao("Erro ao buscar músicas.", "error"); }
         finally { setBuscando(false); }
     };
 
@@ -82,6 +82,7 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
 function Repertorio() {
   const [musicas, setMusicas] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  // --- ESTADO DOS FILTROS ATUALIZADO ---
   const [filtros, setFiltros] = useState({ termoBusca: "", artista: "", tom: "", bpm: "" });
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [musicaEmEdicaoId, setMusicaEmEdicaoId] = useState(null);
@@ -89,13 +90,16 @@ function Repertorio() {
   const [musicaParaSugerir, setMusicaParaSugerir] = useState(null);
   const { mostrarNotificacao } = useNotificacao();
 
+  // --- LÓGICA DE BUSCA ATUALIZADA ---
   const buscarMusicas = useCallback(async () => {
+    // Não é necessário setCarregando(true) aqui para evitar piscar
     try {
+      // Filtra apenas os valores que não estão vazios antes de enviar
       const filtrosAtivos = Object.fromEntries(
         Object.entries(filtros).filter(([_, v]) => v != null && v !== '')
       );
       const params = new URLSearchParams(filtrosAtivos);
-      
+
       const resposta = await apiClient.get(`/api/musicas?${params.toString()}`);
       setMusicas(resposta.data);
     } catch (erro) {
@@ -107,12 +111,14 @@ function Repertorio() {
 
   useEffect(() => {
     setCarregando(true);
+    // Adiciona um pequeno delay na busca para não sobrecarregar a API enquanto o utilizador digita
     const timer = setTimeout(() => {
       buscarMusicas();
-    }, 500);
+    }, 500); // 500ms de espera
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer); // Limpa o timer se o utilizador continuar a digitar
   }, [filtros, buscarMusicas]);
+
 
   const handleFiltroChange = (e) => {
     const { name, value } = e.target;
@@ -163,6 +169,7 @@ function Repertorio() {
             </Button>
         </Box>
 
+        {/* --- ÁREA DE FILTROS REDESENHADA --- */}
         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6} lg={3}>
@@ -228,7 +235,7 @@ function Repertorio() {
             )}
             </Grid>
         )}
-      
+
       <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="md">
         {musicaEmEdicaoId ? (
             <Box sx={{p: {xs: 2, md: 3}}}>
@@ -238,7 +245,7 @@ function Repertorio() {
             <SeletorDeMusica onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} />
         )}
       </Dialog>
-      
+
       {musicaParaSugerir && (
         <FormularioSugestao open={dialogoSugestaoAberto} onClose={() => setDialogoSugestaoAberto(false)} musica={musicaParaSugerir} />
       )}
