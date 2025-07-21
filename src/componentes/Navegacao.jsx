@@ -1,5 +1,5 @@
 // src/componentes/Navegacao.jsx
-import React, { useContext, useState, useEffect, useCallback } from "react"; // 1. Importar o useCallback
+import React, { useContext, useState, useEffect, useCallback } from "react";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext.jsx";
 import apiClient from "../api";
@@ -18,7 +18,9 @@ import {
   Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon,
   EmojiEvents as EmojiEventsIcon,
   Announcement as MuralIcon,
-  WorkspacePremium as WorkspacePremiumIcon
+  WorkspacePremium as WorkspacePremiumIcon,
+  DoneAll as DoneAllIcon,
+  DeleteSweep as DeleteSweepIcon
 } from "@mui/icons-material";
 
 const iconMapNotificacao = {
@@ -41,8 +43,6 @@ function Navegacao() {
   const naoLidasCount = notificacoes.filter((n) => !n.lida).length;
   const drawerWidth = 270;
 
-  // 2. Envolver a função buscarNotificacoes com o useCallback
-  // Isto garante que a função não é recriada em cada renderização
   const buscarNotificacoes = useCallback(async () => {
     if (!usuario) return;
     try {
@@ -51,14 +51,13 @@ function Navegacao() {
     } catch (error) {
       console.error("Erro ao buscar notificações", error);
     }
-  }, [usuario]); // A função só será recriada se o 'usuario' mudar
+  }, [usuario]);
 
-  // 3. O useEffect agora depende da função "memorizada"
   useEffect(() => {
     buscarNotificacoes();
     const intervalId = setInterval(buscarNotificacoes, 30000);
     return () => clearInterval(intervalId);
-  }, [buscarNotificacoes]); // A dependência agora é a função estável
+  }, [buscarNotificacoes]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -136,11 +135,10 @@ function Navegacao() {
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
-    { to: "/mural", text: "Vitrine", icon: <MuralIcon /> },
+    { to: "/mural", text: "Mural", icon: <MuralIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
-    { to: "/assinatura", text: "Assinatura", icon: <WorkspacePremiumIcon /> },
   ];
 
   let fotoUrlCompleta = null;
@@ -180,27 +178,29 @@ function Navegacao() {
           <ListItem disablePadding sx={{ my: 0.5 }}>
             <ListItemButton component={RouterLink} to="/admin" sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
               <ListItemIcon><AdminPanelSettingsIcon /></ListItemIcon>
-              <ListItemText primary="Painel do Administrador" />
+              <ListItemText primary="Painel Admin" />
             </ListItemButton>
           </ListItem>
         )}
       </List>
       
       <Divider />
-      <List sx={{ p: 1, flexShrink: 0 }}>
-        <ListItem disablePadding>
-          <ListItemButton component={RouterLink} to="/configuracoes" sx={{ borderRadius: theme.shape.borderRadius }}>
-            <ListItemIcon><SettingsIcon /></ListItemIcon>
-            <ListItemText primary="Configurações" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleLogout} sx={{ borderRadius: theme.shape.borderRadius }}>
-            <ListItemIcon><LogoutIcon /></ListItemIcon>
-            <ListItemText primary="Sair" />
-          </ListItemButton>
-        </ListItem>
-      </List>
+      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        <List sx={{ p: 1, flexShrink: 0 }}>
+          <ListItem disablePadding>
+            <ListItemButton component={RouterLink} to="/configuracoes" sx={{ borderRadius: theme.shape.borderRadius }}>
+              <ListItemIcon><SettingsIcon /></ListItemIcon>
+              <ListItemText primary="Configurações" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleLogout} sx={{ borderRadius: theme.shape.borderRadius }}>
+              <ListItemIcon><LogoutIcon /></ListItemIcon>
+              <ListItemText primary="Sair" />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
     </Box>
   );
 
@@ -212,6 +212,18 @@ function Navegacao() {
             <MenuIcon />
           </IconButton>
            <Box sx={{ flexGrow: 1 }} />
+          
+          <Tooltip title="Configurações">
+            <IconButton color="inherit" onClick={() => navigate('/configuracoes')} sx={{ display: { xs: 'inline-flex', md: 'none' } }}>
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Sair">
+            <IconButton color="inherit" onClick={handleLogout} sx={{ display: { xs: 'inline-flex', md: 'none' } }}>
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
+
           <IconButton color="inherit" onClick={handleMenuNotificacoesOpen}>
             <Badge badgeContent={naoLidasCount} color="error">
               <NotificationsIcon />
@@ -227,34 +239,68 @@ function Navegacao() {
           {drawerContent}
         </Drawer>
       </Box>
-      <Menu anchorEl={anchorElNotificacoes} open={openNotificacoes} onClose={handleMenuNotificacoesClose} PaperProps={{ sx: { maxHeight: 400, width: { xs: "calc(100vw - 32px)", sm: "400px" }, mt: 1, bgcolor: "background.paper", boxShadow: theme.shadows[6] } }}>
-        <Box sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="subtitle1" fontWeight="bold" sx={{ color: "text.primary" }}>Notificações</Typography>
-          <Box>
-            {naoLidasCount > 0 && <Button size="small" onClick={handleMarcarTodasComoLidas} sx={{ textTransform: "none", color: "primary.main", mr: 1 }}>Marcar todas como lidas</Button>}
-            {notificacoes.length > 0 && <Button size="small" onClick={abrirDialogoLimpar} sx={{ textTransform: "none", color: "error.main" }}>Limpar Todas</Button>}
-          </Box>
+      <Menu
+        anchorEl={anchorElNotificacoes}
+        open={openNotificacoes}
+        onClose={handleMenuNotificacoesClose}
+        PaperProps={{
+          sx: {
+            width: { xs: "calc(100vw - 32px)", sm: "400px" },
+            mt: 1,
+            bgcolor: "background.paper",
+            boxShadow: theme.shadows[6],
+            display: 'flex',
+            flexDirection: 'column'
+          }
+        }}
+      >
+        <Box sx={{ px: 2, py: 1.5, flexShrink: 0 }}>
+          <Typography variant="h6" fontWeight="bold" sx={{ color: "text.primary" }}>Notificações</Typography>
         </Box>
         <Divider sx={{ borderColor: "divider" }} />
-        {notificacoes.length > 0 ? (
-          notificacoes.map((notificacao) => (
-            <MenuItem key={notificacao.id} onClick={() => handleMarcarComoLida(notificacao.id)} sx={{ backgroundColor: notificacao.lida ? "transparent" : "action.hover", whiteSpace: "normal", py: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
-              <ListItemIcon sx={{ minWidth: "36px", mr: 1, alignSelf: "flex-start", mt: "4px", color: "text.secondary" }}>{getConquistaIcon(notificacao.conquista?.tipo_condicao)}</ListItemIcon>
-              <ListItemText primary={notificacao.mensagem} primaryTypographyProps={{ sx: { fontWeight: notificacao.lida ? "normal" : "bold", color: "text.primary" } }} />
-              <Tooltip title="Remover notificação">
-                <IconButton size="small" onClick={(e) => handleApagar(e, notificacao.id)} sx={{ ml: 1, alignSelf: "center", color: "action.active" }}>
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </MenuItem>
-          ))
-        ) : (
-          <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
-            <NotificationsIcon sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="body2">Você não tem nenhuma notificação nova.</Typography>
-          </Box>
+
+        <Box sx={{ overflowY: 'auto', maxHeight: 320, flexGrow: 1 }}>
+          {notificacoes.length > 0 ? (
+            notificacoes.map((notificacao) => (
+              <MenuItem key={notificacao.id} onClick={() => handleMarcarComoLida(notificacao.id)} sx={{ backgroundColor: notificacao.lida ? "transparent" : "action.hover", whiteSpace: "normal", py: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                <ListItemIcon sx={{ minWidth: "36px", mr: 1, alignSelf: "flex-start", mt: "4px", color: "text.secondary" }}>{getConquistaIcon(notificacao.conquista?.tipo_condicao)}</ListItemIcon>
+                <ListItemText primary={notificacao.mensagem} primaryTypographyProps={{ sx: { fontWeight: notificacao.lida ? "normal" : "bold", color: "text.primary" } }} />
+                <Tooltip title="Remover notificação">
+                  <IconButton size="small" onClick={(e) => handleApagar(e, notificacao.id)} sx={{ ml: 1, alignSelf: "center", color: "action.active" }}>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </MenuItem>
+            ))
+          ) : (
+            <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
+              <NotificationsIcon sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="body2">Você não tem nenhuma notificação nova.</Typography>
+            </Box>
+          )}
+        </Box>
+
+        {notificacoes.length > 0 && (
+            <>
+                <Divider sx={{ borderColor: "divider" }} />
+                <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-around', flexShrink: 0 }}>
+                    <Tooltip title="Marcar todas como lidas">
+                        <span>
+                            <IconButton onClick={handleMarcarTodasComoLidas} disabled={naoLidasCount === 0}>
+                                <DoneAllIcon />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                    <Tooltip title="Limpar todas as notificações">
+                        <IconButton onClick={abrirDialogoLimpar} color="error">
+                            <DeleteSweepIcon />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+            </>
         )}
       </Menu>
+
       <Dialog open={dialogoLimparAberto} onClose={fecharDialogoLimpar} PaperProps={{ sx: { bgcolor: "background.paper", boxShadow: theme.shadows[6] } }}>
         <DialogTitle sx={{ color: "text.primary" }}>Limpar Todas as Notificações?</DialogTitle>
         <DialogContent>

@@ -1,18 +1,34 @@
 // src/paginas/Financeiro.jsx
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import apiClient from "../api";
 import { useNotificacao } from "../contextos/NotificationContext";
 
 import {
-  Box, Button, Container, Typography, CircularProgress, Card,
+  Box, Button, Typography, CircularProgress, Card,
   CardContent, Paper, Grid, TextField, Select, MenuItem,
-  FormControl, InputLabel, Avatar, ButtonGroup, useTheme, CardHeader
+  FormControl, InputLabel, Avatar, ButtonGroup, useTheme
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+
+// Componente para os cartões de resumo
+const SummaryCard = ({ title, value, icon, avatarBgColor }) => (
+    <Box sx={{ flex: '1 1 300px' }}>
+        <Card>
+            <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Avatar sx={{ bgcolor: avatarBgColor, mr: 2 }}>{icon}</Avatar>
+                    <Box>
+                        <Typography color="text.secondary">{title}</Typography>
+                        <Typography variant="h5" fontWeight="bold">{value}</Typography>
+                    </Box>
+                </Box>
+            </CardContent>
+        </Card>
+    </Box>
+);
 
 function Financeiro() {
   const [transacoes, setTransacoes] = useState([]);
@@ -27,20 +43,21 @@ function Financeiro() {
   const { mostrarNotificacao } = useNotificacao();
   const theme = useTheme();
 
-  // ... (toda a lógica de busca e manipulação de dados permanece a mesma) ...
-  useEffect(() => {
-    async function buscarTransacoes() {
-      try {
+  const buscarTransacoes = useCallback(async () => {
+    try {
         const resposta = await apiClient.get("/api/financeiro/transacoes");
         setTransacoes(resposta.data);
-      } catch (erro) {
+    } catch (erro) {
         mostrarNotificacao("Não foi possível carregar o extrato financeiro.", "error");
-      } finally {
+    } finally {
         setCarregando(false);
-      }
     }
+  }, [mostrarNotificacao]);
+
+  useEffect(() => {
+    setCarregando(true);
     buscarTransacoes();
-  }, []);
+  }, [buscarTransacoes]);
 
   useEffect(() => {
     let transacoesTemporarias = [...transacoes];
@@ -84,6 +101,8 @@ function Financeiro() {
   const totalDespesas = transacoesFiltradas.filter((t) => t.tipo === "despesa").reduce((acc, t) => acc + parseFloat(t.valor), 0);
   const saldo = totalReceitas - totalDespesas;
 
+  const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+
   if (carregando) {
     return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress color="inherit" /></Box>;
   }
@@ -92,57 +111,18 @@ function Financeiro() {
     <Box>
         <Box sx={{mb: 4}}>
             <Typography variant="h4" component="h1" fontWeight="bold">Painel Financeiro</Typography>
-            <Typography color="text.secondary">Controle suas receitas, despesas e veja seu saldo.</Typography>
+            <Typography color="text.secondary">Controle as suas receitas, despesas e veja o seu saldo.</Typography>
         </Box>
       
-        {/* Resumo */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={4}>
-            <Card>
-                <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ bgcolor: 'success.main', mr: 2 }}><TrendingUpIcon /></Avatar>
-                        <Box>
-                            <Typography color="text.secondary">Receitas (período)</Typography>
-                            <Typography variant="h5" fontWeight="bold">R$ {totalReceitas.toFixed(2)}</Typography>
-                        </Box>
-                    </Box>
-                </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <Card>
-                <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ bgcolor: 'error.main', mr: 2 }}><TrendingDownIcon /></Avatar>
-                        <Box>
-                            <Typography color="text.secondary">Despesas (período)</Typography>
-                            <Typography variant="h5" fontWeight="bold">R$ {totalDespesas.toFixed(2)}</Typography>
-                        </Box>
-                    </Box>
-                </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={12} md={4}>
-            <Card>
-                <CardContent>
-                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ bgcolor: saldo >= 0 ? 'primary.main' : 'warning.main', mr: 2 }}><AccountBalanceWalletIcon /></Avatar>
-                        <Box>
-                            <Typography color="text.secondary">Balanço (período)</Typography>
-                            <Typography variant="h5" fontWeight="bold">R$ {saldo.toFixed(2)}</Typography>
-                        </Box>
-                    </Box>
-                </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
+            <SummaryCard title="Receitas (período)" value={formatarMoeda(totalReceitas)} icon={<TrendingUpIcon />} avatarBgColor="success.main" />
+            <SummaryCard title="Despesas (período)" value={formatarMoeda(totalDespesas)} icon={<TrendingDownIcon />} avatarBgColor="error.main" />
+            <SummaryCard title="Balanço (período)" value={formatarMoeda(saldo)} icon={<AccountBalanceWalletIcon />} avatarBgColor={saldo >= 0 ? 'primary.main' : 'warning.main'} />
+        </Box>
 
-        {/* Controles e Formulário */}
         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-            <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} lg={8}>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                     <ButtonGroup>
                         <Button variant={filtroPeriodo === "mes" ? "contained" : "outlined"} onClick={() => setFiltroPeriodo("mes")}>Este Mês</Button>
                         <Button variant={filtroPeriodo === "ano" ? "contained" : "outlined"} onClick={() => setFiltroPeriodo("ano")}>Este Ano</Button>
@@ -153,41 +133,31 @@ function Financeiro() {
                         <Button variant={filtroTipo === "receita" ? "contained" : "outlined"} onClick={() => setFiltroTipo("receita")}>Receitas</Button>
                         <Button variant={filtroTipo === "despesa" ? "contained" : "outlined"} onClick={() => setFiltroTipo("despesa")}>Despesas</Button>
                     </ButtonGroup>
-                    </Box>
-                </Grid>
-                <Grid item xs={12} lg={4} sx={{ textAlign: { lg: "right", xs: "left" }, mt: { xs: 2, lg: 0 } }}>
-                    <Button variant="contained" onClick={() => setMostrarFormulario(!mostrarFormulario)} startIcon={<AddCircleOutlineIcon />} sx={{ width: { xs: "100%", lg: "auto" } }}>
-                    {mostrarFormulario ? "Fechar Formulário" : "Nova Transação"}
-                    </Button>
-                </Grid>
-            </Grid>
+                </Box>
+                <Button variant="contained" onClick={() => setMostrarFormulario(!mostrarFormulario)} startIcon={<AddCircleOutlineIcon />} sx={{ width: { xs: "100%", sm: "auto" } }}>
+                {mostrarFormulario ? "Fechar Formulário" : "Nova Transação"}
+                </Button>
+            </Box>
              {mostrarFormulario && (
                 <Box component="form" onSubmit={handleFormSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 4, borderTop: `1px solid ${theme.palette.divider}`, pt: 3 }}>
                     <Typography variant="h6">Adicionar Nova Transação</Typography>
                     <TextField name="descricao" label="Descrição" variant="outlined" value={novaTransacao.descricao} onChange={handleFormChange} required fullWidth />
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
-                             <TextField name="valor" label="Valor (R$)" type="number" variant="outlined" inputProps={{ step: "0.01" }} value={novaTransacao.valor} onChange={handleFormChange} required fullWidth />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField name="data" label="Data" type="date" variant="outlined" value={novaTransacao.data} onChange={handleFormChange} required fullWidth InputLabelProps={{ shrink: true }} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                             <FormControl fullWidth variant="outlined">
-                                <InputLabel>Tipo</InputLabel>
-                                <Select name="tipo" value={novaTransacao.tipo} label="Tipo" onChange={handleFormChange}>
-                                    <MenuItem value="despesa">Despesa</MenuItem>
-                                    <MenuItem value="receita">Receita</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                    </Grid>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                        <TextField name="valor" label="Valor (R$)" type="number" variant="outlined" inputProps={{ step: "0.01" }} value={novaTransacao.valor} onChange={handleFormChange} required sx={{ flex: '1 1 150px' }} />
+                        <TextField name="data" label="Data" type="date" variant="outlined" value={novaTransacao.data} onChange={handleFormChange} required sx={{ flex: '1 1 150px' }} InputLabelProps={{ shrink: true }} />
+                        <FormControl sx={{ flex: '1 1 150px' }}>
+                            <InputLabel>Tipo</InputLabel>
+                            <Select name="tipo" value={novaTransacao.tipo} label="Tipo" onChange={handleFormChange}>
+                                <MenuItem value="despesa">Despesa</MenuItem>
+                                <MenuItem value="receita">Receita</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
                     <Button type="submit" variant="contained" color="primary" sx={{alignSelf: 'flex-start'}}>Salvar Transação</Button>
                 </Box>
              )}
         </Paper>
 
-        {/* Histórico */}
       <Paper sx={{ p: { xs: 2, md: 3 } }}>
         <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Histórico de Transações</Typography>
         <Box>
@@ -202,7 +172,7 @@ function Financeiro() {
                   <Typography variant="body2" color="text.secondary">{new Date(t.data).toLocaleDateString("pt-BR", {day:'2-digit', month:'2-digit', year:'numeric'})}</Typography>
                 </Box>
                 <Typography variant="h6" fontWeight="bold" sx={{ color: t.tipo === "receita" ? 'success.main' : 'error.main', minWidth: '120px', textAlign: 'right' }}>
-                  {t.tipo === "receita" ? "+" : "-"} R$ {parseFloat(t.valor).toFixed(2)}
+                  {t.tipo === "receita" ? "+" : "-"} {formatarMoeda(parseFloat(t.valor))}
                 </Typography>
               </Card>
             ))

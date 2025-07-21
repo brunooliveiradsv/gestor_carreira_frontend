@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import apiClient from "../api.js";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
-  Box, Button, Typography, CircularProgress, Paper, Grid, TextField, 
-  InputAdornment, Chip, IconButton, Tooltip, Dialog, Card, 
+  Box, Button, Typography, CircularProgress, Paper, Grid, TextField,
+  InputAdornment, Chip, IconButton, Tooltip, Dialog, Card,
   CardContent, CardActions, List, ListItem, ListItemText
 } from "@mui/material";
 import {
-  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon, 
+  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon,
   Delete as DeleteIcon, MusicNote as MusicNoteIcon, PlaylistAddCheck as SuggestionIcon,
   ImportExport as ImportExportIcon
 } from "@mui/icons-material";
@@ -29,7 +29,7 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
         try {
             const resposta = await apiClient.get(`/api/musicas/buscar-publicas?termoBusca=${termoBusca}`);
             setResultados(resposta.data);
-        } catch (error) { mostrarNotificacao("Erro ao buscar músicas.", "error"); } 
+        } catch (error) { mostrarNotificacao("Erro ao buscar músicas.", "error"); }
         finally { setBuscando(false); }
     };
 
@@ -81,7 +81,7 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
 function Repertorio() {
   const [musicas, setMusicas] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [buscaGeral, setBuscaGeral] = useState("");
+  const [filtros, setFiltros] = useState({ termoBusca: "", tom: "", bpm: "" });
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [musicaEmEdicaoId, setMusicaEmEdicaoId] = useState(null);
   const [dialogoSugestaoAberto, setDialogoSugestaoAberto] = useState(false);
@@ -90,10 +90,10 @@ function Repertorio() {
 
   const buscarMusicas = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
-      if (buscaGeral) {
-        params.append('buscaGeral', buscaGeral);
-      }
+      const filtrosAtivos = Object.fromEntries(
+        Object.entries(filtros).filter(([_, v]) => v != null && v !== '')
+      );
+      const params = new URLSearchParams(filtrosAtivos);
       
       const resposta = await apiClient.get(`/api/musicas?${params.toString()}`);
       setMusicas(resposta.data);
@@ -102,7 +102,7 @@ function Repertorio() {
     } finally {
       setCarregando(false);
     }
-  }, [mostrarNotificacao, buscaGeral]);
+  }, [mostrarNotificacao, filtros]);
 
   useEffect(() => {
     setCarregando(true);
@@ -111,7 +111,12 @@ function Repertorio() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [buscaGeral, buscarMusicas]);
+  }, [filtros, buscarMusicas]);
+
+  const handleFiltroChange = (e) => {
+    const { name, value } = e.target;
+    setFiltros(f => ({ ...f, [name]: value }));
+  };
 
   const handleAbrirFormulario = (id = null) => {
     setMusicaEmEdicaoId(id);
@@ -158,52 +163,64 @@ function Repertorio() {
         </Box>
 
         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-            <TextField 
-                fullWidth 
-                name="buscaGeral" 
-                label="Buscar por nome, artista, tom ou BPM..."
-                value={buscaGeral} 
-                onChange={(e) => setBuscaGeral(e.target.value)}
-                InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
-            />
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                  <TextField fullWidth name="termoBusca" label="Buscar por Nome ou Artista..."
+                    value={filtros.termoBusca} onChange={handleFiltroChange}
+                    InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
+                  />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                  <TextField fullWidth name="tom" label="Filtrar por Tom"
+                    value={filtros.tom} onChange={handleFiltroChange}
+                  />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                  <TextField fullWidth name="bpm" label="Filtrar por BPM" type="number"
+                    value={filtros.bpm} onChange={handleFiltroChange}
+                  />
+              </Grid>
+            </Grid>
         </Paper>
 
         {carregando ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>
         ) : (
-            musicas.length > 0 ? (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                    {musicas.map((musica) => (
-                        <Box key={musica.id} sx={{ flex: '1 1 350px', minWidth: '300px' }}>
-                            <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                                <CardContent sx={{flexGrow: 1}}>
-                                    <Typography variant="h6" fontWeight="medium">{musica.nome}</Typography>
-                                    <Typography component="div" color="text.secondary" variant="body2">
-                                    {musica.artista}
-                                    {musica.master_id && <Chip label="Importada" size="small" variant="outlined" color="primary" sx={{ ml: 1 }} />}
-                                    {musica.is_modificada && <Chip label="Modificada" size="small" variant="outlined" color="secondary" sx={{ ml: 1 }} />}
-                                    </Typography>
-                                    <Typography color="text.secondary" variant="body2" sx={{mt: 0.5}}>Tom: {musica.tom || "N/A"} | BPM: {musica.bpm || "N/A"}</Typography>
-                                    <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                        {musica.tags?.map((tag) => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
-                                    </Box>
-                                </CardContent>
-                                <CardActions sx={{justifyContent: 'flex-end'}}>
-                                    {musica.master_id && <Tooltip title="Sugerir Melhoria"><IconButton onClick={() => handleAbrirSugestao(musica)}><SuggestionIcon /></IconButton></Tooltip>}
-                                    <Tooltip title="Editar"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
-                                    <Tooltip title="Apagar"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
-                                </CardActions>
-                            </Card>
-                        </Box>
-                    ))}
-                </Box>
+            <Grid container spacing={3}>
+            {musicas.length > 0 ? (
+                musicas.map((musica) => (
+                <Grid item xs={12} sm={6} md={4} key={musica.id}>
+                    <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+                        <CardContent sx={{flexGrow: 1}}>
+                            <Typography variant="h6" fontWeight="medium">{musica.nome}</Typography>
+                            <Typography component="div" color="text.secondary" variant="body2">
+                              {musica.artista}
+                              {musica.master_id && <Chip label="Importada" size="small" variant="outlined" color="primary" sx={{ ml: 1 }} />}
+                              {musica.is_modificada && <Chip label="Modificada" size="small" variant="outlined" color="secondary" sx={{ ml: 1 }} />}
+                            </Typography>
+                            <Typography color="text.secondary" variant="body2" sx={{mt: 0.5}}>Tom: {musica.tom || "N/A"} | BPM: {musica.bpm || "N/A"}</Typography>
+                            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {musica.tags?.map((tag) => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
+                            </Box>
+                        </CardContent>
+                        <CardActions sx={{justifyContent: 'flex-end'}}>
+                            {musica.master_id && <Tooltip title="Sugerir Melhoria"><IconButton onClick={() => handleAbrirSugestao(musica)}><SuggestionIcon /></IconButton></Tooltip>}
+                            <Tooltip title="Editar"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
+                            <Tooltip title="Apagar"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
+                        </CardActions>
+                    </Card>
+                </Grid>
+                ))
             ) : (
-                <Paper variant="outlined" sx={{p: 4, textAlign: 'center', width: '100%'}}>
-                    <MusicNoteIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
-                    <Typography variant="h6">Nenhuma música encontrada</Typography>
-                    <Typography color="text.secondary">Adicione uma música ou ajuste sua busca.</Typography>
-                </Paper>
-            )
+                <Grid item xs={12}>
+                    <Paper variant="outlined" sx={{p: 4, textAlign: 'center'}}>
+                        <MusicNoteIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
+                        <Typography variant="h6">Nenhuma música encontrada</Typography>
+                        <Typography color="text.secondary">Adicione uma música ou ajuste a sua busca.</Typography>
+                    </Paper>
+                </Grid>
+            )}
+            </Grid>
         )}
       
       <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="md">

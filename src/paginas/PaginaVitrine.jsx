@@ -1,11 +1,11 @@
 // src/paginas/PaginaVitrine.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import apiClient from '../api';
-import YouTube from 'react-youtube'; // <-- Importa o componente do YouTube
+import YouTube from 'react-youtube';
 import {
   Box, Typography, CircularProgress, Container, Paper, Avatar,
-  Grid, Divider, List, ListItem, ListItemIcon, ListItemText, Button, Chip, IconButton, Tooltip, Link
+  Divider, List, ListItem, ListItemIcon, ListItemText, Button, Chip, IconButton, Tooltip, Link
 } from '@mui/material';
 import {
   CalendarMonth as CalendarMonthIcon,
@@ -17,17 +17,15 @@ import {
   Star as StarIcon,
   Favorite as FavoriteIcon,
   Instagram,
-  YouTube as YouTubeIcon, // Renomeado para não conflitar com o componente
+  YouTube as YouTubeIcon,
   Announcement as AnnouncementIcon,
   Link as LinkIcon,
   ThumbUp,
   ThumbDown
 } from '@mui/icons-material';
 
-// --- COMPONENTES INTERNOS PARA ORGANIZAÇÃO ---
-
 const StatCard = ({ icon, value, label }) => (
-    <Box sx={{ textAlign: 'center', flex: '1 1 0', minWidth: '100px' }}>
+    <Box sx={{ textAlign: 'center', flex: '1 1 0', minWidth: '90px', p: 1 }}>
         {icon}
         <Typography variant="h5" component="p" fontWeight="bold">{Number.isFinite(value) ? value : 0}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>{label}</Typography>
@@ -43,7 +41,7 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
     }
 
     return (
-        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4, position: 'relative', mt: -15 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4, position: 'relative', mt: -15, bgcolor: 'background.paper' }}>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', gap: 3 }}>
                 <Avatar 
                     src={fotoUrlCompleta} 
@@ -52,7 +50,7 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
                         height: { xs: 120, md: 160 },
                         fontSize: '4rem', 
                         border: '4px solid', 
-                        borderColor: 'background.paper',
+                        borderColor: 'primary.main',
                         boxShadow: 3
                     }}
                 >
@@ -61,7 +59,7 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
                 
                 <Box sx={{ flexGrow: 1, width: '100%' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, justifyContent: {xs: 'center', md: 'flex-start'} }}>
-                        <Typography variant="h3" component="h1" fontWeight="bold">{artista.nome}</Typography>
+                        <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', sm: '3rem' } }}>{artista.nome}</Typography>
                         <Tooltip title={jaAplaudido ? "Você já aplaudiu!" : "Apoie este artista!"}>
                             <span>
                                 <IconButton onClick={handleAplaudir} disabled={jaAplaudido} color={jaAplaudido ? "error" : "default"}><FavoriteIcon /></IconButton>
@@ -81,8 +79,8 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
 
                 <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }} />
 
-                {/* ESTATÍSTICAS DENTRO DO HEADER */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-around', width: { xs: '100%', md: 'auto' }, gap: 2, p: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
+                {/* --- CORREÇÃO AQUI (Estatísticas) --- */}
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-around', width: { xs: '100%', md: 'auto' }, gap: 2, p: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
                     <StatCard icon={<MicIcon color="primary" />} value={estatisticas?.shows} label="Shows"/>
                     <StatCard icon={<LibraryMusicIcon color="primary" />} value={estatisticas?.musicas} label="Músicas"/>
                     <StatCard icon={<EmojiEventsIcon color="primary" />} value={estatisticas?.conquistas} label="Conquistas"/>
@@ -92,6 +90,42 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
     );
 };
 
+const PostsSection = ({ posts, reacoes, handleReacao }) => {
+    return (
+        <Paper sx={{ p: 3 }}>
+            <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Últimas Atualizações</Typography>
+            <List>{posts.map(post => {
+                const reacaoDoUtilizador = reacoes[post.id];
+                const dataPost = post.created_at ? new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) : null;
+
+                return (
+                    // --- CORREÇÃO AQUI (Layout do Post) ---
+                    <ListItem key={post.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 2, '&:not(:last-child)': { borderBottom: '1px solid', borderColor: 'divider' } }} disablePadding>
+                        <Box sx={{ display: 'flex', width: '100%' }}>
+                            <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}><AnnouncementIcon color="primary" /></ListItemIcon>
+                            <ListItemText primary={post.content} />
+                        </Box>
+                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, pl: '40px' }}>
+                             {post.link ? (
+                                <Link href={post.link} target="_blank" rel="noopener noreferrer" sx={{display: 'flex', alignItems: 'center', fontSize: '0.875rem'}}>
+                                    <LinkIcon fontSize="small" sx={{mr: 0.5}}/> Ver mais
+                                </Link>
+                            ) : (
+                                <Typography variant="caption" color="text.secondary">{dataPost || ''}</Typography>
+                            )}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Tooltip title="Gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'like')} disabled={!!reacaoDoUtilizador}><ThumbUp fontSize="small" color={reacaoDoUtilizador === 'like' ? 'primary' : 'inherit'} /></IconButton></span></Tooltip>
+                                <Typography variant="body2">{post.likes}</Typography>
+                                <Tooltip title="Não gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'dislike')} disabled={!!reacaoDoUtilizador}><ThumbDown fontSize="small" color={reacaoDoUtilizador === 'dislike' ? 'error' : 'inherit'} /></IconButton></span></Tooltip>
+                                <Typography variant="body2">{post.dislikes}</Typography>
+                            </Box>
+                        </Box>
+                    </ListItem>
+                );
+            })}</List>
+        </Paper>
+    );
+};
 
 function PaginaVitrine() {
   const { url_unica } = useParams();
@@ -107,15 +141,79 @@ function PaginaVitrine() {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
-  }
+  };
 
-  useEffect(() => {
-    const buscarDadosVitrine = async () => { /* ... (código existente sem alterações) ... */ };
-    if (url_unica) buscarDadosVitrine();
+  const buscarDadosVitrine = useCallback(async () => {
+      try {
+        setCarregando(true);
+        const { data } = await apiClient.get(`/api/vitrine/${url_unica}`);
+        setVitrine(data);
+        setTotalAplausos(data.artista.aplausos || 0);
+        if (localStorage.getItem(`aplauso_${url_unica}`)) {
+          setJaAplaudido(true);
+        }
+        const reacoesGuardadas = {};
+        if (data.postsRecentes) {
+            data.postsRecentes.forEach(post => {
+                const reacao = localStorage.getItem(`reacao_post_${post.id}`);
+                if (reacao) reacoesGuardadas[post.id] = reacao;
+            });
+        }
+        setReacoesPosts(reacoesGuardadas);
+        setErro('');
+      } catch (err) {
+        setErro(err.response?.data?.mensagem || 'Artista não encontrado.');
+        setVitrine(null);
+      } finally {
+        setCarregando(false);
+      }
   }, [url_unica]);
 
-  const handleAplaudir = async () => { /* ... (código existente sem alterações) ... */ };
-  const handleReacao = async (postId, tipo) => { /* ... (código existente sem alterações) ... */ };
+  useEffect(() => {
+    if (url_unica) {
+        buscarDadosVitrine();
+    }
+  }, [url_unica, buscarDadosVitrine]);
+
+  const handleAplaudir = async () => {
+      if (jaAplaudido) return;
+      try {
+          setTotalAplausos(prev => prev + 1);
+          setJaAplaudido(true);
+          localStorage.setItem(`aplauso_${url_unica}`, 'true');
+          await apiClient.post(`/api/vitrine/${url_unica}/aplaudir`);
+      } catch (error) {
+          console.error("Erro ao registar aplauso", error);
+          setTotalAplausos(prev => prev - 1);
+          setJaAplaudido(false);
+          localStorage.removeItem(`aplauso_${url_unica}`);
+      }
+  };
+  
+  const handleReacao = async (postId, tipo) => {
+      if (reacoesPosts[postId]) return;
+
+      setVitrine(prev => ({
+          ...prev,
+          postsRecentes: prev.postsRecentes.map(p => 
+              p.id === postId ? { ...p, [tipo === 'like' ? 'likes' : 'dislikes']: p[tipo === 'like' ? 'likes' : 'dislikes'] + 1 } : p
+          )
+      }));
+      setReacoesPosts(prev => ({ ...prev, [postId]: tipo }));
+      localStorage.setItem(`reacao_post_${postId}`, tipo);
+
+      try {
+          await apiClient.post(`/api/vitrine/posts/${postId}/reacao`, { tipo });
+      } catch (error) {
+          console.error("Erro ao registar reação:", error);
+          setReacoesPosts(prev => {
+              const novo = { ...prev };
+              delete novo[postId];
+              return novo;
+          });
+          localStorage.removeItem(`reacao_post_${postId}`);
+      }
+  };
 
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
@@ -148,35 +246,23 @@ function PaginaVitrine() {
         <Container maxWidth="lg" sx={{ pb: 5 }}>
             <VitrineHeader artista={artista} estatisticas={vitrine.estatisticas} jaAplaudido={jaAplaudido} totalAplausos={totalAplausos} handleAplaudir={handleAplaudir} />
             
-            {/* --- LAYOUT PRINCIPAL COM FLEXBOX --- */}
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4 }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4 }}>
                 
-                {/* Coluna da Esquerda (Conteúdo Principal) */}
                 <Box sx={{ flex: '2 1 60%', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {videoDestaqueId && (
-                        <Paper sx={{ p: 2, aspectRatio: '16/9' }}>
+                        <Paper sx={{ p: {xs: 1, sm: 2}, aspectRatio: '16/9' }}>
                             <YouTube
                                 videoId={videoDestaqueId}
-                                opts={{
-                                    height: '100%',
-                                    width: '100%',
-                                }}
+                                opts={{ height: '100%', width: '100%' }}
                                 style={{ width: '100%', height: '100%' }}
                             />
                         </Paper>
                     )}
                     {postsRecentes && postsRecentes.length > 0 && (
-                       <Paper sx={{ p: 3 }}>
-                            <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Últimas Atualizações</Typography>
-                            <List>{postsRecentes.map(post => {
-                                const reacaoDoUtilizador = reacoesPosts[post.id];
-                                return ( <ListItem key={post.id} disablePadding sx={{ py: 1 }} secondaryAction={ <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> <Tooltip title="Gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'like')} disabled={!!reacaoDoUtilizador}><ThumbUp fontSize="small" color={reacaoDoUtilizador === 'like' ? 'primary' : 'inherit'} /></IconButton></span></Tooltip> <Typography variant="body2">{post.likes}</Typography> <Tooltip title="Não gostei"><span><IconButton size="small" onClick={() => handleReacao(post.id, 'dislike')} disabled={!!reacaoDoUtilizador}><ThumbDown fontSize="small" color={reacaoDoUtilizador === 'dislike' ? 'error' : 'inherit'} /></IconButton></span></Tooltip> <Typography variant="body2">{post.dislikes}</Typography> </Box> }> <ListItemIcon><AnnouncementIcon color="primary" /></ListItemIcon> <ListItemText primary={post.content} secondary={post.link ? (<Link href={post.link} target="_blank" rel="noopener noreferrer" sx={{display: 'flex', alignItems: 'center', mt: 0.5}}><LinkIcon fontSize="small" sx={{mr: 0.5}}/> Ver mais</Link>) : new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}/> </ListItem> );
-                            })}</List>
-                        </Paper>
+                       <PostsSection posts={postsRecentes} reacoes={reacoesPosts} handleReacao={handleReacao} />
                     )}
                 </Box>
 
-                {/* Coluna da Direita (Informações Secundárias) */}
                 <Box sx={{ flex: '1 1 30%', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Próximos Shows</Typography>
@@ -184,17 +270,17 @@ function PaginaVitrine() {
                             <List dense>{proximosShows.map((show, index) => (<ListItem key={index} disableGutters><ListItemIcon><CalendarMonthIcon color="primary" /></ListItemIcon><ListItemText primary={show.nome_evento} secondary={<>{new Date(show.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}{show.local && ` - ${show.local}`}</>} /></ListItem>))}</List>
                         ) : ( <Typography color="text.secondary">Nenhum show agendado no momento.</Typography> )}
                     </Paper>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Contato</Typography>
-                        {contatoPublico ? (
+                    {contatoPublico && (
+                        <Paper sx={{ p: 3 }}>
+                            <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Contato</Typography>
                             <Box>
-                            <Chip icon={<PersonIcon />} label={contatoPublico.funcao || 'Contato Profissional'} color="primary" sx={{ mb: 2 }}/>
-                            <Typography><strong>Nome:</strong> {contatoPublico.nome}</Typography>
-                            {contatoPublico.email && <Typography><strong>Email:</strong> {contatoPublico.email}</Typography>}
-                            {contatoPublico.telefone && <Typography><strong>Telefone:</strong> {contatoPublico.telefone}</Typography>}
+                                <Chip icon={<PersonIcon />} label={contatoPublico.funcao || 'Contato Profissional'} color="primary" sx={{ mb: 2 }}/>
+                                <Typography><strong>Nome:</strong> {contatoPublico.nome}</Typography>
+                                {contatoPublico.email && <Typography><strong>Email:</strong> {contatoPublico.email}</Typography>}
+                                {contatoPublico.telefone && <Typography><strong>Telefone:</strong> {contatoPublico.telefone}</Typography>}
                             </Box>
-                        ) : ( <Typography color="text.secondary">Informações de contato não disponíveis.</Typography> )}
-                    </Paper>
+                        </Paper>
+                    )}
                 </Box>
             </Box>
         </Container>
