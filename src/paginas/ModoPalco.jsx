@@ -5,31 +5,39 @@ import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { 
     Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container, 
-    Dialog, DialogTitle, DialogContent, DialogActions, AppBar, Toolbar 
+    AppBar, Toolbar 
 } from '@mui/material';
 import { 
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
     PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
     Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon,
-    Notes as NotesIcon,
     ZoomIn as ZoomInIcon, ZoomOut as ZoomOutIcon
 } from '@mui/icons-material';
 
-const formatarCifra = (textoCifra, theme) => {
-    if (!textoCifra) return <Typography>Nenhuma cifra ou letra adicionada.</Typography>;
+// Função para analisar o texto e colorir as linhas de cifra
+const formatarCifra = (textoCifra, theme, fontSize) => {
+    if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
+    
     const regexCifra = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?(\s+[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?)*\s*$/i;
-    return textoCifra.split('\n').map((linha, index) => (
-        <Typography 
-            key={index} component="span"
-            sx={{
-                display: 'block',
-                color: linha.trim().match(regexCifra) ? theme.palette.secondary.main : 'inherit',
-                fontWeight: linha.trim().match(regexCifra) ? 'bold' : 'normal',
-            }}
-        >
-            {linha || <br />}
-        </Typography>
-    ));
+
+    return textoCifra.split('\n').map((linha, index) => {
+        const isCifra = regexCifra.test(linha.trim());
+        return (
+            <Typography 
+                key={index}
+                component="span"
+                sx={{
+                    display: 'block',
+                    fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` },
+                    color: isCifra ? theme.palette.secondary.main : 'inherit',
+                    fontWeight: isCifra ? 'bold' : 'normal',
+                    transition: 'font-size 0.2s ease-in-out'
+                }}
+            >
+                {linha || <br />}
+            </Typography>
+        );
+    });
 };
 
 function ModoPalco() {
@@ -44,11 +52,11 @@ function ModoPalco() {
   
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(90);
+  const [fontSize, setFontSize] = useState(1.8);
   const letraRef = useRef(null);
   const scrollAnimationRef = useRef();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [fontSize, setFontSize] = useState(1.8);
 
   const handleToggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -66,27 +74,25 @@ function ModoPalco() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // --- NOVA LÓGICA ADICIONADA AQUI ---
-  // Este useEffect garante que, ao sair do componente, a tela cheia seja desativada.
   useEffect(() => {
-    // A função de retorno (cleanup) é executada quando o componente é desmontado
+    // Função de limpeza que é executada quando o componente é desmontado
     return () => {
       if (document.fullscreenElement) {
         document.exitFullscreen();
       }
     };
-  }, []); // O array vazio [] significa que este efeito só corre na montagem e desmontagem
+  }, []);
 
   const buscarSetlist = useCallback(async () => {
-    try {
-      const resposta = await apiClient.get(`/api/setlists/${id}`);
-      setSetlist(resposta.data);
-    } catch (error) {
-      console.error("Erro ao carregar setlist para o Modo Palco", error);
-      navigate('/setlists');
-    } finally {
-      setCarregando(false);
-    }
+      try {
+        const resposta = await apiClient.get(`/api/setlists/${id}`);
+        setSetlist(resposta.data);
+      } catch (error) {
+        console.error("Erro ao carregar setlist para o Modo Palco", error);
+        navigate('/setlists');
+      } finally {
+        setCarregando(false);
+      }
   }, [id, navigate]);
 
   useEffect(() => {
@@ -183,22 +189,15 @@ function ModoPalco() {
                 flexGrow: 1, 
                 overflowY: 'auto', 
                 p: {xs: 2, md: 4},
-                pb: '80px',
+                pb: '80px', // Espaço para o rodapé fixo
                 '&::-webkit-scrollbar': { display: 'none' }, 
                 scrollbarWidth: 'none' 
             }}
         >
             <Container maxWidth="md">
-                <Typography sx={{ 
-                    fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` }, 
-                    lineHeight: 2, 
-                    fontFamily: 'monospace', 
-                    textAlign: 'center', 
-                    whiteSpace: 'pre-wrap',
-                    transition: 'font-size 0.2s ease-in-out'
-                }}>
-                    {formatarCifra(musicaAtual.notas_adicionais, theme)}
-                </Typography>
+                <Box sx={{ lineHeight: 2, fontFamily: 'monospace', textAlign: 'center', whiteSpace: 'pre-wrap' }}>
+                    {formatarCifra(musicaAtual.notas_adicionais, theme, fontSize)}
+                </Box>
             </Container>
         </Box>
       
