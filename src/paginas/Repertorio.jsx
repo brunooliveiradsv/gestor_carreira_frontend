@@ -81,7 +81,7 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
 function Repertorio() {
   const [musicas, setMusicas] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [buscaGeral, setBuscaGeral] = useState("");
+  const [filtros, setFiltros] = useState({ termoBusca: "", tom: "", bpm: "" });
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [musicaEmEdicaoId, setMusicaEmEdicaoId] = useState(null);
   const [dialogoSugestaoAberto, setDialogoSugestaoAberto] = useState(false);
@@ -90,11 +90,11 @@ function Repertorio() {
 
   const buscarMusicas = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
-      if (buscaGeral) {
-        params.append('buscaGeral', buscaGeral);
-      }
-
+      const filtrosAtivos = Object.fromEntries(
+        Object.entries(filtros).filter(([_, v]) => v != null && v !== '')
+      );
+      const params = new URLSearchParams(filtrosAtivos);
+      
       const resposta = await apiClient.get(`/api/musicas?${params.toString()}`);
       setMusicas(resposta.data);
     } catch (erro) {
@@ -102,7 +102,7 @@ function Repertorio() {
     } finally {
       setCarregando(false);
     }
-  }, [mostrarNotificacao, buscaGeral]);
+  }, [mostrarNotificacao, filtros]);
 
   useEffect(() => {
     setCarregando(true);
@@ -111,7 +111,12 @@ function Repertorio() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [buscaGeral, buscarMusicas]);
+  }, [filtros, buscarMusicas]);
+
+  const handleFiltroChange = (e) => {
+    const { name, value } = e.target;
+    setFiltros(f => ({ ...f, [name]: value }));
+  };
 
   const handleAbrirFormulario = (id = null) => {
     setMusicaEmEdicaoId(id);
@@ -158,14 +163,24 @@ function Repertorio() {
         </Box>
 
         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-            <TextField
-                fullWidth
-                name="buscaGeral"
-                label="Buscar por nome, artista, tom ou BPM..."
-                value={buscaGeral}
-                onChange={(e) => setBuscaGeral(e.target.value)}
-                InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
-            />
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                  <TextField fullWidth name="termoBusca" label="Buscar por Nome ou Artista..."
+                    value={filtros.termoBusca} onChange={handleFiltroChange}
+                    InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
+                  />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                  <TextField fullWidth name="tom" label="Filtrar por Tom"
+                    value={filtros.tom} onChange={handleFiltroChange}
+                  />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                  <TextField fullWidth name="bpm" label="Filtrar por BPM" type="number"
+                    value={filtros.bpm} onChange={handleFiltroChange}
+                  />
+              </Grid>
+            </Grid>
         </Paper>
 
         {carregando ? (
@@ -201,13 +216,13 @@ function Repertorio() {
                     <Paper variant="outlined" sx={{p: 4, textAlign: 'center'}}>
                         <MusicNoteIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
                         <Typography variant="h6">Nenhuma música encontrada</Typography>
-                        <Typography color="text.secondary">Adicione uma música ou ajuste sua busca.</Typography>
+                        <Typography color="text.secondary">Adicione uma música ou ajuste a sua busca.</Typography>
                     </Paper>
                 </Grid>
             )}
             </Grid>
         )}
-
+      
       <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="md">
         {musicaEmEdicaoId ? (
             <Box sx={{p: {xs: 2, md: 3}}}>
@@ -217,7 +232,7 @@ function Repertorio() {
             <SeletorDeMusica onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} />
         )}
       </Dialog>
-
+      
       {musicaParaSugerir && (
         <FormularioSugestao open={dialogoSugestaoAberto} onClose={() => setDialogoSugestaoAberto(false)} musica={musicaParaSugerir} />
       )}
