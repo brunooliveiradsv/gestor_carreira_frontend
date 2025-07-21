@@ -11,8 +11,7 @@ import {
   Alert,
   LinearProgress,
   Chip,
-  Grid,
-  useTheme // <-- Importação adicionada
+  useTheme
 } from '@mui/material';
 import {
   MilitaryTech as MilitaryTechIcon,
@@ -33,7 +32,7 @@ function Conquistas() {
   const [conquistas, setConquistas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
-  const theme = useTheme(); // <-- Hook instanciado aqui
+  const theme = useTheme();
 
   const getConquistaIcon = (tipo) => {
     if (tipo.includes('SHOWS')) return <MusicNoteIcon />;
@@ -81,9 +80,11 @@ function Conquistas() {
             <Typography color="text.secondary">Continue usando o VoxGest para desbloquear novas medalhas!</Typography>
           </Paper>
       ) : (
-        <Grid container spacing={3}>
+        // --- LAYOUT ATUALIZADO PARA USAR FLEXBOX ---
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           {conquistas.map(conquista => (
-            <Grid item xs={12} sm={6} md={4} key={conquista.id}>
+            // Cada 'Box' é um item flexível que contém o cartão da conquista
+            <Box key={conquista.id} sx={{ flex: '1 1 350px', minWidth: '300px' }}>
                 <Paper
                 variant="outlined"
                 sx={{
@@ -154,9 +155,9 @@ function Conquistas() {
                     )}
                 </Box>
                 </Paper>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
     </Box>
   );
