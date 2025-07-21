@@ -25,11 +25,10 @@ function Mural() {
   const [posts, setPosts] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
-  // Estados para o formulário de nova publicação
+  // Estados dos formulários
   const [dialogoAberto, setDialogoAberto] = useState(false);
   const [novoPost, setNovoPost] = useState({ content: '', link: '' });
 
-  // Estados para o formulário de perfil público
   const [biografia, setBiografia] = useState("");
   const [urlUnica, setUrlUnica] = useState("");
   const [links, setLinks] = useState({ instagram: '', youtube: '', spotify: '' });
@@ -40,20 +39,23 @@ function Mural() {
 
   const [carregandoPublico, setCarregandoPublico] = useState(false);
   
-  // Popula os campos do perfil público quando o componente carrega
   useEffect(() => {
     if (usuario) {
       setBiografia(usuario.biografia || "");
       setUrlUnica(usuario.url_unica || "");
       setLinks(usuario.links_redes || { instagram: '', youtube: '', spotify: '' });
       setVideoDestaque(usuario.video_destaque_url || "");
-      setPreviewFotoCapa(usuario.foto_capa_url || null);
+      // Corrigido para mostrar a imagem de capa a partir da URL completa
+      if (usuario.foto_capa_url) {
+        setPreviewFotoCapa(usuario.foto_capa_url.startsWith('http') ? usuario.foto_capa_url : `${apiClient.defaults.baseURL}${usuario.foto_capa_url}`);
+      } else {
+        setPreviewFotoCapa(null);
+      }
     }
   }, [usuario]);
 
   const buscarPosts = useCallback(async () => {
     try {
-      // Já está a carregar, não precisa de definir de novo
       const resposta = await apiClient.get('/api/posts');
       setPosts(resposta.data);
     } catch (error) {
@@ -68,13 +70,6 @@ function Mural() {
     buscarPosts();
   }, [buscarPosts]);
 
-  const handleAbrirDialogo = () => {
-    setNovoPost({ content: '', link: '' });
-    setDialogoAberto(true);
-  };
-
-  const handleFecharDialogo = () => setDialogoAberto(false);
-  
   const handleLinkChange = (plataforma, valor) => setLinks(prev => ({ ...prev, [plataforma]: valor }));
 
   const handleSalvarPerfilPublico = async (e) => {
@@ -82,23 +77,23 @@ function Mural() {
     setCarregandoPublico(true);
     try {
       const payload = { biografia, url_unica: urlUnica, links_redes: links, video_destaque_url: videoDestaque };
-      // Primeiro, atualiza os dados de texto
       const { data: dadosAtualizados } = await apiClient.put('/api/usuarios/perfil/publico', payload);
       
       let finalUserData = dadosAtualizados;
 
-      // Se uma nova foto de capa foi selecionada, faz o upload
       if (novaFotoCapa) {
         const formData = new FormData();
         formData.append('capa', novaFotoCapa);
-        // O servidor responderá com os dados do utilizador já incluindo o novo URL da foto de capa
         const { data: dataFoto } = await apiClient.put('/api/usuarios/perfil/capa', formData);
-        finalUserData = dataFoto; // Usa os dados mais recentes que incluem a nova foto
-        setNovaFotoCapa(null); // Limpa o estado da foto após o upload
+        finalUserData = dataFoto;
+        setNovaFotoCapa(null);
       }
       
-      // Atualiza o estado global do utilizador com os dados finais
-      setUsuario(finalUserData);
+      // --- A CORREÇÃO ESTÁ AQUI ---
+      // Usamos uma função para garantir que fundimos os dados novos com os antigos,
+      // o que força uma atualização de estado mais fiável em React.
+      setUsuario(prevUsuario => ({ ...prevUsuario, ...finalUserData }));
+      
       mostrarNotificacao(`Perfil público atualizado com sucesso!`, "success");
     } catch (error) {
       mostrarNotificacao(error.response?.data?.mensagem || `Falha ao atualizar perfil.`, "error");
@@ -106,7 +101,7 @@ function Mural() {
       setCarregandoPublico(false);
     }
   };
-
+  
   const handleFotoCapaChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -118,6 +113,13 @@ function Mural() {
       setPreviewFotoCapa(URL.createObjectURL(file));
     }
   };
+  
+  const handleAbrirDialogo = () => {
+    setNovoPost({ content: '', link: '' });
+    setDialogoAberto(true);
+  };
+
+  const handleFecharDialogo = () => setDialogoAberto(false);
 
   const handleSalvarPost = async () => {
     if (!novoPost.content.trim()) {
@@ -168,8 +170,12 @@ function Mural() {
 
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
         <Typography variant="h6" component="h2" gutterBottom>Configurações da Vitrine</Typography>
+        {usuario?.url_unica && (
+            <Link href={`/vitrine/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <LinkIcon sx={{ mr: 1 }} /> Visualizar minha página pública
+            </Link>
+        )}
         <Box component="form" onSubmit={handleSalvarPerfilPublico} noValidate sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
-            
             <Box>
                 <Typography color="text.secondary" gutterBottom>Foto de Capa</Typography>
                 <Paper 
