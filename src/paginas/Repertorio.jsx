@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import apiClient from "../api.js";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
-  Box, Button, Typography, CircularProgress, Paper, Grid, TextField,
-  InputAdornment, Chip, IconButton, Tooltip, Dialog, Card,
+  Box, Button, Typography, CircularProgress, Paper, Grid, TextField, 
+  InputAdornment, Chip, IconButton, Tooltip, Dialog, Card, 
   CardContent, CardActions, List, ListItem, ListItemText
 } from "@mui/material";
 import {
-  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon,
+  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon, 
   Delete as DeleteIcon, MusicNote as MusicNoteIcon, PlaylistAddCheck as SuggestionIcon,
   ImportExport as ImportExportIcon
 } from "@mui/icons-material";
@@ -16,7 +16,6 @@ import {
 import FormularioMusica from "../componentes/FormularioMusica.jsx";
 import FormularioSugestao from "../componentes/FormularioSugestao.jsx";
 
-// Componente interno para o Dialog de Adicionar/Importar
 const SeletorDeMusica = ({ onSave, onCancel }) => {
     const [modo, setModo] = useState('buscar');
     const [termoBusca, setTermoBusca] = useState('');
@@ -30,7 +29,7 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
         try {
             const resposta = await apiClient.get(`/api/musicas/buscar-publicas?termoBusca=${termoBusca}`);
             setResultados(resposta.data);
-        } catch (error) { mostrarNotificacao("Erro ao buscar músicas.", "error"); }
+        } catch (error) { mostrarNotificacao("Erro ao buscar músicas.", "error"); } 
         finally { setBuscando(false); }
     };
 
@@ -82,24 +81,20 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
 function Repertorio() {
   const [musicas, setMusicas] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  // --- ESTADO DOS FILTROS ATUALIZADO ---
-  const [filtros, setFiltros] = useState({ termoBusca: "", artista: "", tom: "", bpm: "" });
+  const [buscaGeral, setBuscaGeral] = useState("");
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [musicaEmEdicaoId, setMusicaEmEdicaoId] = useState(null);
   const [dialogoSugestaoAberto, setDialogoSugestaoAberto] = useState(false);
   const [musicaParaSugerir, setMusicaParaSugerir] = useState(null);
   const { mostrarNotificacao } = useNotificacao();
 
-  // --- LÓGICA DE BUSCA ATUALIZADA ---
   const buscarMusicas = useCallback(async () => {
-    // Não é necessário setCarregando(true) aqui para evitar piscar
     try {
-      // Filtra apenas os valores que não estão vazios antes de enviar
-      const filtrosAtivos = Object.fromEntries(
-        Object.entries(filtros).filter(([_, v]) => v != null && v !== '')
-      );
-      const params = new URLSearchParams(filtrosAtivos);
-
+      const params = new URLSearchParams();
+      if (buscaGeral) {
+        params.append('buscaGeral', buscaGeral);
+      }
+      
       const resposta = await apiClient.get(`/api/musicas?${params.toString()}`);
       setMusicas(resposta.data);
     } catch (erro) {
@@ -107,23 +102,16 @@ function Repertorio() {
     } finally {
       setCarregando(false);
     }
-  }, [mostrarNotificacao, filtros]);
+  }, [mostrarNotificacao, buscaGeral]);
 
   useEffect(() => {
     setCarregando(true);
-    // Adiciona um pequeno delay na busca para não sobrecarregar a API enquanto o utilizador digita
     const timer = setTimeout(() => {
       buscarMusicas();
-    }, 500); // 500ms de espera
+    }, 500);
 
-    return () => clearTimeout(timer); // Limpa o timer se o utilizador continuar a digitar
-  }, [filtros, buscarMusicas]);
-
-
-  const handleFiltroChange = (e) => {
-    const { name, value } = e.target;
-    setFiltros(f => ({ ...f, [name]: value }));
-  };
+    return () => clearTimeout(timer);
+  }, [buscaGeral, buscarMusicas]);
 
   const handleAbrirFormulario = (id = null) => {
     setMusicaEmEdicaoId(id);
@@ -169,31 +157,15 @@ function Repertorio() {
             </Button>
         </Box>
 
-        {/* --- ÁREA DE FILTROS REDESENHADA --- */}
         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6} lg={3}>
-                  <TextField fullWidth name="termoBusca" label="Buscar por Nome da Música..."
-                    value={filtros.termoBusca} onChange={handleFiltroChange}
-                    InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
-                  />
-              </Grid>
-              <Grid item xs={12} sm={4} md={6} lg={3}>
-                  <TextField fullWidth name="artista" label="Filtrar por Artista"
-                    value={filtros.artista} onChange={handleFiltroChange}
-                  />
-              </Grid>
-              <Grid item xs={12} sm={4} md={6} lg={3}>
-                  <TextField fullWidth name="tom" label="Filtrar por Tom"
-                    value={filtros.tom} onChange={handleFiltroChange}
-                  />
-              </Grid>
-              <Grid item xs={12} sm={4} md={6} lg={3}>
-                  <TextField fullWidth name="bpm" label="Filtrar por BPM" type="number"
-                    value={filtros.bpm} onChange={handleFiltroChange}
-                  />
-              </Grid>
-            </Grid>
+            <TextField 
+                fullWidth 
+                name="buscaGeral" 
+                label="Buscar por nome, artista, tom ou BPM..."
+                value={buscaGeral} 
+                onChange={(e) => setBuscaGeral(e.target.value)}
+                InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
+            />
         </Paper>
 
         {carregando ? (
@@ -211,7 +183,7 @@ function Repertorio() {
                               {musica.master_id && <Chip label="Importada" size="small" variant="outlined" color="primary" sx={{ ml: 1 }} />}
                               {musica.is_modificada && <Chip label="Modificada" size="small" variant="outlined" color="secondary" sx={{ ml: 1 }} />}
                             </Typography>
-                            <Typography color="text.secondary" variant="body2" sx={{mt: 0.5}}>Tom: {musica.tom || "N/A"}</Typography>
+                            <Typography color="text.secondary" variant="body2" sx={{mt: 0.5}}>Tom: {musica.tom || "N/A"} | BPM: {musica.bpm || "N/A"}</Typography>
                             <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                 {musica.tags?.map((tag) => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
                             </Box>
@@ -229,13 +201,13 @@ function Repertorio() {
                     <Paper variant="outlined" sx={{p: 4, textAlign: 'center'}}>
                         <MusicNoteIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
                         <Typography variant="h6">Nenhuma música encontrada</Typography>
-                        <Typography color="text.secondary">Adicione uma música ou ajuste seus filtros.</Typography>
+                        <Typography color="text.secondary">Adicione uma música ou ajuste sua busca.</Typography>
                     </Paper>
                 </Grid>
             )}
             </Grid>
         )}
-
+      
       <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="md">
         {musicaEmEdicaoId ? (
             <Box sx={{p: {xs: 2, md: 3}}}>
@@ -245,7 +217,7 @@ function Repertorio() {
             <SeletorDeMusica onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} />
         )}
       </Dialog>
-
+      
       {musicaParaSugerir && (
         <FormularioSugestao open={dialogoSugestaoAberto} onClose={() => setDialogoSugestaoAberto(false)} musica={musicaParaSugerir} />
       )}
