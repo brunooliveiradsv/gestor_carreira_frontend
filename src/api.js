@@ -1,4 +1,3 @@
-// src/api.js
 import axios from 'axios';
 
 // Defina a URL base da sua API. Altere se o seu backend rodar em outra porta.
@@ -8,7 +7,7 @@ const apiClient = axios.create({
   baseURL: API_URL,
 });
 
-// Intercepta cada requisição para adicionar o token de autenticação no cabeçalho
+// Adiciona o token de autenticação a todas as requisições, se ele existir
 apiClient.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
   if (token) {
