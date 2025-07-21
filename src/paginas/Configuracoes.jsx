@@ -9,15 +9,14 @@ import {
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, 
   Grid, Avatar, Badge, IconButton, Chip
 } from "@mui/material";
-// --- A CORREÇÃO ESTÁ AQUI ---
-// Adicionámos o WorkspacePremiumIcon à lista de importações
 import { 
     PhotoCamera, 
     WorkspacePremium as WorkspacePremiumIcon 
 } from "@mui/icons-material";
 
+// Componente FormCard atualizado: removemos o height: '100%'
 const FormCard = ({ title, children }) => (
-    <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Paper sx={{ p: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Typography variant="h6" component="h2" gutterBottom>{title}</Typography>
         {children}
     </Paper>
@@ -90,7 +89,8 @@ function Configuracoes() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
+      const MAX_FILE_SIZE = 5 * 1024 * 1024;
+      if (file.size > MAX_FILE_SIZE) {
         mostrarNotificacao('A imagem é muito grande. O limite máximo é de 5MB.', 'error');
         return;
       }
@@ -162,10 +162,10 @@ function Configuracoes() {
         <Typography color="text.secondary">Gerencie as suas informações de acesso e assinatura.</Typography>
       </Box>
 
-      <Grid container spacing={4} sx={{ mb: 4 }}>
+      {/* --- ESTRUTURA DE GRID ATUALIZADA PARA LISTA --- */}
+      <Grid container spacing={4}>
         <Grid item xs={12}>
-            <Paper sx={{ p: { xs: 2, md: 3 }}}>
-                <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
+            <FormCard title="Assinatura">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                     <Typography>Seu plano atual:</Typography>
                     <Chip icon={<WorkspacePremiumIcon />} label={capitalizar(usuario.plano) || 'Nenhum'} color={usuario.status_assinatura === 'ativa' || usuario.status_assinatura === 'teste' ? 'primary' : 'default'} variant="outlined" />
@@ -176,12 +176,10 @@ function Configuracoes() {
                         <Button variant="contained" onClick={handleGerirAssinatura} sx={{ ml: 'auto' }} disabled={carregando.portal}>{carregando.portal ? <CircularProgress size={24} color="inherit" /> : 'Gerir Assinatura'}</Button>
                     )}
                 </Box>
-            </Paper>
+            </FormCard>
         </Grid>
-      </Grid>
-      
-      <Grid container spacing={4}>
-        <Grid item xs={12} sm={6} lg={3}>
+        
+        <Grid item xs={12}>
             <FormCard title="Foto de Perfil">
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
                     <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<IconButton color="primary" onClick={() => fileInputRef.current.click()}><PhotoCamera /></IconButton>}>
@@ -194,7 +192,8 @@ function Configuracoes() {
                 </Box>
             </FormCard>
         </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
+
+        <Grid item xs={12}>
             <FormCard title="Alterar Nome">
                 <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                     <TextField id="nome" name="nome" label="Nome Artístico" value={nome} onChange={(e) => setNome(e.target.value)} fullWidth />
@@ -204,7 +203,8 @@ function Configuracoes() {
                 </Box>
             </FormCard>
         </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
+
+        <Grid item xs={12}>
             <FormCard title="Alterar E-mail">
                 <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                     <TextField id="email" name="email" label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
@@ -214,7 +214,8 @@ function Configuracoes() {
                 </Box>
             </FormCard>
         </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
+
+        <Grid item xs={12}>
             <FormCard title="Alterar Senha">
                 <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
