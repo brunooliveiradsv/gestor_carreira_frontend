@@ -1,9 +1,9 @@
 // src/componentes/Anuncio.jsx
 import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../contextos/AuthContext';
-import Adsense from 'react-adsense'; // <-- 1. Importe o componente de anúncio
-import { 
-    Dialog, DialogTitle, DialogContent, 
+import AdSense from 'react-adsense';
+import {
+    Dialog, DialogTitle, DialogContent,
     IconButton, Typography
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
@@ -26,7 +26,6 @@ function Anuncio() {
     setDialogAberto(false);
   };
 
-  // Se o utilizador não tiver o plano padrão, o componente não faz nada
   if (usuario?.plano !== 'padrao') {
     return null;
   }
@@ -35,7 +34,7 @@ function Anuncio() {
     <Dialog
       open={dialogAberto}
       onClose={handleFechar}
-      PaperProps={{ sx: { maxWidth: '728px', width: '100%' } }} // Largura comum para banners
+      PaperProps={{ sx: { maxWidth: '728px', width: '100%' } }}
     >
       <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="body2" color="text.secondary">Publicidade</Typography>
@@ -48,10 +47,10 @@ function Anuncio() {
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ p: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        {/* --- 2. Componente do AdSense --- */}
-        <Adsense
-          client="pub-6978134622596714" // <-- SUBSTITUA
-          slot="6578217682"   // <-- SUBSTITUA
+        {/* --- IDs Inseridos Aqui --- */}
+        <AdSense.Google
+          client="ca-pub-6978134622596714"
+          slot="6578217682"
           style={{ display: 'block' }}
           layout="in-article"
           format="fluid"
