@@ -23,6 +23,7 @@ import AdminLogs from "./paginas/AdminLogs.jsx";
 import Mural from "./paginas/Mural.jsx";
 import Assinatura from "./paginas/Assinatura.jsx";
 import VerificarAssinatura from "./componentes/VerificarAssinatura.jsx";
+import ModoPalco from "./paginas/ModoPalco.jsx";
 
 function App() {
   return (
@@ -33,7 +34,19 @@ function App() {
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/vitrine/:url_unica" element={<PaginaVitrine />} />
 
-      {/* Rotas Protegidas (exigem apenas login) */}
+      {/* --- ROTA DE TELA CHEIA (SEM LAYOUT) --- */}
+      {/* Esta rota é protegida, mas renderiza APENAS o ModoPalco, sem o menu lateral */}
+      <Route
+        path="/setlists/palco/:id"
+        element={
+          <RotaProtegida>
+            <ModoPalco />
+          </RotaProtegida>
+        }
+      />
+
+      {/* --- ROTAS COM O LAYOUT PRINCIPAL --- */}
+      {/* Todas as outras páginas que devem ter o menu lateral e o cabeçalho ficam aqui dentro */}
       <Route
         element={
           <RotaProtegida>
