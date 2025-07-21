@@ -3,11 +3,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
-import { 
-    Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container, 
-    AppBar, Toolbar 
+import {
+    Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container,
+    AppBar, Toolbar
 } from '@mui/material';
-import { 
+import {
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
     PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
     Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon,
@@ -17,13 +17,13 @@ import {
 // Função para analisar o texto e colorir as linhas de cifra
 const formatarCifra = (textoCifra, theme, fontSize) => {
     if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
-    
+
     const regexCifra = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?(\s+[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?)*\s*$/i;
 
     return textoCifra.split('\n').map((linha, index) => {
         const isCifra = regexCifra.test(linha.trim());
         return (
-            <Typography 
+            <Typography
                 key={index}
                 component="span"
                 sx={{
@@ -49,7 +49,7 @@ function ModoPalco() {
   const [setlist, setSetlist] = useState(null);
   const [indiceAtual, setIndiceAtual] = useState(0);
   const [carregando, setCarregando] = useState(true);
-  
+
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(90);
   const [fontSize, setFontSize] = useState(1.8);
@@ -77,7 +77,12 @@ function ModoPalco() {
   }, []);
 
   useEffect(() => {
-    return () => { if (document.fullscreenElement) document.exitFullscreen(); };
+    // Função de limpeza que é executada quando o componente é desmontado
+    return () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+    };
   }, []);
 
   const buscarSetlist = useCallback(async () => {
@@ -115,12 +120,11 @@ function ModoPalco() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [irParaProxima, irParaAnterior, navigate]);
-  
+
   const iniciarContagemParaScroll = () => {
     clearInterval(countdownIntervalRef.current);
     setCountdown(3);
     let count = 3;
-    
     countdownIntervalRef.current = setInterval(() => {
       count -= 1;
       setCountdown(count);
@@ -136,15 +140,14 @@ function ModoPalco() {
     clearInterval(countdownIntervalRef.current);
     setCountdown(null);
     if (!isScrolling) {
-        // Se a letra não estiver no topo, recomeça do início. Caso contrário, inicia a contagem.
-        if (letraRef.current && letraRef.current.scrollTop > 0) {
-            letraRef.current.scrollTop = 0;
-            setIsScrolling(true);
-        } else {
-            iniciarContagemParaScroll();
-        }
+      if (letraRef.current && letraRef.current.scrollTop > 0) {
+        letraRef.current.scrollTop = 0;
+        setIsScrolling(true);
+      } else {
+        iniciarContagemParaScroll();
+      }
     } else {
-        setIsScrolling(false);
+      setIsScrolling(false);
     }
   };
 
@@ -157,7 +160,6 @@ function ModoPalco() {
     } else {
       setScrollSpeed(90);
     }
-
     if (letraRef.current) letraRef.current.scrollTop = 0;
     setIsScrolling(false);
     clearInterval(countdownIntervalRef.current);
@@ -223,55 +225,55 @@ function ModoPalco() {
             </Box>
           </Toolbar>
         </AppBar>
-        
-        <Box 
-            ref={letraRef}
-            sx={{ 
-                position: 'relative', // Necessário para o posicionamento absoluto da contagem
-                flexGrow: 1, 
-                overflowY: 'auto', 
-                p: {xs: 2, md: 4},
-                pb: '80px',
-                '&::-webkit-scrollbar': { display: 'none' }, 
-                scrollbarWidth: 'none' 
-            }}
-        >
-            <Container maxWidth="md">
-                <Box sx={{ lineHeight: 2, fontFamily: 'monospace', textAlign: 'center', whiteSpace: 'pre-wrap' }}>
-                    {formatarCifra(musicaAtual.notas_adicionais, theme, fontSize)}
-                </Box>
-            </Container>
-            
-            {countdown !== null && countdown > 0 && (
-                <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 20 }}>
-                    <Typography sx={{ fontSize: '25rem', fontWeight: 'bold', color: 'white', animation: 'countdown-zoom 1s infinite' }}>
-                        {countdown}
-                    </Typography>
-                    <style>
-                        {`
-                        @keyframes countdown-zoom {
-                            0% { transform: scale(1); opacity: 1; }
-                            50% { transform: scale(1.1); opacity: 0.7; }
-                            100% { transform: scale(1); opacity: 1; }
-                        }
-                        `}
-                    </style>
-                </Box>
-            )}
-        </Box>
-      
+
+      <Box
+          ref={letraRef}
+          sx={{
+              position: 'relative',
+              flexGrow: 1,
+              overflowY: 'auto',
+              p: {xs: 2, md: 4},
+              pb: '80px',
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none'
+          }}
+      >
+          <Container maxWidth="md">
+              <Box sx={{ lineHeight: 2, fontFamily: 'monospace', textAlign: 'center', whiteSpace: 'pre-wrap' }}>
+                  {formatarCifra(musicaAtual.notas_adicionais, theme, fontSize)}
+              </Box>
+          </Container>
+
+          {countdown !== null && countdown > 0 && (
+              <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 20 }}>
+                  <Typography sx={{ fontSize: {xs: '15rem', sm: '25rem'}, fontWeight: 'bold', color: 'white', animation: 'countdown-zoom 1s infinite' }}>
+                      {countdown}
+                  </Typography>
+                  <style>
+                      {`
+                      @keyframes countdown-zoom {
+                          0% { transform: scale(1); opacity: 1; }
+                          50% { transform: scale(1.1); opacity: 0.7; }
+                          100% { transform: scale(1); opacity: 1; }
+                      }
+                      `}
+                  </style>
+              </Box>
+          )}
+      </Box>
+
       <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowBackIos /></IconButton>
       <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowForwardIos /></IconButton>
-      
-      <Paper sx={{ 
+
+      <Paper sx={{
             position: 'fixed',
             bottom: 0,
             left: 0,
             right: 0,
             display: 'flex',
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            p: 1, 
+            justifyContent: 'center',
+            alignItems: 'center',
+            p: 1,
             bgcolor: 'background.paper',
             borderTop: '1px solid',
             borderColor: 'divider',
@@ -281,7 +283,7 @@ function ModoPalco() {
                 <IconButton onClick={() => setFontSize(s => Math.max(1, s - 0.1))}><ZoomOutIcon /></IconButton>
                 <IconButton onClick={() => setFontSize(s => Math.min(4, s + 0.1))}><ZoomInIcon /></IconButton>
             </Box>
-            
+
             <Typography sx={{ flexGrow: 1, textAlign: 'right', display: {xs: 'none', sm: 'block'} }}>Velocidade:</Typography>
             <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
             <IconButton onClick={handleToggleScroll} color="secondary" size="large">
