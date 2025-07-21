@@ -14,8 +14,9 @@ import {
     WorkspacePremium as WorkspacePremiumIcon 
 } from "@mui/icons-material";
 
+// Componente interno para os cartões para manter o código limpo
 const FormCard = ({ title, children }) => (
-    <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2, width:'100%' }}>
+    <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Typography variant="h6" component="h2" gutterBottom>{title}</Typography>
         {children}
     </Paper>
@@ -26,6 +27,7 @@ function Configuracoes() {
   const { mostrarNotificacao } = useNotificacao();
   const navigate = useNavigate();
 
+  // Estados dos formulários
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senhaAtual, setSenhaAtual] = useState("");
@@ -34,6 +36,7 @@ function Configuracoes() {
   const [novaFoto, setNovaFoto] = useState(null);
   const [previewFoto, setPreviewFoto] = useState(null);
   
+  // Estados de carregamento
   const [carregando, setCarregando] = useState({ nome: false, email: false, senha: false, foto: false, portal: false });
   const [dialogoSenhaAberto, setDialogoSenhaAberto] = useState(false);
   const fileInputRef = useRef();
@@ -161,10 +164,8 @@ function Configuracoes() {
         <Typography color="text.secondary">Gerencie as suas informações de acesso e assinatura.</Typography>
       </Box>
 
-      {/* --- ESTRUTURA DE GRID ATUALIZADA PARA MAIOR ROBUSTEZ --- */}
-      
-      {/* GRID CONTAINER APENAS PARA A ASSINATURA */}
-      <Grid container spacing={4} sx={{ mb: 4 }}>
+      <Grid container spacing={4}>
+        {/* ASSINATURA */}
         <Grid item xs={12}>
             <Paper sx={{ p: { xs: 2, md: 3 }}}>
                 <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
@@ -180,10 +181,8 @@ function Configuracoes() {
                 </Box>
             </Paper>
         </Grid>
-      </Grid>
-      
-      {/* SEGUNDO GRID CONTAINER PARA OS OUTROS CARDS */}
-      <Grid container spacing={4}>
+        
+        {/* FOTO DE PERFIL */}
         <Grid item xs={12} sm={6} lg={3}>
             <FormCard title="Foto de Perfil">
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
@@ -197,6 +196,8 @@ function Configuracoes() {
                 </Box>
             </FormCard>
         </Grid>
+
+        {/* ALTERAR NOME */}
         <Grid item xs={12} sm={6} lg={3}>
             <FormCard title="Alterar Nome">
                 <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
@@ -207,6 +208,8 @@ function Configuracoes() {
                 </Box>
             </FormCard>
         </Grid>
+
+        {/* ALTERAR E-MAIL */}
         <Grid item xs={12} sm={6} lg={3}>
             <FormCard title="Alterar E-mail">
                 <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
@@ -217,6 +220,8 @@ function Configuracoes() {
                 </Box>
             </FormCard>
         </Grid>
+
+        {/* ALTERAR SENHA */}
         <Grid item xs={12} sm={6} lg={3}>
             <FormCard title="Alterar Senha">
                 <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
