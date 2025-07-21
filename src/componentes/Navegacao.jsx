@@ -65,23 +65,87 @@ function Navegacao() {
 
   const handleMenuNotificacoesOpen = (event) => setAnchorElNotificacoes(event.currentTarget);
   const handleMenuNotificacoesClose = () => setAnchorElNotificacoes(null);
-  const handleMarcarComoLida = async (notificacaoId) => { /* ... (sem alterações) ... */ };
-  const handleMarcarTodasComoLidas = async () => { /* ... (sem alterações) ... */ };
-  const handleApagar = async (e, notificacaoId) => { /* ... (sem alterações) ... */ };
-  const abrirDialogoLimpar = () => { /* ... (sem alterações) ... */ };
+
+  const handleMarcarComoLida = async (notificacaoId) => {
+    const notificacao = notificacoes.find((n) => n.id === notificacaoId);
+    if (notificacao && !notificacao.lida) {
+      try {
+        await apiClient.patch(`/api/notificacoes/${notificacaoId}/lida`);
+        setNotificacoes((atuais) => atuais.map((n) => n.id === notificacaoId ? { ...n, lida: true } : n));
+      } catch (error) {
+        console.error("Erro ao marcar notificação como lida", error);
+      }
+    }
+  };
+
+  const handleMarcarTodasComoLidas = async () => {
+    try {
+      await apiClient.patch("/api/notificacoes/marcar-todas-lidas");
+      setNotificacoes((atuais) => atuais.map((n) => ({ ...n, lida: true })));
+      handleMenuNotificacoesClose();
+    } catch (error) {
+      console.error("Erro ao marcar todas as notificações como lidas", error);
+    }
+  };
+
+  const handleApagar = async (e, notificacaoId) => {
+    e.stopPropagation();
+    try {
+      await apiClient.delete(`/api/notificacoes/${notificacaoId}`);
+      setNotificacoes(notificacoes.filter((n) => n.id !== notificacaoId));
+    } catch (error) {
+      console.error("Erro ao apagar notificação", error);
+    }
+  };
+
+  const abrirDialogoLimpar = () => {
+    handleMenuNotificacoesClose();
+    setDialogoLimparAberto(true);
+  };
+
   const fecharDialogoLimpar = () => setDialogoLimparAberto(false);
-  const handleConfirmarLimparTodas = async () => { /* ... (sem alterações) ... */ };
+
+  const handleConfirmarLimparTodas = async () => {
+    try {
+      await apiClient.delete("/api/notificacoes");
+      setNotificacoes([]);
+    } catch (error) {
+      console.error("Erro ao limpar notificações", error);
+    } finally {
+      fecharDialogoLimpar();
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
-  const getConquistaIcon = (tipoCondicao) => { /* ... (sem alterações) ... */ };
-  const navLinks = [ /* ... (sem alterações) ... */ ];
+
+  const getConquistaIcon = (tipoCondicao) => {
+    if (!tipoCondicao) return <NotificationsIcon fontSize="small" />;
+    const Icone = Object.keys(iconMapNotificacao).find(key => tipoCondicao.includes(key))
+        ? iconMapNotificacao[Object.keys(iconMapNotificacao).find(key => tipoCondicao.includes(key))]
+        : MilitaryTechIcon;
+    return <Icone fontSize="small" />;
+  };
+
+  const navLinks = [
+    { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
+    { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
+    { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
+    { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
+    { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
+    { to: "/mural", text: "Mural", icon: <MuralIcon /> },
+    { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
+    { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
+    { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
+  ];
+
   let fotoUrlCompleta = null;
   if (usuario?.foto_url) {
-      fotoUrlCompleta = usuario.foto_url.startsWith('http') 
-          ? usuario.foto_url 
-          : `${apiClient.defaults.baseURL}${usuario.foto_url}`;
+    fotoUrlCompleta = usuario.foto_url.startsWith('http') 
+        ? usuario.foto_url 
+        : `${apiClient.defaults.baseURL}${usuario.foto_url}`;
   }
 
   const drawerContent = (
@@ -121,7 +185,6 @@ function Navegacao() {
       </List>
       
       <Divider />
-      {/* --- ALTERAÇÃO AQUI: Esconde os links no Drawer em ecrãs pequenos --- */}
       <Box sx={{ display: { xs: 'none', md: 'block' } }}>
         <List sx={{ p: 1, flexShrink: 0 }}>
           <ListItem disablePadding>
@@ -150,7 +213,6 @@ function Navegacao() {
           </IconButton>
            <Box sx={{ flexGrow: 1 }} />
           
-          {/* --- ALTERAÇÃO AQUI: Adiciona os novos ícones apenas para mobile --- */}
           <Tooltip title="Configurações">
             <IconButton color="inherit" onClick={() => navigate('/configuracoes')} sx={{ display: { xs: 'inline-flex', md: 'none' } }}>
               <SettingsIcon />
@@ -170,13 +232,86 @@ function Navegacao() {
         </Toolbar>
       </AppBar>
       <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
-        {/* ... (componentes Drawer sem alterações) ... */}
+        <Drawer variant="temporary" open={mobileOpen} onClose={handleDrawerToggle} ModalProps={{ keepMounted: true }} sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth } }}>
+          {drawerContent}
+        </Drawer>
+        <Drawer variant="permanent" sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none' } }} open>
+          {drawerContent}
+        </Drawer>
       </Box>
-      <Menu anchorEl={anchorElNotificacoes} open={openNotificacoes} onClose={handleMenuNotificacoesClose} PaperProps={{ /* ... */ }}>
-        {/* ... (conteúdo do Menu de Notificações sem alterações) ... */}
+      <Menu
+        anchorEl={anchorElNotificacoes}
+        open={openNotificacoes}
+        onClose={handleMenuNotificacoesClose}
+        PaperProps={{
+          sx: {
+            width: { xs: "calc(100vw - 32px)", sm: "400px" },
+            mt: 1,
+            bgcolor: "background.paper",
+            boxShadow: theme.shadows[6],
+            display: 'flex',
+            flexDirection: 'column'
+          }
+        }}
+      >
+        <Box sx={{ px: 2, py: 1.5, flexShrink: 0 }}>
+          <Typography variant="h6" fontWeight="bold" sx={{ color: "text.primary" }}>Notificações</Typography>
+        </Box>
+        <Divider sx={{ borderColor: "divider" }} />
+
+        <Box sx={{ overflowY: 'auto', maxHeight: 320, flexGrow: 1 }}>
+          {notificacoes.length > 0 ? (
+            notificacoes.map((notificacao) => (
+              <MenuItem key={notificacao.id} onClick={() => handleMarcarComoLida(notificacao.id)} sx={{ backgroundColor: notificacao.lida ? "transparent" : "action.hover", whiteSpace: "normal", py: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                <ListItemIcon sx={{ minWidth: "36px", mr: 1, alignSelf: "flex-start", mt: "4px", color: "text.secondary" }}>{getConquistaIcon(notificacao.conquista?.tipo_condicao)}</ListItemIcon>
+                <ListItemText primary={notificacao.mensagem} primaryTypographyProps={{ sx: { fontWeight: notificacao.lida ? "normal" : "bold", color: "text.primary" } }} />
+                <Tooltip title="Remover notificação">
+                  <IconButton size="small" onClick={(e) => handleApagar(e, notificacao.id)} sx={{ ml: 1, alignSelf: "center", color: "action.active" }}>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </MenuItem>
+            ))
+          ) : (
+            <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
+              <NotificationsIcon sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="body2">Você não tem nenhuma notificação nova.</Typography>
+            </Box>
+          )}
+        </Box>
+
+        {notificacoes.length > 0 && (
+            <>
+                <Divider sx={{ borderColor: "divider" }} />
+                <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-around', flexShrink: 0 }}>
+                    <Tooltip title="Marcar todas como lidas">
+                        <span>
+                            <IconButton onClick={handleMarcarTodasComoLidas} disabled={naoLidasCount === 0}>
+                                <DoneAllIcon />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                    <Tooltip title="Limpar todas as notificações">
+                        <IconButton onClick={abrirDialogoLimpar} color="error">
+                            <DeleteSweepIcon />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+            </>
+        )}
       </Menu>
-      <Dialog open={dialogoLimparAberto} onClose={fecharDialogoLimpar} PaperProps={{ /* ... */ }}>
-        {/* ... (conteúdo do Dialog de Limpar sem alterações) ... */}
+
+      <Dialog open={dialogoLimparAberto} onClose={fecharDialogoLimpar} PaperProps={{ sx: { bgcolor: "background.paper", boxShadow: theme.shadows[6] } }}>
+        <DialogTitle sx={{ color: "text.primary" }}>Limpar Todas as Notificações?</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: "text.secondary" }}>
+            Esta ação é irreversível. Você tem certeza que deseja apagar todas as suas notificações?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={fecharDialogoLimpar} sx={{ color: "text.secondary" }}>Cancelar</Button>
+          <Button onClick={handleConfirmarLimparTodas} color="error" autoFocus>Confirmar e Apagar</Button>
+        </DialogActions>
       </Dialog>
     </>
   );
