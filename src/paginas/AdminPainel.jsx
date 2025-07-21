@@ -1,13 +1,16 @@
 // src/paginas/AdminPainel.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Grid, Paper, Button } from '@mui/material';
+import { Box, Typography, Paper, Button } from '@mui/material';
 import { People as PeopleIcon, LibraryMusic as LibraryMusicIcon, Announcement as AnnouncementIcon, History as HistoryIcon } from '@mui/icons-material';
 
+// --- COMPONENTE AdminCard ATUALIZADO ---
+// Agora ele não é mais um Grid item e controla o seu próprio tamanho no Flexbox
 const AdminCard = ({ title, description, icon, linkTo }) => {
   const navigate = useNavigate();
   return (
-    <Grid item xs={12} sm={6} md={4}>
+    // O Box exterior define o comportamento do cartão dentro do contentor Flexbox
+    <Box sx={{ flex: '1 1 300px', minWidth: '280px' }}>
       <Paper 
         sx={{ 
           p: 3, 
@@ -32,7 +35,7 @@ const AdminCard = ({ title, description, icon, linkTo }) => {
           Acessar
         </Button>
       </Paper>
-    </Grid>
+    </Box>
   );
 };
 
@@ -48,7 +51,8 @@ function AdminPainel() {
         </Typography>
       </Box>
 
-      <Grid container spacing={3}>
+      {/* --- LAYOUT ATUALIZADO PARA USAR FLEXBOX --- */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
         <AdminCard
           title="Gerenciar Usuários"
           description="Visualize, edite e remova usuários da plataforma."
@@ -73,7 +77,7 @@ function AdminPainel() {
           icon={<HistoryIcon color="primary" sx={{ fontSize: 40 }} />}
           linkTo="/admin/logs"
         />
-      </Grid>
+      </Box>
     </Box>
   );
 }

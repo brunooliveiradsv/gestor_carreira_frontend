@@ -180,7 +180,7 @@ function Navegacao() {
           <ListItem disablePadding sx={{ my: 0.5 }}>
             <ListItemButton component={RouterLink} to="/admin" sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
               <ListItemIcon><AdminPanelSettingsIcon /></ListItemIcon>
-              <ListItemText primary="Painel Admin" />
+              <ListItemText primary="Painel do Administrador" />
             </ListItemButton>
           </ListItem>
         )}
