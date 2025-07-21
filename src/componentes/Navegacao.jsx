@@ -143,8 +143,8 @@ function Navegacao() {
 
   let fotoUrlCompleta = null;
   if (usuario?.foto_url) {
-    fotoUrlCompleta = usuario.foto_url.startsWith('http') 
-        ? usuario.foto_url 
+    fotoUrlCompleta = usuario.foto_url.startsWith('http')
+        ? usuario.foto_url
         : `${apiClient.defaults.baseURL}${usuario.foto_url}`;
   }
 
@@ -168,7 +168,8 @@ function Navegacao() {
       <List sx={{ p: 1, overflowY: 'auto', flexGrow: 1 }}>
         {navLinks.map((link) => (
           <ListItem key={link.text} disablePadding sx={{ my: 0.5 }}>
-            <ListItemButton component={RouterLink} to={link.to} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
+            {/* Adicionando onClick={handleDrawerToggle} aqui */}
+            <ListItemButton component={RouterLink} to={link.to} onClick={handleDrawerToggle} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
               <ListItemIcon>{link.icon}</ListItemIcon>
               <ListItemText primary={link.text} />
             </ListItemButton>
@@ -176,19 +177,21 @@ function Navegacao() {
         ))}
         {usuario?.role === "admin" && (
           <ListItem disablePadding sx={{ my: 0.5 }}>
-            <ListItemButton component={RouterLink} to="/admin" sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
+            {/* Adicionando onClick={handleDrawerToggle} aqui */}
+            <ListItemButton component={RouterLink} to="/admin" onClick={handleDrawerToggle} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
               <ListItemIcon><AdminPanelSettingsIcon /></ListItemIcon>
               <ListItemText primary="Painel Admin" />
             </ListItemButton>
           </ListItem>
         )}
       </List>
-      
+
       <Divider />
       <Box sx={{ display: { xs: 'none', md: 'block' } }}>
         <List sx={{ p: 1, flexShrink: 0 }}>
           <ListItem disablePadding>
-            <ListItemButton component={RouterLink} to="/configuracoes" sx={{ borderRadius: theme.shape.borderRadius }}>
+            {/* Adicionando onClick={handleDrawerToggle} aqui para garantir que mesmo em telas maiores o drawer feche se for o caso */}
+            <ListItemButton component={RouterLink} to="/configuracoes" onClick={handleDrawerToggle} sx={{ borderRadius: theme.shape.borderRadius }}>
               <ListItemIcon><SettingsIcon /></ListItemIcon>
               <ListItemText primary="Configurações" />
             </ListItemButton>
@@ -212,7 +215,7 @@ function Navegacao() {
             <MenuIcon />
           </IconButton>
            <Box sx={{ flexGrow: 1 }} />
-          
+
           <Tooltip title="Configurações">
             <IconButton color="inherit" onClick={() => navigate('/configuracoes')} sx={{ display: { xs: 'inline-flex', md: 'none' } }}>
               <SettingsIcon />
