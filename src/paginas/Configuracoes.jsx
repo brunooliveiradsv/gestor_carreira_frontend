@@ -9,6 +9,8 @@ import {
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, 
   Grid, Avatar, Badge, IconButton, Chip
 } from "@mui/material";
+// --- A CORREÇÃO ESTÁ AQUI ---
+// Adicionámos o WorkspacePremiumIcon à lista de importações
 import { 
     PhotoCamera, 
     WorkspacePremium as WorkspacePremiumIcon 
@@ -88,8 +90,7 @@ function Configuracoes() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const MAX_FILE_SIZE = 5 * 1024 * 1024;
-      if (file.size > MAX_FILE_SIZE) {
+      if (file.size > 5 * 1024 * 1024) {
         mostrarNotificacao('A imagem é muito grande. O limite máximo é de 5MB.', 'error');
         return;
       }
@@ -161,9 +162,7 @@ function Configuracoes() {
         <Typography color="text.secondary">Gerencie as suas informações de acesso e assinatura.</Typography>
       </Box>
 
-      {/* --- ESTRUTURA DE GRID ATUALIZADA --- */}
-      <Grid container spacing={4}>
-        {/* ASSINATURA */}
+      <Grid container spacing={4} sx={{ mb: 4 }}>
         <Grid item xs={12}>
             <Paper sx={{ p: { xs: 2, md: 3 }}}>
                 <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
@@ -179,67 +178,65 @@ function Configuracoes() {
                 </Box>
             </Paper>
         </Grid>
-
-        {/* --- NOVA LINHA PARA FOTO E NOME --- */}
-        <Grid item container xs={12} spacing={4}>
-            <Grid item xs={12} md={6}>
-                <FormCard title="Foto de Perfil">
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
-                        <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<IconButton color="primary" onClick={() => fileInputRef.current.click()}><PhotoCamera /></IconButton>}>
-                            <Avatar src={previewFoto} sx={{ width: 120, height: 120, mb: 2, fontSize: '3rem' }}>{usuario?.nome?.charAt(0).toUpperCase()}</Avatar>
-                        </Badge>
-                        <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleFileChange} />
-                        <Button variant="contained" sx={{mt: 2}} disabled={!novaFoto || carregando.foto} onClick={handleSalvarFoto}>
-                            {carregando.foto ? <CircularProgress size={24} /> : 'Salvar Foto'}
-                        </Button>
-                    </Box>
-                </FormCard>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-                <FormCard title="Alterar Nome">
-                    <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
-                        <TextField id="nome" name="nome" label="Nome Artístico" value={nome} onChange={(e) => setNome(e.target.value)} fullWidth />
-                        <Button type="submit" variant="contained" disabled={carregando.nome} sx={{ alignSelf: "flex-end", mt: 2 }}>
-                            {carregando.nome ? <CircularProgress size={24} /> : "Salvar Nome"}
-                        </Button>
-                    </Box>
-                </FormCard>
-            </Grid>
+      </Grid>
+      
+      <Grid container spacing={4}>
+        <Grid item xs={12} sm={6} lg={3}>
+            <FormCard title="Foto de Perfil">
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
+                    <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<IconButton color="primary" onClick={() => fileInputRef.current.click()}><PhotoCamera /></IconButton>}>
+                        <Avatar src={previewFoto} sx={{ width: 120, height: 120, mb: 2, fontSize: '3rem' }}>{usuario?.nome?.charAt(0).toUpperCase()}</Avatar>
+                    </Badge>
+                    <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleFileChange} />
+                    <Button variant="contained" sx={{mt: 2}} disabled={!novaFoto || carregando.foto} onClick={handleSalvarFoto}>
+                        {carregando.foto ? <CircularProgress size={24} /> : 'Salvar Foto'}
+                    </Button>
+                </Box>
+            </FormCard>
         </Grid>
-        
-        {/* --- NOVA LINHA PARA E-MAIL E SENHA --- */}
-        <Grid item container xs={12} spacing={4}>
-            <Grid item xs={12} md={6}>
-                <FormCard title="Alterar E-mail">
-                    <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
-                        <TextField id="email" name="email" label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
-                        <Button type="submit" variant="contained" disabled={carregando.email} sx={{ alignSelf: "flex-end", mt: 2 }}>
-                            {carregando.email ? <CircularProgress size={24} /> : "Salvar E-mail"}
-                        </Button>
+        <Grid item xs={12} sm={6} lg={3}>
+            <FormCard title="Alterar Nome">
+                <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
+                    <TextField id="nome" name="nome" label="Nome Artístico" value={nome} onChange={(e) => setNome(e.target.value)} fullWidth />
+                    <Button type="submit" variant="contained" disabled={carregando.nome} sx={{ alignSelf: "flex-end", mt: 2 }}>
+                        {carregando.nome ? <CircularProgress size={24} /> : "Salvar Nome"}
+                    </Button>
+                </Box>
+            </FormCard>
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3}>
+            <FormCard title="Alterar E-mail">
+                <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
+                    <TextField id="email" name="email" label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
+                    <Button type="submit" variant="contained" disabled={carregando.email} sx={{ alignSelf: "flex-end", mt: 2 }}>
+                        {carregando.email ? <CircularProgress size={24} /> : "Salvar E-mail"}
+                    </Button>
+                </Box>
+            </FormCard>
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3}>
+            <FormCard title="Alterar Senha">
+                <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <TextField id="senha_atual" name="senha_atual" label="Senha Atual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} fullWidth />
+                        <TextField id="nova_senha" name="nova_senha" label="Nova Senha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} fullWidth />
+                        <TextField id="confirmar_nova_senha" name="confirmar_nova_senha" label="Confirmar Nova Senha" type="password" value={confirmarNovaSenha} onChange={(e) => setConfirmarNovaSenha(e.target.value)} fullWidth />
                     </Box>
-                </FormCard>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-                <FormCard title="Alterar Senha">
-                    <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                            <TextField id="senha_atual" name="senha_atual" label="Senha Atual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} fullWidth />
-                            <TextField id="nova_senha" name="nova_senha" label="Nova Senha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} fullWidth />
-                            <TextField id="confirmar_nova_senha" name="confirmar_nova_senha" label="Confirmar Nova Senha" type="password" value={confirmarNovaSenha} onChange={(e) => setConfirmarNovaSenha(e.target.value)} fullWidth />
-                        </Box>
-                        <Button type="submit" variant="contained" disabled={carregando.senha} sx={{ alignSelf: "flex-end", mt: 2 }}>
-                            {carregando.senha ? <CircularProgress size={24} /> : "Alterar Senha"}
-                        </Button>
-                    </Box>
-                </FormCard>
-            </Grid>
+                    <Button type="submit" variant="contained" disabled={carregando.senha} sx={{ alignSelf: "flex-end", mt: 2 }}>
+                        {carregando.senha ? <CircularProgress size={24} /> : "Alterar Senha"}
+                    </Button>
+                </Box>
+            </FormCard>
         </Grid>
       </Grid>
       
       <Dialog open={dialogoSenhaAberto} onClose={fecharDialogoSenha}>
-        {/* ... (conteúdo do Dialog permanece igual) ... */}
+        <DialogTitle>Confirmar Alteração de Senha</DialogTitle>
+        <DialogContent><DialogContentText>Após a alteração, você será desconectado e precisará fazer login com a nova senha.</DialogContentText></DialogContent>
+        <DialogActions>
+          <Button onClick={fecharDialogoSenha}>Cancelar</Button>
+          <Button onClick={handleSalvarSenha} color="primary" autoFocus disabled={carregando.senha}>{carregando.senha ? <CircularProgress size={24} /> : "Confirmar"}</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

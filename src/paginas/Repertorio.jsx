@@ -4,7 +4,7 @@ import apiClient from "../api.js";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
   Box, Button, Typography, CircularProgress, Paper, Grid, TextField, 
-  InputAdornment, MenuItem, Chip, IconButton, Tooltip, Dialog, Card, 
+  InputAdornment, Chip, IconButton, Tooltip, Dialog, Card, 
   CardContent, CardActions, List, ListItem, ListItemText
 } from "@mui/material";
 import {
@@ -81,9 +81,8 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
 
 function Repertorio() {
   const [musicas, setMusicas] = useState([]);
-  const [tagsDisponiveis, setTagsDisponiveis] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [filtros, setFiltros] = useState({ termoBusca: "", tags: [] });
+  const [filtros, setFiltros] = useState({ termoBusca: "", artista: "", tom: "", bpm: "" });
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [musicaEmEdicaoId, setMusicaEmEdicaoId] = useState(null);
   const [dialogoSugestaoAberto, setDialogoSugestaoAberto] = useState(false);
@@ -91,12 +90,13 @@ function Repertorio() {
   const { mostrarNotificacao } = useNotificacao();
 
   const buscarMusicas = useCallback(async () => {
-    setCarregando(true);
     try {
-      const params = new URLSearchParams();
-      if (filtros.termoBusca) params.append("termoBusca", filtros.termoBusca);
-      if (filtros.tags.length > 0) params.append("tags", filtros.tags.join(","));
-      const resposta = await apiClient.get("/api/musicas", { params }); // Busca no repertório do usuário
+      const filtrosAtivos = Object.fromEntries(
+        Object.entries(filtros).filter(([_, v]) => v != null && v !== '')
+      );
+      const params = new URLSearchParams(filtrosAtivos);
+      
+      const resposta = await apiClient.get(`/api/musicas?${params.toString()}`);
       setMusicas(resposta.data);
     } catch (erro) {
       mostrarNotificacao("Não foi possível carregar o repertório.", "error");
@@ -106,14 +106,18 @@ function Repertorio() {
   }, [mostrarNotificacao, filtros]);
 
   useEffect(() => {
-    apiClient.get("/api/tags")
-      .then((resposta) => setTagsDisponiveis(resposta.data))
-      .catch(() => mostrarNotificacao("Não foi possível carregar as tags.", "error"));
-  }, [mostrarNotificacao]);
+    setCarregando(true);
+    const timer = setTimeout(() => {
+      buscarMusicas();
+    }, 500);
 
-  useEffect(() => {
-    buscarMusicas();
-  }, [buscarMusicas]);
+    return () => clearTimeout(timer);
+  }, [filtros, buscarMusicas]);
+
+  const handleFiltroChange = (e) => {
+    const { name, value } = e.target;
+    setFiltros(f => ({ ...f, [name]: value }));
+  };
 
   const handleAbrirFormulario = (id = null) => {
     setMusicaEmEdicaoId(id);
@@ -161,33 +165,27 @@ function Repertorio() {
 
         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
             <Grid container spacing={2}>
-            <Grid item xs={12} md={5}> 
-                <TextField fullWidth label="Buscar no seu repertório..."
-                value={filtros.termoBusca}
-                onChange={(e) => setFiltros(f => ({ ...f, termoBusca: e.target.value }))}
-                InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
-                />
-            </Grid>
-            <Grid item xs={12} md={7}>
-                <TextField fullWidth select label="Filtrar por Tags"
-                value={filtros.tags}
-                onChange={(e) => setFiltros(f => ({ ...f, tags: e.target.value }))}
-                InputLabelProps={{ shrink: true }}
-                SelectProps={{
-                    multiple: true,
-                    value: filtros.tags,
-                    renderValue: (selectedIds) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selectedIds.map((id) => {
-                            const tag = tagsDisponiveis.find((t) => t.id === id);
-                            return <Chip key={id} label={tag ? tag.nome : id} size="small" />;
-                        })}
-                        </Box>
-                    ),
-                }}>
-                {tagsDisponiveis.map((tag) => ( <MenuItem key={tag.id} value={tag.id}>{tag.nome}</MenuItem> ))}
-                </TextField>
-            </Grid>
+              <Grid item xs={12} md={6} lg={3}>
+                  <TextField fullWidth name="termoBusca" label="Buscar por Nome da Música..."
+                    value={filtros.termoBusca} onChange={handleFiltroChange}
+                    InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
+                  />
+              </Grid>
+              <Grid item xs={12} sm={4} md={6} lg={3}>
+                  <TextField fullWidth name="artista" label="Filtrar por Artista"
+                    value={filtros.artista} onChange={handleFiltroChange}
+                  />
+              </Grid>
+              <Grid item xs={12} sm={4} md={6} lg={3}>
+                  <TextField fullWidth name="tom" label="Filtrar por Tom"
+                    value={filtros.tom} onChange={handleFiltroChange}
+                  />
+              </Grid>
+              <Grid item xs={12} sm={4} md={6} lg={3}>
+                  <TextField fullWidth name="bpm" label="Filtrar por BPM" type="number"
+                    value={filtros.bpm} onChange={handleFiltroChange}
+                  />
+              </Grid>
             </Grid>
         </Paper>
 
@@ -201,15 +199,11 @@ function Repertorio() {
                     <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
                         <CardContent sx={{flexGrow: 1}}>
                             <Typography variant="h6" fontWeight="medium">{musica.nome}</Typography>
-                                      <Typography component="div" color="text.secondary" variant="body2">
-                      {musica.artista}
-                      {/* Mostra a etiqueta "Importada" */}
-                      {musica.master_id && <Chip label="Importada" size="small" variant="outlined" color="primary" sx={{ ml: 1 }} />}
-                      
-                      {/* --- NOVA ETIQUETA --- */}
-                      {/* Mostra a etiqueta "Modificada" se a flag for verdadeira */}
-                      {musica.is_modificada && <Chip label="Modificada" size="small" variant="outlined" color="secondary" sx={{ ml: 1 }} />}
-                    </Typography>
+                            <Typography component="div" color="text.secondary" variant="body2">
+                              {musica.artista}
+                              {musica.master_id && <Chip label="Importada" size="small" variant="outlined" color="primary" sx={{ ml: 1 }} />}
+                              {musica.is_modificada && <Chip label="Modificada" size="small" variant="outlined" color="secondary" sx={{ ml: 1 }} />}
+                            </Typography>
                             <Typography color="text.secondary" variant="body2" sx={{mt: 0.5}}>Tom: {musica.tom || "N/A"}</Typography>
                             <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                 {musica.tags?.map((tag) => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
