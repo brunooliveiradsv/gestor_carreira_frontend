@@ -3,10 +3,13 @@ import React, { useContext, useState } from 'react';
 import { AuthContext } from '../contextos/AuthContext';
 import { useNotificacao } from '../contextos/NotificationContext';
 import apiClient from '../api';
-import { Box, Typography, Paper, Grid, Button, CircularProgress, Chip, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { 
+    Box, Typography, Paper, Grid, Button, CircularProgress, Chip, List, ListItem, 
+    ListItemIcon, ListItemText, ToggleButton, ToggleButtonGroup 
+} from '@mui/material';
 import { CheckCircle as CheckCircleIcon, WorkspacePremium as WorkspacePremiumIcon } from '@mui/icons-material';
 
-const PlanoCard = ({ title, price, description, features, planType, currentPlan, statusAssinatura, onStartTrial, onSwitchPlan, loading }) => (
+const PlanoCard = ({ title, price, description, features, planType, currentPlan, statusAssinatura, onSubscribe, loading, billingPeriod }) => (
   <Paper
     variant="outlined"
     sx={{
@@ -21,7 +24,10 @@ const PlanoCard = ({ title, price, description, features, planType, currentPlan,
     <Box sx={{ flexGrow: 1 }}>
       <Typography variant="h5" component="h2" fontWeight="bold">{title}</Typography>
       <Typography variant="h4" component="p" fontWeight="bold" sx={{ my: 1 }}>
-        {price} <Typography variant="body1" component="span" color="text.secondary">/mês</Typography>
+        {price} 
+        <Typography variant="body1" component="span" color="text.secondary">
+            /{billingPeriod === 'mensal' ? 'mês' : 'ano'}
+        </Typography>
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ minHeight: 40 }}>{description}</Typography>
       <List sx={{ my: 2 }}>
@@ -33,102 +39,109 @@ const PlanoCard = ({ title, price, description, features, planType, currentPlan,
         ))}
       </List>
     </Box>
-    {/* Lógica de Botões Atualizada */}
     <Box sx={{ mt: 2 }}>
       {currentPlan === planType && statusAssinatura !== 'inativa' ? (
         <Chip label="Seu Plano Atual" color="primary" sx={{ width: '100%' }} />
-      ) : statusAssinatura === 'ativa' ? (
-        <Button variant="contained" fullWidth onClick={() => onSwitchPlan(planType)} disabled={loading}>
-          {loading ? <CircularProgress size={24} color="inherit" /> : `Mudar para ${title}`}
+      ) : (
+        <Button variant="contained" fullWidth onClick={() => onSubscribe(planType)} disabled={loading || statusAssinatura === 'ativa'}>
+          {loading ? <CircularProgress size={24} color="inherit" /> : `Assinar ${title}`}
         </Button>
-      ) : planType === 'premium' && statusAssinatura === 'inativa' ? (
-        <Button variant="contained" fullWidth onClick={onStartTrial} disabled={loading}>
-          {loading ? <CircularProgress size={24} color="inherit" /> : 'Iniciar 7 dias grátis'}
-        </Button>
-      ) : null}
+      )}
     </Box>
   </Paper>
 );
 
 
 function Assinatura() {
-  const { usuario, setUsuario } = useContext(AuthContext);
+  const { usuario } = useContext(AuthContext);
   const { mostrarNotificacao } = useNotificacao();
   const [carregando, setCarregando] = useState(false);
+  const [periodo, setPeriodo] = useState('mensal'); // Estado para controlar a seleção Mensal/Anual
 
-  const handleIniciarTeste = async () => {
+  // Mapeamento completo dos preços
+  const planos = {
+    padrao: {
+      nome: 'Padrão',
+      precoMensal: 'R$ 9,90',
+      precoAnual: 'R$ 99,90',
+      priceIdMensal: 'price_1Rn7pw4CZGU00gKswDH0Hbxo', // <-- SUBSTITUA
+      priceIdAnual: 'price_1Rn8HE4CZGU00gKsTNWcCZ4d', // <-- SUBSTITUA
+      descricao: 'Todas as ferramentas essenciais para a sua gestão, com exibição de anúncios.',
+      features: ['Agenda Completa', 'Controlo Financeiro', 'Gestão de Repertório', 'Suporte por E-mail']
+    },
+    premium: {
+      nome: 'Premium',
+      precoMensal: 'R$ 14,90',
+      precoAnual: 'R$ 149,90',
+      priceIdMensal: 'price_1Rn7qv4CZGU00gKsQXm5OTkf', // <-- SUBSTITUA
+      priceIdAnual: 'price_1Rn8Hu4CZGU00gKsIi8RCuKe', // <-- SUBSTITUA
+      descricao: 'A experiência completa do VOXGest, sem interrupções e com recursos avançados.',
+      features: ['Todos os recursos do Padrão', 'Experiência sem Anúncios', 'Sugestão de Músicas (Em breve)', 'Suporte Prioritário']
+    }
+  };
+
+  const handlePeriodoChange = (event, novoPeriodo) => {
+    if (novoPeriodo !== null) {
+      setPeriodo(novoPeriodo);
+    }
+  };
+
+  const handleSubscribe = async (planoEscolhido) => {
     setCarregando(true);
     try {
-      const resposta = await apiClient.post('/api/assinatura/iniciar-teste');
-      setUsuario(resposta.data.usuario);
-      mostrarNotificacao(resposta.data.mensagem, 'success');
+      const priceId = periodo === 'mensal' 
+        ? planos[planoEscolhido].priceIdMensal 
+        : planos[planoEscolhido].priceIdAnual;
+
+      const resposta = await apiClient.post('/api/assinatura/criar-sessao-checkout', {
+        planoId: priceId,
+      });
+      window.location.href = resposta.data.url;
     } catch (error) {
-      mostrarNotificacao(error.response?.data?.mensagem || 'Falha ao iniciar o período de teste.', 'error');
-    } finally {
+      mostrarNotificacao(error.response?.data?.mensagem || 'Falha ao iniciar o processo de pagamento.', 'error');
       setCarregando(false);
     }
   };
 
-  // --- NOVA FUNÇÃO ADICIONADA ---
-  const handleTrocarPlano = async (novoPlano) => {
-    setCarregando(true);
-    try {
-        const resposta = await apiClient.put('/api/assinatura/trocar-plano', { novoPlano });
-        setUsuario(resposta.data.usuario); // Atualiza o usuário no contexto
-        mostrarNotificacao(resposta.data.mensagem, 'success');
-    } catch (error) {
-        mostrarNotificacao(error.response?.data?.mensagem || 'Não foi possível alterar o plano.', 'error');
-    } finally {
-        setCarregando(false);
-    }
-  };
-
-  const isTrialActive = usuario?.status_assinatura === 'teste';
-  const trialEndDate = isTrialActive ? new Date(usuario.teste_termina_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : null;
-
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" fontWeight="bold">Assinatura</Typography>
-        <Typography color="text.secondary">Escolha ou altere o plano que melhor se adapta à sua carreira.</Typography>
+        <Typography color="text.secondary">Escolha o plano que melhor se adapta à sua carreira.</Typography>
+        
+        <ToggleButtonGroup
+          color="primary"
+          value={periodo}
+          exclusive
+          onChange={handlePeriodoChange}
+          aria-label="Período de cobrança"
+          sx={{ mt: 3 }}
+        >
+          <ToggleButton value="mensal">Mensal</ToggleButton>
+          <ToggleButton value="anual">Anual (2 meses grátis)</ToggleButton>
+        </ToggleButtonGroup>
       </Box>
 
-      {isTrialActive && (
-        <Paper sx={{ p: 2, mb: 4, bgcolor: 'primary.dark', color: 'white' }}>
-            <Typography>
-                Você está a usufruir de um período de teste do plano Premium! Aproveite todos os recursos até **{trialEndDate}**.
-            </Typography>
-        </Paper>
-      )}
-
-      <Grid container spacing={4} alignItems="stretch">
-        <Grid item xs={12} md={6}>
-          <PlanoCard
-            title="Padrão"
-            price="R$ 19,90"
-            description="Todas as ferramentas essenciais para a sua gestão, com exibição de anúncios."
-            features={['Agenda Completa', 'Controlo Financeiro', 'Gestão de Repertório', 'Suporte por E-mail']}
-            planType="padrao"
-            currentPlan={usuario?.plano}
-            statusAssinatura={usuario?.status_assinatura}
-            onSwitchPlan={handleTrocarPlano}
-            loading={carregando}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <PlanoCard
-            title="Premium"
-            price="R$ 29,90"
-            description="A experiência completa do VOXGest, sem interrupções e com recursos avançados."
-            features={['Todos os recursos do Padrão', 'Experiência sem Anúncios', 'Sugestão de Músicas (Em breve)', 'Suporte Prioritário']}
-            planType="premium"
-            currentPlan={usuario?.plano}
-            statusAssinatura={usuario?.status_assinatura}
-            onStartTrial={handleIniciarTeste}
-            onSwitchPlan={handleTrocarPlano}
-            loading={carregando}
-          />
-        </Grid>
+      <Grid container spacing={4} alignItems="stretch" justifyContent="center">
+        {Object.keys(planos).map(key => {
+            const plano = planos[key];
+            return (
+                <Grid item xs={12} md={5} key={key}>
+                    <PlanoCard
+                        title={plano.nome}
+                        price={periodo === 'mensal' ? plano.precoMensal : plano.precoAnual}
+                        description={plano.descricao}
+                        features={plano.features}
+                        planType={key}
+                        currentPlan={usuario?.plano}
+                        statusAssinatura={usuario?.status_assinatura}
+                        onSubscribe={handleSubscribe}
+                        loading={carregando}
+                        billingPeriod={periodo}
+                    />
+                </Grid>
+            )
+        })}
       </Grid>
     </Box>
   );
