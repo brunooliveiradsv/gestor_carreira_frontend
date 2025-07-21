@@ -17,7 +17,8 @@ import {
   MonetizationOn as MonetizationOnIcon, LibraryMusic as LibraryMusicIcon, Piano as PianoIcon,
   Contacts as ContactsIcon, PlaylistAddCheck as PlaylistAddCheckIcon,
   EmojiEvents as EmojiEventsIcon,
-  Announcement as MuralIcon
+  Announcement as MuralIcon,
+  WorkspacePremium as WorkspacePremiumIcon
 } from "@mui/icons-material";
 
 const iconMapNotificacao = {
