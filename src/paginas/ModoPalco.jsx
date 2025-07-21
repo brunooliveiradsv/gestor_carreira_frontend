@@ -1,38 +1,29 @@
 // src/paginas/ModoPalco.jsx
-<<<<<<< HEAD
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import apiClient from '../api';
-import { Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme } from '@mui/material';
-import { ArrowBackIos, ArrowForwardIos, Close as CloseIcon } from '@mui/icons-material';
-=======
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useNotificacao } from '../contextos/NotificationContext';
-import {
-    Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container,
-    AppBar, Toolbar
+import { 
+    Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container, 
+    AppBar, Toolbar 
 } from '@mui/material';
-import {
+import { 
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
     PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
     Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon,
     ZoomIn as ZoomInIcon, ZoomOut as ZoomOutIcon
 } from '@mui/icons-material';
 
-// Função para analisar o texto e colorir as linhas de cifra
 const formatarCifra = (textoCifra, theme, fontSize) => {
     if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
-
+    
     const regexCifra = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?(\s+[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?)*\s*$/i;
 
     return textoCifra.split('\n').map((linha, index) => {
         const isCifra = regexCifra.test(linha.trim());
         return (
-            <Typography
-                key={index}
-                component="span"
+            <Typography 
+                key={index} component="span"
                 sx={{
                     display: 'block',
                     fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` },
@@ -46,26 +37,17 @@ const formatarCifra = (textoCifra, theme, fontSize) => {
         );
     });
 };
->>>>>>> 089ddf5052eabf77d9528c2d713eeb9d9047b0a9
 
 function ModoPalco() {
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
-<<<<<<< HEAD
-=======
   const { mostrarNotificacao } = useNotificacao();
->>>>>>> 089ddf5052eabf77d9528c2d713eeb9d9047b0a9
 
   const [setlist, setSetlist] = useState(null);
   const [indiceAtual, setIndiceAtual] = useState(0);
   const [carregando, setCarregando] = useState(true);
-
-<<<<<<< HEAD
-  // Busca os dados do setlist da API
-  useEffect(() => {
-    const buscarSetlist = async () => {
-=======
+  
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(90);
   const [fontSize, setFontSize] = useState(1.8);
@@ -97,23 +79,11 @@ function ModoPalco() {
   }, []);
 
   const buscarSetlist = useCallback(async () => {
->>>>>>> 089ddf5052eabf77d9528c2d713eeb9d9047b0a9
       try {
         const resposta = await apiClient.get(`/api/setlists/${id}`);
         setSetlist(resposta.data);
       } catch (error) {
         console.error("Erro ao carregar setlist para o Modo Palco", error);
-<<<<<<< HEAD
-        navigate('/setlists'); // Volta se não encontrar
-      } finally {
-        setCarregando(false);
-      }
-    };
-    buscarSetlist();
-  }, [id, navigate]);
-
-  // Funções para navegar entre as músicas
-=======
         navigate('/setlists');
       } finally {
         setCarregando(false);
@@ -124,7 +94,6 @@ function ModoPalco() {
     buscarSetlist();
   }, [buscarSetlist]);
 
->>>>>>> 089ddf5052eabf77d9528c2d713eeb9d9047b0a9
   const irParaProxima = useCallback(() => {
     if (!setlist) return;
     setIndiceAtual((prev) => (prev + 1) % setlist.musicas.length);
@@ -135,25 +104,6 @@ function ModoPalco() {
     setIndiceAtual((prev) => (prev - 1 + setlist.musicas.length) % setlist.musicas.length);
   }, [setlist]);
 
-<<<<<<< HEAD
-  // Efeito para controlar a navegação com as setas do teclado
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'ArrowRight') {
-        irParaProxima();
-      } else if (event.key === 'ArrowLeft') {
-        irParaAnterior();
-      } else if (event.key === 'Escape') {
-        navigate(`/setlists/editar/${id}`);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [irParaProxima, irParaAnterior, navigate, id]);
-  
-=======
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'ArrowRight') irParaProxima();
@@ -195,16 +145,11 @@ function ModoPalco() {
       } else {
         setScrollSpeed(90);
       }
-      // --- LÓGICA DE INÍCIO AUTOMÁTICO ---
+      if (letraRef.current) letraRef.current.scrollTop = 0;
+      setIsScrolling(false);
+      clearInterval(countdownIntervalRef.current);
+      setCountdown(null);
       iniciarContagemParaScroll();
-    }
-    if (letraRef.current) letraRef.current.scrollTop = 0;
-    
-    // Limpeza ao mudar de música
-    return () => {
-        setIsScrolling(false);
-        clearInterval(countdownIntervalRef.current);
-        clearTimeout(scrollAnimationRef.current);
     }
   }, [indiceAtual, setlist, mostrarNotificacao]);
 
@@ -230,7 +175,6 @@ function ModoPalco() {
     return () => clearTimeout(scrollAnimationRef.current);
   }, [isScrolling, scrollSpeed, mostrarNotificacao, irParaProxima]);
 
->>>>>>> 089ddf5052eabf77d9528c2d713eeb9d9047b0a9
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: 'background.default' }}><CircularProgress /></Box>;
   }
@@ -249,43 +193,6 @@ function ModoPalco() {
   return (
     <Box sx={{
       position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-<<<<<<< HEAD
-      bgcolor: 'background.default', color: 'text.primary',
-      display: 'flex', flexDirection: 'column', p: { xs: 2, sm: 4, md: 6 }
-    }}>
-      {/* Botões de Navegação e Fechar */}
-      <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(0,0,0,0.3)', '&:hover': { bgcolor: 'rgba(0,0,0,0.5)' } }}>
-        <ArrowBackIos />
-      </IconButton>
-      <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(0,0,0,0.3)', '&:hover': { bgcolor: 'rgba(0,0,0,0.5)' } }}>
-        <ArrowForwardIos />
-      </IconButton>
-      <IconButton onClick={() => navigate(`/setlists/editar/${id}`)} sx={{ position: 'fixed', right: 16, top: 16, zIndex: 10, bgcolor: 'rgba(0,0,0,0.3)', '&:hover': { bgcolor: 'rgba(0,0,0,0.5)' } }}>
-        <CloseIcon />
-      </IconButton>
-      
-      {/* Conteúdo da Música */}
-      <Box sx={{ textAlign: 'center', mb: 2 }}>
-        <Typography variant="h2" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', md: '4rem' } }}>{musicaAtual.nome}</Typography>
-        <Typography variant="h5" color="text.secondary" sx={{ fontSize: { xs: '1.2rem', md: '1.5rem' } }}>{musicaAtual.artista}</Typography>
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1 }}>
-            {musicaAtual.tom && <Chip label={`Tom: ${musicaAtual.tom}`} />}
-            {musicaAtual.bpm && <Chip label={`BPM: ${musicaAtual.bpm}`} />}
-        </Box>
-      </Box>
-      
-      {/* Cifra/Letra */}
-      <Paper variant="outlined" sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
-        <Typography sx={{ whiteSpace: 'pre-wrap', fontSize: { xs: '1rem', md: '1.2rem' }, lineHeight: 1.8, fontFamily: 'monospace' }}>
-          {musicaAtual.notas_adicionais || 'Nenhuma cifra ou letra adicionada.'}
-        </Typography>
-      </Paper>
-      
-      {/* Paginação */}
-      <Typography sx={{ textAlign: 'center', mt: 2 }}>
-        Música {indiceAtual + 1} de {setlist.musicas.length}
-      </Typography>
-=======
       bgcolor: '#000', color: '#FFF', display: 'flex', flexDirection: 'column'
     }}>
       <AppBar sx={{ position: 'relative', bgcolor: 'background.paper' }}>
@@ -306,16 +213,12 @@ function ModoPalco() {
           </Toolbar>
         </AppBar>
 
-      <Box
+      <Box 
           ref={letraRef}
-          sx={{
-              position: 'relative',
-              flexGrow: 1,
-              overflowY: 'auto',
-              p: {xs: 2, md: 4},
-              pb: '80px',
-              '&::-webkit-scrollbar': { display: 'none' },
-              scrollbarWidth: 'none'
+          sx={{ 
+              position: 'relative', flexGrow: 1, overflowY: 'auto', 
+              p: {xs: 2, md: 4}, pb: '80px',
+              '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' 
           }}
       >
           <Container maxWidth="md">
@@ -345,34 +248,30 @@ function ModoPalco() {
       <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowBackIos /></IconButton>
       <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowForwardIos /></IconButton>
 
-      <Paper sx={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            p: 1,
-            bgcolor: 'background.paper',
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            zIndex: 10
+      {/* --- BARRA DE CONTROLOS CORRIGIDA --- */}
+      <Paper sx={{ 
+            position: 'fixed', bottom: 0, left: 0, right: 0,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+            p: 1, bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider', zIndex: 10
         }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', position: 'absolute', left: 16 }}>
+            {/* Grupo da Esquerda: Tamanho da Letra */}
+            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'flex-start' }}>
                 <IconButton onClick={() => setFontSize(s => Math.max(1, s - 0.1))}><ZoomOutIcon /></IconButton>
                 <IconButton onClick={() => setFontSize(s => Math.min(4, s + 0.1))}><ZoomInIcon /></IconButton>
             </Box>
-
-            <Typography sx={{ flexGrow: 1, textAlign: 'right', display: {xs: 'none', sm: 'block'} }}>Velocidade:</Typography>
-            <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
-            <IconButton onClick={handleToggleScroll} color="secondary" size="large">
-                {isScrolling ? <PauseIcon fontSize="large" /> : <PlayIcon fontSize="large" />}
-            </IconButton>
-            <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
-            <Box sx={{ flexGrow: 1 }} />
+            
+            {/* Grupo Central: Play e Velocidade */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
+                <IconButton onClick={handleToggleScroll} color="secondary" size="large">
+                    {isScrolling ? <PauseIcon fontSize="large" /> : <PlayIcon fontSize="large" />}
+                </IconButton>
+                <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
+            </Box>
+            
+            {/* Grupo da Direita (ocupa espaço para manter o centro alinhado) */}
+            <Box sx={{ flex: 1 }} />
       </Paper>
->>>>>>> 089ddf5052eabf77d9528c2d713eeb9d9047b0a9
     </Box>
   );
 }
