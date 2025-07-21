@@ -2,8 +2,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
-import { useNotificacao } from '../contextos/NotificationContext'; // <-- 1. Importe o hook de notificação
-import { Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container } from '@mui/material';
+import { useNotificacao } from '../contextos/NotificationContext';
+import { 
+    Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container, 
+    Dialog, DialogTitle, DialogContent, DialogActions, AppBar, Toolbar 
+} from '@mui/material';
 import { 
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
     PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
@@ -32,7 +35,7 @@ function ModoPalco() {
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { mostrarNotificacao } = useNotificacao(); // <-- 2. Inicialize o hook
+  const { mostrarNotificacao } = useNotificacao();
 
   const [setlist, setSetlist] = useState(null);
   const [indiceAtual, setIndiceAtual] = useState(0);
@@ -90,7 +93,7 @@ function ModoPalco() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (cifraAberta) return; // Desativa atalhos de música quando a cifra está aberta
+      if (cifraAberta) return;
       if (event.key === 'ArrowRight') irParaProxima();
       else if (event.key === 'ArrowLeft') irParaAnterior();
       else if (event.key === 'Escape') navigate(`/setlists`);
@@ -104,7 +107,7 @@ function ModoPalco() {
     if (!element || !cifraAberta) return;
     
     element.scrollTop = 0;
-    setIsScrolling(false); // Garante que o scroll para ao mudar de música
+    setIsScrolling(false);
 
     const step = () => {
       element.scrollTop += 1;
@@ -112,7 +115,6 @@ function ModoPalco() {
         scrollAnimationRef.current = setTimeout(step, scrollSpeed);
       } else {
         setIsScrolling(false);
-        // --- 3. ADICIONA A MENSAGEM DE FIM DA MÚSICA ---
         mostrarNotificacao('Fim da música', 'info');
       }
     };
@@ -178,24 +180,47 @@ function ModoPalco() {
       >
         <AppBar sx={{ position: 'relative', bgcolor: 'background.paper' }}>
           <Toolbar>
-            <Box sx={{ flex: 1, textAlign: 'left' }} />
+            <Box sx={{ flex: 1, textAlign: 'left' }}>
+                <IconButton edge="start" color="inherit" onClick={handleFecharCifra} aria-label="close"><CloseIcon /></IconButton>
+            </Box>
             <Box sx={{ flex: 2, textAlign: 'center' }}>
               <Typography variant="h6">{musicaAtual.nome}</Typography>
               <Typography variant="body2" color="text.secondary">{musicaAtual.artista}</Typography>
             </Box>
             <Box sx={{ flex: 1, textAlign: 'right' }}>
-              <IconButton edge="end" color="inherit" onClick={handleFecharCifra} aria-label="close"><CloseIcon /></IconButton>
+                <IconButton color="inherit" onClick={handleToggleFullscreen}>
+                    {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+                </IconButton>
             </Box>
           </Toolbar>
         </AppBar>
-        <DialogContent sx={{ p: {xs: 2, md: 4}, '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+        <DialogContent sx={{ 
+            p: {xs: 2, md: 4},
+            // --- CORREÇÃO AQUI (Espaçamento) ---
+            // Adiciona um espaçamento no fundo para não ser tapado pelos controlos
+            pb: 12, 
+            '&::-webkit-scrollbar': { display: 'none' }, 
+            scrollbarWidth: 'none' 
+        }}>
             <Container maxWidth="md" ref={letraRef} sx={{ height: '100%', overflowY: 'auto', '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
                 <Typography sx={{ fontSize: { xs: '1.2rem', md: '1.8rem' }, lineHeight: 2, fontFamily: 'monospace', textAlign: 'center', whiteSpace: 'pre-wrap' }}>
                     {formatarCifra(musicaAtual.notas_adicionais, theme)}
                 </Typography>
             </Container>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', alignItems: 'center', p: 2, bgcolor: 'background.paper' }}>
+        {/* --- CORREÇÃO AQUI (Posicionamento Fixo) --- */}
+        <DialogActions sx={{ 
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            p: 2, 
+            bgcolor: 'background.paper',
+            borderTop: '1px solid',
+            borderColor: 'divider'
+        }}>
           <Typography sx={{ flexGrow: 1, textAlign: 'right' }}>Velocidade:</Typography>
           <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
           <IconButton onClick={() => setIsScrolling(!isScrolling)} color="secondary" size="large">
