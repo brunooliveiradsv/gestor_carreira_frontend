@@ -77,12 +77,7 @@ function ModoPalco() {
   }, []);
 
   useEffect(() => {
-    // Função de limpeza que é executada quando o componente é desmontado
-    return () => {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      }
-    };
+    return () => { if (document.fullscreenElement) document.exitFullscreen(); };
   }, []);
 
   const buscarSetlist = useCallback(async () => {
@@ -139,31 +134,30 @@ function ModoPalco() {
   const handleToggleScroll = () => {
     clearInterval(countdownIntervalRef.current);
     setCountdown(null);
-    if (!isScrolling) {
-      if (letraRef.current && letraRef.current.scrollTop > 0) {
-        letraRef.current.scrollTop = 0;
-        setIsScrolling(true);
-      } else {
-        iniciarContagemParaScroll();
-      }
-    } else {
-      setIsScrolling(false);
-    }
+    setIsScrolling(prev => !prev);
   };
 
   useEffect(() => {
     const musicaAtual = setlist?.musicas?.[indiceAtual];
-    if (musicaAtual?.bpm) {
-      const calculatedSpeed = Math.round(12000 / musicaAtual.bpm);
-      setScrollSpeed(calculatedSpeed);
-      mostrarNotificacao(`Velocidade sincronizada para ${musicaAtual.bpm} BPM`, 'info');
-    } else {
-      setScrollSpeed(90);
+    if (musicaAtual) {
+      if (musicaAtual.bpm) {
+        const calculatedSpeed = Math.round(12000 / musicaAtual.bpm);
+        setScrollSpeed(calculatedSpeed);
+        mostrarNotificacao(`Velocidade sincronizada para ${musicaAtual.bpm} BPM`, 'info');
+      } else {
+        setScrollSpeed(90);
+      }
+      // --- LÓGICA DE INÍCIO AUTOMÁTICO ---
+      iniciarContagemParaScroll();
     }
     if (letraRef.current) letraRef.current.scrollTop = 0;
-    setIsScrolling(false);
-    clearInterval(countdownIntervalRef.current);
-    setCountdown(null);
+    
+    // Limpeza ao mudar de música
+    return () => {
+        setIsScrolling(false);
+        clearInterval(countdownIntervalRef.current);
+        clearTimeout(scrollAnimationRef.current);
+    }
   }, [indiceAtual, setlist, mostrarNotificacao]);
 
   useEffect(() => {
