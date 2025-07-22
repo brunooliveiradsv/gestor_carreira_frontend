@@ -5,7 +5,7 @@ import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
     Box, Typography, CircularProgress, IconButton, Paper, useTheme, Button, Container,
-    AppBar, Toolbar // <-- CORRIGIDO AQUI: AppBar e Toolbar foram adicionados de volta
+    AppBar, Toolbar
 } from '@mui/material';
 import {
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
@@ -53,7 +53,6 @@ function ModoPalco() {
   const scrollAnimationRef = useRef();
   const countdownIntervalRef = useRef();
 
-  // Função para sair, agora também fecha o modo de tela cheia
   const handleSair = () => {
     if (document.fullscreenElement) {
       document.exitFullscreen();
@@ -169,7 +168,9 @@ function ModoPalco() {
         scrollAnimationRef.current = setTimeout(step, scrollSpeed);
       } else {
         setIsScrolling(false);
-        mostrarNotificacao('Fim da música, a avançar...', 'info');
+        // --- ALTERAÇÃO AQUI ---
+        // A linha abaixo foi comentada para remover a notificação
+        // mostrarNotificacao('Fim da música, a avançar...', 'info');
         setTimeout(() => {
           irParaProxima();
         }, 2000);
@@ -218,18 +219,11 @@ function ModoPalco() {
           </Toolbar>
         </AppBar>
 
-      <Box
-          ref={letraRef}
-          sx={{
-              position: 'relative',
-              flexGrow: 1,
-              overflowY: 'auto',
-              p: {xs: 2, md: 4},
-              pb: '100px',
-              '&::-webkit-scrollbar': { display: 'none' },
-              scrollbarWidth: 'none'
-          }}
-      >
+      <Box ref={letraRef} sx={{
+          position: 'relative', flexGrow: 1, overflowY: 'auto',
+          p: {xs: 2, md: 4}, pb: '100px',
+          '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none'
+      }}>
           <Container maxWidth="md">
               <Box sx={{ lineHeight: 2, fontFamily: 'monospace', textAlign: 'center', whiteSpace: 'pre-wrap' }}>
                   {formatarCifra(musicaAtual.notas_adicionais, theme, fontSize)}
