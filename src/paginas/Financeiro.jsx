@@ -1,5 +1,4 @@
 // src/paginas/Financeiro.jsx
-import { useState, useEffect, useCallback } from "react";
 import apiClient from "../api";
 import { useNotificacao } from "../contextos/NotificationContext";
 import { useState, useEffect, useCallback, memo } from "react";
