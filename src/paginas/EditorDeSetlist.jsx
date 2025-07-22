@@ -110,20 +110,20 @@ function EditorDeSetlist() {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 112px)' }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexShrink: 0 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: { xs: 'auto', md: 'calc(100vh - 112px)' } }}> {/* Ajuste de altura para mobile */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexShrink: 0, flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}> {/* Ajuste de flex direction e gap para mobile */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Tooltip title="Voltar para Setlists">
               <IconButton onClick={() => navigate("/setlists")}><ArrowBackIcon /></IconButton>
             </Tooltip>
             <Typography variant="h5" fontWeight="bold">{nomeSetlist}</Typography>
           </Box>
-          <Button variant="contained" startIcon={salvando ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} onClick={handleSalvar} disabled={salvando}>
+          <Button variant="contained" startIcon={salvando ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} onClick={handleSalvar} disabled={salvando} sx={{ width: { xs: '100%', sm: 'auto' } }}> {/* Ajuste de largura para mobile */}
             Salvar
           </Button>
         </Box>
 
-        <Paper sx={{ p: 2, mb: 3, flexShrink: 0 }}>
+        <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3, flexShrink: 0 }}>
             <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                     <TextField 
@@ -146,7 +146,7 @@ function EditorDeSetlist() {
 
         <Grid container spacing={3} sx={{ flexGrow: 1, overflow: 'hidden' }}>
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', mb: { xs: 3, md: 0 } }}> {/* Adiciona margem inferior em mobile */}
               <Typography variant="h6" gutterBottom>Repertório Geral</Typography>
               <TextField fullWidth placeholder="Buscar no repertório..." value={termoBusca}
                 onChange={(e) => setTermoBusca(e.target.value)} sx={{ mb: 2, flexShrink: 0 }}
