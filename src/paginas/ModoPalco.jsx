@@ -5,34 +5,79 @@ import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
     Box, Typography, CircularProgress, IconButton, Paper, useTheme, Button, Container,
-    AppBar, Toolbar
+    AppBar, Toolbar, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Tooltip
 } from '@mui/material';
 import {
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
     PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
     Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon,
-    ZoomIn as ZoomInIcon, ZoomOut as ZoomOutIcon
+    ZoomIn as ZoomInIcon, ZoomOut as ZoomOutIcon,
+    PlaylistPlay as PlaylistPlayIcon, // Para navegação rápida
+    MusicOff as MusicOffIcon, // Para auto-advance off
+    SkipNext as SkipNextIcon, // Para auto-advance on
+    RemoveCircleOutline as TransposeDownIcon, // Para transposição
+    AddCircleOutline as TransposeUpIcon, // Para transposição
 } from '@mui/icons-material';
 
-// Função para formatar a cifra (sem alterações)
-const formatarCifra = (textoCifra, theme, fontSize) => {
+
+// --- NOVA LÓGICA DE TRANSPOSIÇÃO ---
+const notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+const notesWithFlats = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab'];
+
+const getNoteIndex = (note) => {
+    let index = notes.indexOf(note);
+    if (index === -1) {
+        index = notesWithFlats.indexOf(note);
+    }
+    return index;
+};
+
+const transposeNote = (note, amount) => {
+    const index = getNoteIndex(note.toUpperCase());
+    if (index === -1) return note;
+    const newIndex = (index + amount + 12) % 12;
+    return notes[newIndex];
+};
+
+const transposeChord = (chord, amount) => {
+    if (!chord || amount === 0) return chord;
+    const match = chord.match(/([A-G][#b]?)(.*)/);
+    if (!match) return chord;
+
+    const note = match[1];
+    const rest = match[2];
+    
+    return transposeNote(note, amount) + rest;
+};
+
+// Função para formatar a cifra, agora com transposição
+const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
     if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
-    const regexCifra = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?(\s+[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?)*\s*$/i;
+    
+    const regexChordLine = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?(\s+[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?)*\s*$/i;
+
     return textoCifra.split('\n').map((linha, index) => {
-        const isCifra = regexCifra.test(linha.trim());
+        const isChordLine = regexChordLine.test(linha.trim());
+        
+        let linhaProcessada = linha;
+        if (isChordLine && transposicao !== 0) {
+            linhaProcessada = linha.trim().split(/\s+/).map(chord => transposeChord(chord, transposicao)).join('   ');
+        }
+
         return (
             <Typography key={index} component="span" sx={{
                 display: 'block',
                 fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` },
-                color: isCifra ? theme.palette.secondary.main : 'inherit',
-                fontWeight: isCifra ? 'bold' : 'normal',
+                color: isChordLine ? theme.palette.secondary.main : 'inherit',
+                fontWeight: isChordLine ? 'bold' : 'normal',
                 transition: 'font-size 0.2s ease-in-out'
             }}>
-                {linha || <br />}
+                {linhaProcessada || <br />}
             </Typography>
         );
     });
 };
+
 
 function ModoPalco() {
   const { id } = useParams();
@@ -49,10 +94,16 @@ function ModoPalco() {
   const [countdown, setCountdown] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // --- NOVOS ESTADOS ---
+  const [transposicao, setTransposicao] = useState(0);
+  const [navAberta, setNavAberta] = useState(false);
+  const [avancoAutomatico, setAvancoAutomatico] = useState(true);
+
   const letraRef = useRef(null);
   const scrollAnimationRef = useRef();
   const countdownIntervalRef = useRef();
-
+  
+  // As funções de fullscreen e sair permanecem as mesmas...
   const handleSair = () => {
     if (document.fullscreenElement) {
       document.exitFullscreen();
@@ -78,6 +129,7 @@ function ModoPalco() {
     return () => { if (document.fullscreenElement) document.exitFullscreen(); };
   }, []);
 
+
   const buscarSetlist = useCallback(async () => {
       try {
         const resposta = await apiClient.get(`/api/setlists/${id}`);
@@ -94,26 +146,34 @@ function ModoPalco() {
     buscarSetlist();
   }, [buscarSetlist]);
 
+  const irParaMusica = useCallback((novoIndice) => {
+    if (!setlist) return;
+    setIndiceAtual(novoIndice);
+    setTransposicao(0); // Reseta a transposição ao mudar de música
+  }, [setlist]);
+
   const irParaProxima = useCallback(() => {
     if (!setlist) return;
-    setIndiceAtual((prev) => (prev + 1) % setlist.musicas.length);
-  }, [setlist]);
+    irParaMusica((indiceAtual + 1) % setlist.musicas.length);
+  }, [setlist, indiceAtual, irParaMusica]);
 
   const irParaAnterior = useCallback(() => {
     if (!setlist) return;
-    setIndiceAtual((prev) => (prev - 1 + setlist.musicas.length) % setlist.musicas.length);
-  }, [setlist]);
+    irParaMusica((indiceAtual - 1 + setlist.musicas.length) % setlist.musicas.length);
+  }, [setlist, indiceAtual, irParaMusica]);
 
+  // --- CONTROLO POR PEDAL MELHORADO ---
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === 'ArrowRight') irParaProxima();
-      else if (event.key === 'ArrowLeft') irParaAnterior();
+      if (event.key === 'ArrowRight' || event.key === 'PageDown') irParaProxima();
+      else if (event.key === 'ArrowLeft' || event.key === 'PageUp') irParaAnterior();
       else if (event.key === 'Escape') handleSair();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [irParaProxima, irParaAnterior, handleSair]);
   
+  // As funções de scroll permanecem as mesmas...
   const iniciarContagemParaScroll = () => {
     clearInterval(countdownIntervalRef.current);
     setCountdown(3);
@@ -168,17 +228,17 @@ function ModoPalco() {
         scrollAnimationRef.current = setTimeout(step, scrollSpeed);
       } else {
         setIsScrolling(false);
-        // --- ALTERAÇÃO AQUI ---
-        // A linha abaixo foi comentada para remover a notificação
-        // mostrarNotificacao('Fim da música, a avançar...', 'info');
-        setTimeout(() => {
-          irParaProxima();
-        }, 2000);
+        // --- LÓGICA DE AVANÇO AUTOMÁTICO CONDICIONAL ---
+        if (avancoAutomatico) {
+            setTimeout(() => {
+              irParaProxima();
+            }, 2000);
+        }
       }
     };
     scrollAnimationRef.current = setTimeout(step, scrollSpeed);
     return () => clearTimeout(scrollAnimationRef.current);
-  }, [isScrolling, scrollSpeed, mostrarNotificacao, irParaProxima]);
+  }, [isScrolling, scrollSpeed, irParaProxima, avancoAutomatico]); // Adicionado avancoAutomatico
 
 
   if (carregando) {
@@ -195,6 +255,8 @@ function ModoPalco() {
   }
 
   const musicaAtual = setlist.musicas[indiceAtual];
+  const tomOriginal = musicaAtual.tom || 'N/A';
+  const tomAtual = transposeChord(tomOriginal, transposicao);
 
   return (
     <Box sx={{
@@ -208,8 +270,13 @@ function ModoPalco() {
                 <Typography sx={{ ml: 2, display: { xs: 'none', sm: 'block' } }}>Música {indiceAtual + 1} de {setlist.musicas.length}</Typography>
             </Box>
             <Box sx={{ flex: 2, textAlign: 'center' }}>
-              <Typography variant="h6" noWrap>{musicaAtual.nome}</Typography>
-              <Typography variant="body2" color="text.secondary" noWrap>{musicaAtual.artista}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography variant="h6" noWrap>{musicaAtual.nome}</Typography>
+                <IconButton size="small" sx={{ ml: 1 }} onClick={() => setNavAberta(true)}><PlaylistPlayIcon /></IconButton>
+              </Box>
+              <Typography variant="body2" color="text.secondary" noWrap>
+                {musicaAtual.artista} | Tom: {tomOriginal}{transposicao !== 0 && ` -> ${tomAtual}`}
+              </Typography>
             </Box>
             <Box sx={{ flex: 1, textAlign: 'right' }}>
                 <IconButton color="inherit" onClick={handleToggleFullscreen}>
@@ -226,7 +293,7 @@ function ModoPalco() {
       }}>
           <Container maxWidth="md">
               <Box sx={{ lineHeight: 2, fontFamily: 'monospace', textAlign: 'center', whiteSpace: 'pre-wrap' }}>
-                  {formatarCifra(musicaAtual.notas_adicionais, theme, fontSize)}
+                  {formatarCifra(musicaAtual.notas_adicionais, theme, fontSize, transposicao)}
               </Box>
           </Container>
 
@@ -235,15 +302,7 @@ function ModoPalco() {
                   <Typography sx={{ fontSize: {xs: '15rem', sm: '25rem'}, fontWeight: 'bold', color: 'white', animation: 'countdown-zoom 1s infinite' }}>
                       {countdown}
                   </Typography>
-                  <style>
-                      {`
-                      @keyframes countdown-zoom {
-                          0% { transform: scale(1); opacity: 1; }
-                          50% { transform: scale(1.1); opacity: 0.7; }
-                          100% { transform: scale(1); opacity: 1; }
-                      }
-                      `}
-                  </style>
+                  <style>{`@keyframes countdown-zoom { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }`}</style>
               </Box>
           )}
       </Box>
@@ -252,24 +311,17 @@ function ModoPalco() {
       <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowForwardIos /></IconButton>
 
       <Paper sx={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            p: { xs: 0.5, sm: 1 },
-            bgcolor: 'background.paper',
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            zIndex: 10
+            position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex',
+            justifyContent: 'space-between', alignItems: 'center',
+            p: { xs: 0.5, sm: 1 }, bgcolor: 'background.paper',
+            borderTop: '1px solid', borderColor: 'divider', zIndex: 10
         }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <IconButton onClick={() => setTransposicao(t => t - 1)}><TransposeDownIcon /></IconButton>
+                <IconButton onClick={() => setTransposicao(t => t + 1)}><TransposeUpIcon /></IconButton>
                 <IconButton onClick={() => setFontSize(s => Math.max(1, s - 0.1))}><ZoomOutIcon /></IconButton>
                 <IconButton onClick={() => setFontSize(s => Math.min(4, s + 0.1))}><ZoomInIcon /></IconButton>
             </Box>
-
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
                 <IconButton onClick={handleToggleScroll} color="secondary" size="large">
@@ -277,12 +329,33 @@ function ModoPalco() {
                 </IconButton>
                 <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
             </Box>
-            
-            <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', visibility: 'hidden' }}>
-                <IconButton><ZoomOutIcon /></IconButton>
-                <IconButton><ZoomInIcon /></IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Tooltip title={avancoAutomatico ? "Avanço Automático LIGADO" : "Avanço Automático DESLIGADO"}>
+                    <IconButton onClick={() => setAvancoAutomatico(a => !a)}>
+                        {avancoAutomatico ? <SkipNextIcon /> : <MusicOffIcon />}
+                    </IconButton>
+                </Tooltip>
             </Box>
       </Paper>
+
+      <Drawer anchor="right" open={navAberta} onClose={() => setNavAberta(false)}>
+        <Box sx={{ width: 250, bgcolor: 'background.default', height: '100%' }} role="presentation">
+            <Typography variant="h6" sx={{ p: 2 }}>Setlist</Typography>
+            <Divider />
+            <List>
+                {(setlist?.musicas || []).map((musica, index) => (
+                    <ListItem key={musica.id} disablePadding>
+                        <ListItemButton
+                            selected={indiceAtual === index}
+                            onClick={() => { irParaMusica(index); setNavAberta(false); }}
+                        >
+                            <ListItemText primary={`${index + 1}. ${musica.nome}`} />
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+        </Box>
+      </Drawer>
     </Box>
   );
 }
