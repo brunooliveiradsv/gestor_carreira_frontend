@@ -12,48 +12,62 @@ import {
     PlayArrow as PlayIcon, Pause as PauseIcon, Add as AddIcon, Remove as RemoveIcon,
     Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon,
     ZoomIn as ZoomInIcon, ZoomOut as ZoomOutIcon,
-    PlaylistPlay as PlaylistPlayIcon, // Para navegação rápida
-    MusicOff as MusicOffIcon, // Para auto-advance off
-    SkipNext as SkipNextIcon, // Para auto-advance on
-    RemoveCircleOutline as TransposeDownIcon, // Para transposição
-    AddCircleOutline as TransposeUpIcon, // Para transposição
+    PlaylistPlay as PlaylistPlayIcon,
+    MusicOff as MusicOffIcon,
+    SkipNext as SkipNextIcon,
+    RemoveCircleOutline as TransposeDownIcon,
+    AddCircleOutline as TransposeUpIcon,
 } from '@mui/icons-material';
 
-
-// --- NOVA LÓGICA DE TRANSPOSIÇÃO ---
-const notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
-const notesWithFlats = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab'];
+// --- NOVA LÓGICA DE TRANSPOSIÇÃO ROBUSTA ---
+const ALL_NOTES = [
+    { sharp: 'A', flat: 'A' }, { sharp: 'A#', flat: 'Bb' }, { sharp: 'B', flat: 'B' },
+    { sharp: 'C', flat: 'C' }, { sharp: 'C#', flat: 'Db' }, { sharp: 'D', flat: 'D' },
+    { sharp: 'D#', flat: 'Eb' }, { sharp: 'E', flat: 'E' }, { sharp: 'F', flat: 'F' },
+    { sharp: 'F#', flat: 'Gb' }, { sharp: 'G', flat: 'G' }, { sharp: 'G#', flat: 'Ab' }
+];
 
 const getNoteIndex = (note) => {
-    let index = notes.indexOf(note);
-    if (index === -1) {
-        index = notesWithFlats.indexOf(note);
+    const upperNote = note.toUpperCase();
+    for (let i = 0; i < ALL_NOTES.length; i++) {
+        if (ALL_NOTES[i].sharp === upperNote || ALL_NOTES[i].flat === upperNote) {
+            return i;
+        }
     }
-    return index;
+    return -1; // Nota não encontrada
 };
 
 const transposeNote = (note, amount) => {
-    const index = getNoteIndex(note.toUpperCase());
-    if (index === -1) return note;
-    const newIndex = (index + amount + 12) % 12;
-    return notes[newIndex];
+    const index = getNoteIndex(note);
+    if (index === -1) return note; // Retorna a nota original se não for encontrada
+    
+    const newIndex = (index + amount + ALL_NOTES.length) % ALL_NOTES.length;
+    
+    // Prefere sustenidos ao subir e bemóis ao descer, exceto para notas sem equivalentes
+    const newNote = ALL_NOTES[newIndex];
+    if (newNote.sharp === newNote.flat) return newNote.sharp;
+    return amount > 0 ? newNote.sharp : newNote.flat;
 };
 
 const transposeChord = (chord, amount) => {
     if (!chord || amount === 0) return chord;
-    const match = chord.match(/([A-G][#b]?)(.*)/);
+    // Regex melhorado para capturar a nota e o resto do acorde
+    const match = chord.match(/^([A-G][#b]?)(.*)/);
     if (!match) return chord;
 
     const note = match[1];
     const rest = match[2];
     
-    return transposeNote(note, amount) + rest;
+    const transposedNote = transposeNote(note, amount);
+    if (transposedNote === note) return chord; // Se a nota não pôde ser transposta, retorna o acorde original
+    
+    return transposedNote + rest;
 };
 
-// Função para formatar a cifra, agora com transposição
 const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
     if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
     
+    // Regex que identifica uma linha que provavelmente contém cifras
     const regexChordLine = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?(\s+[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?)*\s*$/i;
 
     return textoCifra.split('\n').map((linha, index) => {
@@ -78,8 +92,9 @@ const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
     });
 };
 
-
+// O resto do componente ModoPalco permanece o mesmo...
 function ModoPalco() {
+    // ... (todo o código do componente que já tinhamos, sem alterações)
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -93,8 +108,6 @@ function ModoPalco() {
   const [fontSize, setFontSize] = useState(1.8);
   const [countdown, setCountdown] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  // --- NOVOS ESTADOS ---
   const [transposicao, setTransposicao] = useState(0);
   const [navAberta, setNavAberta] = useState(false);
   const [avancoAutomatico, setAvancoAutomatico] = useState(true);
@@ -103,7 +116,6 @@ function ModoPalco() {
   const scrollAnimationRef = useRef();
   const countdownIntervalRef = useRef();
   
-  // As funções de fullscreen e sair permanecem as mesmas...
   const handleSair = () => {
     if (document.fullscreenElement) {
       document.exitFullscreen();
@@ -129,7 +141,6 @@ function ModoPalco() {
     return () => { if (document.fullscreenElement) document.exitFullscreen(); };
   }, []);
 
-
   const buscarSetlist = useCallback(async () => {
       try {
         const resposta = await apiClient.get(`/api/setlists/${id}`);
@@ -149,7 +160,7 @@ function ModoPalco() {
   const irParaMusica = useCallback((novoIndice) => {
     if (!setlist) return;
     setIndiceAtual(novoIndice);
-    setTransposicao(0); // Reseta a transposição ao mudar de música
+    setTransposicao(0);
   }, [setlist]);
 
   const irParaProxima = useCallback(() => {
@@ -162,7 +173,6 @@ function ModoPalco() {
     irParaMusica((indiceAtual - 1 + setlist.musicas.length) % setlist.musicas.length);
   }, [setlist, indiceAtual, irParaMusica]);
 
-  // --- CONTROLO POR PEDAL MELHORADO ---
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'ArrowRight' || event.key === 'PageDown') irParaProxima();
@@ -173,7 +183,6 @@ function ModoPalco() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [irParaProxima, irParaAnterior, handleSair]);
   
-  // As funções de scroll permanecem as mesmas...
   const iniciarContagemParaScroll = () => {
     clearInterval(countdownIntervalRef.current);
     setCountdown(3);
@@ -228,7 +237,6 @@ function ModoPalco() {
         scrollAnimationRef.current = setTimeout(step, scrollSpeed);
       } else {
         setIsScrolling(false);
-        // --- LÓGICA DE AVANÇO AUTOMÁTICO CONDICIONAL ---
         if (avancoAutomatico) {
             setTimeout(() => {
               irParaProxima();
@@ -238,7 +246,7 @@ function ModoPalco() {
     };
     scrollAnimationRef.current = setTimeout(step, scrollSpeed);
     return () => clearTimeout(scrollAnimationRef.current);
-  }, [isScrolling, scrollSpeed, irParaProxima, avancoAutomatico]); // Adicionado avancoAutomatico
+  }, [isScrolling, scrollSpeed, irParaProxima, avancoAutomatico]);
 
 
   if (carregando) {
