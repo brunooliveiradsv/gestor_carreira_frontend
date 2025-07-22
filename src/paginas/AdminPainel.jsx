@@ -4,12 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import { People as PeopleIcon, LibraryMusic as LibraryMusicIcon, Announcement as AnnouncementIcon, History as HistoryIcon } from '@mui/icons-material';
 
+
 // --- COMPONENTE AdminCard ATUALIZADO ---
 // Agora ele não é mais um Grid item e controla o seu próprio tamanho no Flexbox
-const AdminCard = ({ title, description, icon, linkTo }) => {
+const AdminCard = React.memo(({ title, description, icon, linkTo }) => {
   const navigate = useNavigate();
   return (
-    // O Box exterior define o comportamento do cartão dentro do contentor Flexbox
     <Box sx={{ flex: '1 1 300px', minWidth: '280px' }}>
       <Paper 
         sx={{ 
@@ -37,7 +37,7 @@ const AdminCard = ({ title, description, icon, linkTo }) => {
       </Paper>
     </Box>
   );
-};
+});
 
 function AdminPainel() {
   return (

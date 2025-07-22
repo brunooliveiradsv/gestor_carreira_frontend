@@ -14,7 +14,7 @@ import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 // Componente para os cartões de resumo
-const SummaryCard = ({ title, value, icon, avatarBgColor }) => (
+const SummaryCard = memo(({ title, value, icon, avatarBgColor }) => (
     <Box sx={{ flex: '1 1 300px' }}>
         <Card>
             <CardContent>
@@ -28,7 +28,7 @@ const SummaryCard = ({ title, value, icon, avatarBgColor }) => (
             </CardContent>
         </Card>
     </Box>
-);
+));
 
 function Financeiro() {
   const [transacoes, setTransacoes] = useState([]);
