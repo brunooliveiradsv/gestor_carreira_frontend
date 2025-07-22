@@ -117,7 +117,7 @@ function ModoPalco() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [transposicao, setTransposicao] = useState(0);
   const [navAberta, setNavAberta] = useState(false);
-  const [avancoAutomatico, setAvancoAutomatico] = useState(true);
+  const [avancoAutomatico, setAvancoAutomatico] = useState(false);
 
   const letraRef = useRef(null);
   const scrollAnimationRef = useRef();
