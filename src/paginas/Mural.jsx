@@ -1,6 +1,6 @@
 // src/paginas/Mural.jsx
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { AuthContext } from '../contextos/AuthContext';
 import {

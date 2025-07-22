@@ -14,7 +14,7 @@ import Equipamentos from "./paginas/Equipamentos.jsx";
 import RecuperarSenha from "./paginas/RecuperarSenha.jsx";
 import Setlists from "./paginas/Setlists.jsx";
 import EditorDeSetlist from "./paginas/EditorDeSetlist.jsx";
-import PaginaVitrine from "./paginas/PaginaVitrine.jsx"; 
+import ShowCase from "./paginas/ShowCase.jsx"; 
 import AdminPainel from "./paginas/AdminPainel.jsx";
 import AdminUsuarios from "./paginas/AdminUsuarios.jsx";
 import AdminMusicas from "./paginas/AdminMusicas.jsx";

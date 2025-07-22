@@ -1,7 +1,7 @@
 // src/contextos/AuthContext.jsx
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import { useNotificacao } from './NotificationContext';
 
 export const AuthContext = createContext();

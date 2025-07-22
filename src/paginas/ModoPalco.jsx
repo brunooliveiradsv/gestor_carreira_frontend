@@ -1,7 +1,7 @@
 // src/paginas/ModoPalco.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
     Box, Typography, CircularProgress, IconButton, Paper, Chip, useTheme, Button, Container,

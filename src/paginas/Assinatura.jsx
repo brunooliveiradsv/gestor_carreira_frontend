@@ -2,7 +2,7 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../contextos/AuthContext';
 import { useNotificacao } from '../contextos/NotificationContext';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import { 
     Box, Typography, Paper, Grid, Button, CircularProgress, Chip, List, ListItem, 
     ListItemIcon, ListItemText, ToggleButton, ToggleButtonGroup 

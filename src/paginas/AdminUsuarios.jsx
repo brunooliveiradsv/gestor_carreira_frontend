@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../contextos/AuthContext.jsx";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
-import apiClient from '../api.js';
+import apiClient from '../apiClient';
 
 import {
   Box, Typography, CircularProgress, Paper, Table, TableBody,

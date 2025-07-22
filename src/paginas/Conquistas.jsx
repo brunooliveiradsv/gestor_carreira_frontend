@@ -1,6 +1,6 @@
 // src/paginas/Conquistas.jsx
 import { useState, useEffect, useCallback } from 'react';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import {
   Box,
   Typography,

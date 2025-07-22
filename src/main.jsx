@@ -8,12 +8,12 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './contextos/AuthContext.jsx';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import darkTheme from './tema';
+import darkTheme from './theme.js';
 
 import { NotificationProvider } from './contextos/NotificationContext.jsx';
 
 import { Provider } from 'react-redux';
-import store from './store';
+import store from './reduxStore.js';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

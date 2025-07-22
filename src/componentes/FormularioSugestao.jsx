@@ -1,7 +1,7 @@
 // src/componentes/FormularioSugestao.jsx
 
 import { useState } from 'react';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
     Box, Button, TextField, Typography, CircularProgress,

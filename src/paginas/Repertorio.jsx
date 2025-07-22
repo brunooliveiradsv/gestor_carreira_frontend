@@ -1,6 +1,6 @@
 // src/paginas/Repertorio.jsx
 import { useState, useEffect, useCallback } from "react";
-import apiClient from "../api.js";
+import apiClient from '../apiClient';
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
   Box, Button, Typography, CircularProgress, Paper, Grid, TextField,

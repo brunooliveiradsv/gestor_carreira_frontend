@@ -2,7 +2,7 @@
 import React, { useContext, useState, useEffect, useCallback } from "react";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext.jsx";
-import apiClient from "../api";
+import apiClient from '../apiClient';
 import {
   AppBar, Toolbar, Typography, Box, IconButton, Badge, Menu,
   MenuItem, Tooltip, Divider, ListItemIcon, ListItemText, Dialog,

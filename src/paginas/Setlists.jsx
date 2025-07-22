@@ -1,7 +1,7 @@
 // src/paginas/Setlists.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
   Box, Typography, Button, CircularProgress, Paper,

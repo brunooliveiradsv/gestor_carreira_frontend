@@ -1,4 +1,4 @@
-// src/paginas/PaginaVitrine.jsx
+// src/paginas/ShowCase.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import apiClient from '../api';
@@ -79,7 +79,6 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
 
                 <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }} />
 
-                {/* --- CORREÇÃO AQUI (Estatísticas) --- */}
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-around', width: { xs: '100%', md: 'auto' }, gap: 2, p: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
                     <StatCard icon={<MicIcon color="primary" />} value={estatisticas?.shows} label="Shows"/>
                     <StatCard icon={<LibraryMusicIcon color="primary" />} value={estatisticas?.musicas} label="Músicas"/>
@@ -99,7 +98,6 @@ const PostsSection = ({ posts, reacoes, handleReacao }) => {
                 const dataPost = post.created_at ? new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) : null;
 
                 return (
-                    // --- CORREÇÃO AQUI (Layout do Post) ---
                     <ListItem key={post.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 2, '&:not(:last-child)': { borderBottom: '1px solid', borderColor: 'divider' } }} disablePadding>
                         <Box sx={{ display: 'flex', width: '100%' }}>
                             <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}><AnnouncementIcon color="primary" /></ListItemIcon>
@@ -127,7 +125,7 @@ const PostsSection = ({ posts, reacoes, handleReacao }) => {
     );
 };
 
-function PaginaVitrine() {
+function ShowCase() { // <-- NOME DA FUNÇÃO ALTERADO
   const { url_unica } = useParams();
   const [vitrine, setVitrine] = useState(null);
   const [carregando, setCarregando] = useState(true);
@@ -288,4 +286,4 @@ function PaginaVitrine() {
   );
 }
 
-export default PaginaVitrine;
+export default ShowCase; // <-- NOME DA EXPORTAÇÃO ALTERADO

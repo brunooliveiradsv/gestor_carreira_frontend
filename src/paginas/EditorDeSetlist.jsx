@@ -1,7 +1,7 @@
 // src/paginas/EditorDeSetlist.jsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import apiClient from "../api";
+import apiClient from '../apiClient';
 import { useNotificacao } from "../contextos/NotificationContext";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { FixedSizeList } from 'react-window'; // Continua importando FixedSizeList aqui

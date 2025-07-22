@@ -1,6 +1,6 @@
 // src/componentes/FormularioMusica.jsx
 import React, { useState, useEffect } from 'react';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { Box, TextField, Button, CircularProgress, Typography, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 

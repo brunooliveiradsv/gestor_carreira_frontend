@@ -1,7 +1,7 @@
 // src/componentes/FormularioContato.jsx
 
 import { useState, useEffect } from 'react';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { Box, Button, TextField, Typography, Paper, CircularProgress } from '@mui/material';
 

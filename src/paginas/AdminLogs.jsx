@@ -1,6 +1,6 @@
 // src/paginas/AdminLogs.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
   Box, Typography, CircularProgress, Paper, Table, TableBody,
