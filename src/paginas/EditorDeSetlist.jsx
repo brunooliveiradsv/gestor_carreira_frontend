@@ -1,9 +1,11 @@
 // src/paginas/EditorDeSetlist.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import apiClient from "../api";
 import { useNotificacao } from "../contextos/NotificationContext";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { FixedSizeList } from 'react-window'; // Importação do FixedSizeList
+
 import {
   Box, Typography, Paper, CircularProgress, Grid,
   List, ListItem, ListItemText, IconButton, Tooltip,
@@ -12,7 +14,8 @@ import {
 import {
   Save as SaveIcon, ArrowBack as ArrowBackIcon, Search as SearchIcon,
   PlaylistAdd as PlaylistAddIcon, Delete as DeleteIcon, DragIndicator as DragIndicatorIcon,
-  RemoveCircleOutline as RemoveCircleOutlineIcon // Novo ícone para remover rápido
+  RemoveCircleOutline as RemoveCircleOutlineIcon,
+  Lightbulb as LightbulbIcon // Ícone para sugestões
 } from "@mui/icons-material";
 
 const reorder = (list, startIndex, endIndex) => {
@@ -21,6 +24,36 @@ const reorder = (list, startIndex, endIndex) => {
   result.splice(endIndex, 0, removed);
   return result;
 };
+
+// Componente de Linha para o FixedSizeList do Repertório Geral
+const RepertorioRow = React.memo(({ index, style, data }) => {
+  const { musica, adicionarAoSetlist, dragHandleProps } = data[index];
+  return (
+    <ListItem
+      style={style} // Importante para o posicionamento do react-window
+      secondaryAction={
+        <Tooltip title="Adicionar ao Setlist">
+          <IconButton edge="end" onClick={() => adicionarAoSetlist(musica)}>
+            <PlaylistAddIcon />
+          </IconButton>
+        </Tooltip>
+      }
+      sx={{
+        mb: 1,
+        bgcolor: 'background.paper',
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: 'divider'
+      }}
+    >
+      <ListItemIcon sx={{ minWidth: 32, color: 'text.secondary' }}>
+        <DragIndicatorIcon />
+      </ListItemIcon>
+      <ListItemText primary={musica.nome} secondary={musica.artista} />
+    </ListItem>
+  );
+});
+
 
 function EditorDeSetlist() {
   const { id } = useParams();
@@ -34,6 +67,9 @@ function EditorDeSetlist() {
   const [termoBusca, setTermoBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [sugestoesCarregando, setSugestoesCarregando] = useState(false); // Novo estado
+  const [sugestoesMusicas, setSugestoesMusicas] = useState([]); // Novo estado
+  const repertorioListRef = useRef(); // Ref para o FixedSizeList
 
   const buscarDados = useCallback(async () => {
     try {
@@ -68,13 +104,8 @@ function EditorDeSetlist() {
     if (source.droppableId === "setlist" && destination.droppableId === "setlist") {
       setMusicasNoSetlist(reorder(musicasNoSetlist, source.index, destination.index));
     }
-    else if (source.droppableId === "repertorio" && destination.droppableId === "setlist") {
-      const itemMovido = repertorioGeral[source.index];
-      setRepertorioGeral(repertorioGeral.filter((_, i) => i !== source.index));
-      const novoSetlist = [...musicasNoSetlist];
-      novoSetlist.splice(destination.index, 0, itemMovido);
-      setMusicasNoSetlist(novoSetlist);
-    }
+    // Não permitimos arrastar do repertório geral virtualizado diretamente para o setlist
+    // O botão "Adicionar" é o caminho.
   };
   
   const removerDoSetlist = (musica, index) => {
@@ -87,6 +118,7 @@ function EditorDeSetlist() {
   const adicionarAoSetlist = (musica) => {
     setMusicasNoSetlist((prev) => [...prev, musica]);
     setRepertorioGeral((prev) => prev.filter((m) => m.id !== musica.id));
+    setSugestoesMusicas((prev) => prev.filter((s) => s.id !== musica.id)); // Remove da sugestão se adicionada
   };
   
   const handleSalvar = async () => {
@@ -108,6 +140,37 @@ function EditorDeSetlist() {
     }
   };
 
+  // --- NOVA FUNÇÃO: Gerar Sugestões ---
+  const handleGerarSugestoes = async () => {
+    if (musicasNoSetlist.length === 0) {
+      mostrarNotificacao("Adicione músicas ao setlist para obter sugestões.", "info");
+      return;
+    }
+    setSugestoesCarregando(true);
+    try {
+      // O endpoint de sugestão é `/api/setlists/:id/sugerir`
+      const resposta = await apiClient.post(`/api/setlists/${id}/sugerir`, { quantidade: 10 });
+      // Filtra sugestões que já estão no setlist ou no repertório geral
+      const idsNoSetlistOuRepertorio = new Set([
+        ...musicasNoSetlist.map(m => m.id),
+        ...repertorioGeral.map(m => m.id)
+      ]);
+      const sugestoesFiltradas = resposta.data.filter(sugestao => !idsNoSetlistOuRepertorio.has(sugestao.id));
+
+      setSugestoesMusicas(sugestoesFiltradas);
+      if (sugestoesFiltradas.length === 0) {
+        mostrarNotificacao("Nenhuma sugestão nova encontrada com base nas músicas atuais.", "info");
+      } else {
+        mostrarNotificacao(`Foram encontradas ${sugestoesFiltradas.length} sugestões de músicas!`, "success");
+      }
+    } catch (error) {
+      mostrarNotificacao(error.response?.data?.mensagem || "Erro ao gerar sugestões.", "error");
+    } finally {
+      setSugestoesCarregando(false);
+    }
+  };
+
+
   if (carregando) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -116,12 +179,12 @@ function EditorDeSetlist() {
     );
   }
 
+  // Altura dinâmica para as listas virtualizadas
+  const listHeight = window.innerHeight * 0.5; // Ex: 50% da altura da viewport
+
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      {/* Container principal com flexbox para layout em coluna e altura responsiva */}
-      {/* A altura agora usa '100%' para forçar o Box a ter uma altura que os flex children podem usar */}
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: { xs: 'auto', md: 'calc(100vh - 112px)' } }}> 
-        {/* Cabeçalho do editor com flexbox para alinhamento e responsividade */}
         <Box sx={{ 
           display: "flex", 
           justifyContent: "space-between", 
@@ -152,7 +215,6 @@ function EditorDeSetlist() {
           </Button>
         </Box>
 
-        {/* Campo de nome e notas do setlist */}
         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3, flexShrink: 0 }}>
             <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
@@ -174,12 +236,9 @@ function EditorDeSetlist() {
             </Grid>
         </Paper>
 
-        {/* Grid Container para as duas colunas (Repertório Geral e Músicas no Setlist) */}
-        {/* Adiciona flexGrow: 1 para o Grid container ocupar o espaço restante */}
         <Grid container spacing={3} sx={{ flexGrow: 1, overflow: 'hidden' }}>
           {/* Coluna do Repertório Geral */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Paper para o Repertório Geral */}
             <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', mb: { xs: 3, md: 0 } }}>
               <Typography variant="h6" gutterBottom>Repertório Geral</Typography>
               <TextField fullWidth placeholder="Buscar no repertório..." value={termoBusca}
@@ -188,45 +247,18 @@ function EditorDeSetlist() {
               />
               <Droppable droppableId="repertorio">
                 {(provided) => (
-                  <List
-                    dense
-                    // --- MODIFICAÇÃO CHAVE: Forçando altura e rolagem da lista ---
-                    sx={{
-                      flexGrow: 1, // Permite que a lista cresça para preencher o espaço
-                      overflowY: 'auto', // Habilita a rolagem vertical
-                      // Para garantir que flexGrow funcione corretamente, podemos precisar de uma altura base
-                      // ou que o pai determine a altura total. 'height: 0' com flexGrow:1 é um padrão comum.
-                      // Alternativamente, uma altura percentual pode funcionar se o pai tem altura definida.
-                      height: 0, // Altura base 0, deixando o flexGrow definir a altura real
-                      minHeight: 100 // Uma altura mínima para não sumir se houver poucos itens
-                    }}
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
+                  <FixedSizeList // Substitui List por FixedSizeList
+                    height={repertorioListRef.current ? repertorioListRef.current.clientHeight : listHeight} // Altura do container
+                    itemCount={repertorioGeral.length}
+                    itemSize={56} // Altura estimada de cada item da lista (ajuste conforme necessário)
+                    width="100%"
+                    outerRef={provided.innerRef}
+                    innerElementType="div" // Pode ser 'div' ou 'ul'
+                    itemData={repertorioGeral.map(musica => ({ musica, adicionarAoSetlist }))} // Passa dados para o Row
+                    style={{ overflowX: 'hidden' }} // Esconder overflow horizontal
                   >
-                    {repertorioGeral.map((musica, index) => (
-                      <Draggable key={`musica-${musica.id}`} draggableId={`musica-${musica.id}`} index={index}>
-                        {(provided) => (
-                          <ListItem
-                            ref={provided.innerRef} {...provided.draggableProps} 
-                            secondaryAction={
-                              <Tooltip title="Adicionar ao Setlist">
-                                <IconButton edge="end" onClick={() => adicionarAoSetlist(musica)}>
-                                    <PlaylistAddIcon />
-                                </IconButton>
-                              </Tooltip>
-                            }
-                            sx={{ mb: 1, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}
-                          >
-                            <ListItemIcon sx={{minWidth: 32, color: 'text.secondary'}} {...provided.dragHandleProps}>
-                                <DragIndicatorIcon />
-                            </ListItemIcon>
-                            <ListItemText primary={musica.nome} secondary={musica.artista} />
-                          </ListItem>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </List>
+                    {RepertorioRow}
+                  </FixedSizeList>
                 )}
               </Droppable>
             </Paper>
@@ -234,19 +266,17 @@ function EditorDeSetlist() {
 
           {/* Coluna das Músicas no Setlist */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Paper para as Músicas no Setlist */}
             <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'action.selected' }}>
               <Typography variant="h6" gutterBottom>Músicas no Setlist ({musicasNoSetlist.length})</Typography>
                 <Droppable droppableId="setlist">
                 {(provided) => (
                   <List
                     dense
-                    // --- MODIFICAÇÃO CHAVE: Forçando altura e rolagem da lista ---
                     sx={{
-                      flexGrow: 1, // Permite que a lista cresça para preencher o espaço
-                      overflowY: 'auto', // Habilita a rolagem vertical
-                      height: 0, // Altura base 0, deixando o flexGrow definir a altura real
-                      minHeight: 100 // Garante uma altura mínima visível
+                      flexGrow: 1,
+                      overflowY: 'auto',
+                      height: 0,
+                      minHeight: 100
                     }}
                     {...provided.droppableProps}
                     ref={provided.innerRef}
@@ -277,6 +307,39 @@ function EditorDeSetlist() {
                   </List>
                 )}
               </Droppable>
+
+              {/* --- Seção de Sugestões Inteligentes --- */}
+              <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider', flexShrink: 0 }}>
+                <Typography variant="h6" gutterBottom>Sugestões Inteligentes</Typography>
+                <Button 
+                  variant="outlined" 
+                  startIcon={sugestoesCarregando ? <CircularProgress size={20} color="inherit" /> : <LightbulbIcon />} 
+                  onClick={handleGerarSugestoes} 
+                  disabled={sugestoesCarregando || musicasNoSetlist.length === 0}
+                  fullWidth
+                >
+                  {sugestoesCarregando ? "Gerando..." : "Obter Sugestões"}
+                </Button>
+                {sugestoesMusicas.length > 0 && (
+                  <List dense sx={{ mt: 2, maxHeight: 200, overflowY: 'auto' }}>
+                    {sugestoesMusicas.map(sugestao => (
+                      <ListItem
+                        key={`sugestao-${sugestao.id}`}
+                        secondaryAction={
+                          <Tooltip title="Adicionar Sugestão ao Setlist">
+                            <IconButton edge="end" onClick={() => adicionarAoSetlist(sugestao)}>
+                              <PlaylistAddIcon color="secondary" />
+                            </IconButton>
+                          </Tooltip>
+                        }
+                        sx={{ bgcolor: 'background.paper', mb: 1, borderRadius: 2 }}
+                      >
+                        <ListItemText primary={sugestao.nome} secondary={sugestao.artista} />
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+              </Box>
             </Paper>
           </Grid>
         </Grid>
