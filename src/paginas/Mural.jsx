@@ -105,8 +105,8 @@ function Mural() {
   const handleFotoCapaChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB
-        mostrarNotificacao('A imagem de capa é muito grande (máx 5MB).', 'error');
+      if (file.size > 15 * 1024 * 1024) { // 15MB
+        mostrarNotificacao('A imagem de capa é muito grande (máx 15MB).', 'error');
         return;
       }
       setNovaFotoCapa(file);
