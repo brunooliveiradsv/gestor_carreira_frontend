@@ -44,7 +44,6 @@ function EditorDeSetlist() {
 
       setNomeSetlist(setlistRes.data.nome);
       setNotasSetlist(setlistRes.data.notas_adicionais || '');
-      // Garante que 'musicas' seja um array, mesmo que venha nulo/undefined
       const setlistMusicas = setlistRes.data.musicas || [];
       setMusicasNoSetlist(setlistMusicas);
 
@@ -66,11 +65,9 @@ function EditorDeSetlist() {
     const { source, destination } = result;
     if (!destination) return;
 
-    // Se moveu dentro do setlist
     if (source.droppableId === "setlist" && destination.droppableId === "setlist") {
       setMusicasNoSetlist(reorder(musicasNoSetlist, source.index, destination.index));
     }
-    // Se moveu do repertório para o setlist
     else if (source.droppableId === "repertorio" && destination.droppableId === "setlist") {
       const itemMovido = repertorioGeral[source.index];
       setRepertorioGeral(repertorioGeral.filter((_, i) => i !== source.index));
@@ -80,16 +77,13 @@ function EditorDeSetlist() {
     }
   };
   
-  // Função para remover uma música do setlist
   const removerDoSetlist = (musica, index) => {
     setMusicasNoSetlist(musicasNoSetlist.filter((_, i) => i !== index));
-    // Verifica se a música já existe no repertório geral antes de adicionar, para evitar duplicatas visuais
     if (!repertorioGeral.some(m => m.id === musica.id)) {
         setRepertorioGeral((atual) => [musica, ...atual]);
     }
   };
   
-  // Função para adicionar uma música do repertório ao setlist
   const adicionarAoSetlist = (musica) => {
     setMusicasNoSetlist((prev) => [...prev, musica]);
     setRepertorioGeral((prev) => prev.filter((m) => m.id !== musica.id));
@@ -125,7 +119,8 @@ function EditorDeSetlist() {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       {/* Container principal com flexbox para layout em coluna e altura responsiva */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: { xs: 'auto', md: 'calc(100vh - 112px)' } }}>
+      {/* A altura agora usa '100%' para forçar o Box a ter uma altura que os flex children podem usar */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: { xs: 'auto', md: 'calc(100vh - 112px)' } }}> 
         {/* Cabeçalho do editor com flexbox para alinhamento e responsividade */}
         <Box sx={{ 
           display: "flex", 
@@ -133,8 +128,8 @@ function EditorDeSetlist() {
           alignItems: "center", 
           mb: 2, 
           flexShrink: 0, 
-          flexDirection: { xs: 'column', sm: 'row' }, // Empilha em telas pequenas
-          gap: 2 // Espaçamento entre os itens
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          gap: 2 
         }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Tooltip title="Voltar para Setlists">
@@ -151,7 +146,7 @@ function EditorDeSetlist() {
             startIcon={salvando ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} 
             onClick={handleSalvar} 
             disabled={salvando} 
-            sx={{ width: { xs: '100%', sm: 'auto' } }} // Largura total em telas pequenas
+            sx={{ width: { xs: '100%', sm: 'auto' } }} 
           >
             Salvar
           </Button>
@@ -180,10 +175,12 @@ function EditorDeSetlist() {
         </Paper>
 
         {/* Grid Container para as duas colunas (Repertório Geral e Músicas no Setlist) */}
+        {/* Adiciona flexGrow: 1 para o Grid container ocupar o espaço restante */}
         <Grid container spacing={3} sx={{ flexGrow: 1, overflow: 'hidden' }}>
           {/* Coluna do Repertório Geral */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', mb: { xs: 3, md: 0 } }}> {/* Margem inferior em mobile */}
+            {/* Paper para o Repertório Geral */}
+            <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', mb: { xs: 3, md: 0 } }}>
               <Typography variant="h6" gutterBottom>Repertório Geral</Typography>
               <TextField fullWidth placeholder="Buscar no repertório..." value={termoBusca}
                 onChange={(e) => setTermoBusca(e.target.value)} sx={{ mb: 2, flexShrink: 0 }}
@@ -193,12 +190,15 @@ function EditorDeSetlist() {
                 {(provided) => (
                   <List
                     dense
-                    // Propriedades flexbox e de rolagem para a lista
+                    // --- MODIFICAÇÃO CHAVE: Forçando altura e rolagem da lista ---
                     sx={{
-                      height: '100%', // Essencial para que a lista ocupe a altura total do pai Paper
+                      flexGrow: 1, // Permite que a lista cresça para preencher o espaço
                       overflowY: 'auto', // Habilita a rolagem vertical
-                      flexGrow: 1, // Permite que a lista cresça e preencha o espaço
-                      minHeight: 200 // Garante uma altura mínima visível
+                      // Para garantir que flexGrow funcione corretamente, podemos precisar de uma altura base
+                      // ou que o pai determine a altura total. 'height: 0' com flexGrow:1 é um padrão comum.
+                      // Alternativamente, uma altura percentual pode funcionar se o pai tem altura definida.
+                      height: 0, // Altura base 0, deixando o flexGrow definir a altura real
+                      minHeight: 100 // Uma altura mínima para não sumir se houver poucos itens
                     }}
                     {...provided.droppableProps}
                     ref={provided.innerRef}
@@ -207,9 +207,7 @@ function EditorDeSetlist() {
                       <Draggable key={`musica-${musica.id}`} draggableId={`musica-${musica.id}`} index={index}>
                         {(provided) => (
                           <ListItem
-                            ref={provided.innerRef} 
-                            {...provided.draggableProps} 
-                            // O drag handle agora é o ícone de arrastar
+                            ref={provided.innerRef} {...provided.draggableProps} 
                             secondaryAction={
                               <Tooltip title="Adicionar ao Setlist">
                                 <IconButton edge="end" onClick={() => adicionarAoSetlist(musica)}>
@@ -219,7 +217,6 @@ function EditorDeSetlist() {
                             }
                             sx={{ mb: 1, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}
                           >
-                            {/* Ícone de arrastar que serve como drag handle */}
                             <ListItemIcon sx={{minWidth: 32, color: 'text.secondary'}} {...provided.dragHandleProps}>
                                 <DragIndicatorIcon />
                             </ListItemIcon>
@@ -237,18 +234,19 @@ function EditorDeSetlist() {
 
           {/* Coluna das Músicas no Setlist */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+            {/* Paper para as Músicas no Setlist */}
             <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'action.selected' }}>
               <Typography variant="h6" gutterBottom>Músicas no Setlist ({musicasNoSetlist.length})</Typography>
                 <Droppable droppableId="setlist">
                 {(provided) => (
                   <List
                     dense
-                    // Propriedades flexbox e de rolagem para a lista
+                    // --- MODIFICAÇÃO CHAVE: Forçando altura e rolagem da lista ---
                     sx={{
-                      height: '100%', // Essencial para que a lista ocupe a altura total do pai Paper
+                      flexGrow: 1, // Permite que a lista cresça para preencher o espaço
                       overflowY: 'auto', // Habilita a rolagem vertical
-                      flexGrow: 1, // Permite que a lista cresça e preencha o espaço
-                      minHeight: 200 // Garante uma altura mínima visível
+                      height: 0, // Altura base 0, deixando o flexGrow definir a altura real
+                      minHeight: 100 // Garante uma altura mínima visível
                     }}
                     {...provided.droppableProps}
                     ref={provided.innerRef}
@@ -257,8 +255,7 @@ function EditorDeSetlist() {
                       <Draggable key={`setlist-${musica.id}`} draggableId={`setlist-${musica.id}`} index={index}>
                         {(provided) => (
                           <ListItem
-                            ref={provided.innerRef} 
-                            {...provided.draggableProps}
+                            ref={provided.innerRef} {...provided.draggableProps}
                             secondaryAction={
                               <Tooltip title="Remover do Setlist">
                                 <IconButton edge="end" onClick={() => removerDoSetlist(musica, index)}>
@@ -268,7 +265,6 @@ function EditorDeSetlist() {
                             }
                             sx={{ mb: 1, bgcolor: 'background.paper', borderRadius: 2 }}
                           >
-                            {/* Ícone de arrastar que serve como drag handle */}
                             <ListItemIcon sx={{minWidth: 32, color: 'text.secondary'}} {...provided.dragHandleProps}>
                                 <DragIndicatorIcon />
                             </ListItemIcon>
