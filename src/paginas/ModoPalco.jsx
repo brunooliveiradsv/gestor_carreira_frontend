@@ -19,7 +19,7 @@ import {
     AddCircleOutline as TransposeUpIcon,
 } from '@mui/icons-material';
 
-// --- NOVA LÓGICA DE TRANSPOSIÇÃO ROBUSTA ---
+// Lógica de transposição (sem alterações)
 const ALL_NOTES = [
     { sharp: 'A', flat: 'A' }, { sharp: 'A#', flat: 'Bb' }, { sharp: 'B', flat: 'B' },
     { sharp: 'C', flat: 'C' }, { sharp: 'C#', flat: 'Db' }, { sharp: 'D', flat: 'D' },
@@ -28,7 +28,6 @@ const ALL_NOTES = [
 ];
 
 const getNoteIndex = (note) => {
-    // Normaliza a nota para o formato "A#" ou "Bb" (primeira letra maiúscula)
     const normalizedNote = note.length > 1 
         ? note.charAt(0).toUpperCase() + note.charAt(1).toLowerCase() 
         : note.toUpperCase();
@@ -38,7 +37,7 @@ const getNoteIndex = (note) => {
             return i;
         }
     }
-    return -1; // Nota não encontrada
+    return -1;
 };
 
 const transposeNote = (note, amount) => {
@@ -50,7 +49,6 @@ const transposeNote = (note, amount) => {
     const newNote = ALL_NOTES[newIndex];
     if (newNote.sharp === newNote.flat) return newNote.sharp;
     
-    // Prefere sustenidos (#) por padrão, a menos que a nota original fosse bemol (b)
     return note.includes('b') ? newNote.flat : newNote.sharp;
 };
 
@@ -66,6 +64,8 @@ const transposeChord = (chord, amount) => {
     return transposedNote + rest;
 };
 
+
+// --- FUNÇÃO DE FORMATAR CIFRA CORRIGIDA ---
 const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
     if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
     
@@ -76,7 +76,13 @@ const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
         
         let linhaProcessada = linha;
         if (isChordLine && transposicao !== 0) {
-            linhaProcessada = linha.trim().split(/\s+/).map(chord => transposeChord(chord, transposicao)).join('   ');
+            // Regex para encontrar cada acorde individual na linha
+            const chordRegex = /([A-G][#b]?(?:m|maj|min|dim|aug|sus|add)?[0-9\/b#]*)/g;
+            // Usa replace com uma função para transpor cada acorde mantendo o espaçamento
+            linhaProcessada = linha.replace(chordRegex, (match) => {
+                if (match.trim() === '') return match; // Mantém espaços em branco
+                return transposeChord(match, transposicao);
+            });
         }
 
         return (
@@ -93,8 +99,9 @@ const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
     });
 };
 
-// O resto do componente ModoPalco permanece o mesmo...
+
 function ModoPalco() {
+  // O resto do componente permanece o mesmo...
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
