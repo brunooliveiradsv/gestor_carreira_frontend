@@ -1,7 +1,7 @@
 // src/paginas/ShowCase.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
-import apiClient from '../api';
+import apiClient from '../apiClient';
 import YouTube from 'react-youtube';
 import {
   Box, Typography, CircularProgress, Container, Paper, Avatar,
