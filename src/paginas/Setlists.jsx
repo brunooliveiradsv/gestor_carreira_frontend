@@ -12,7 +12,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   PlaylistPlay as PlaylistPlayIcon,
-  MusicVideo as MusicVideoIcon // <-- 1. Importe o ícone novo
+  MusicVideo as MusicVideoIcon
 } from '@mui/icons-material';
 
 function Setlists() {
@@ -73,13 +73,13 @@ function Setlists() {
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+    <Box sx={{ p: 2 }}> {/* Adicionado padding geral para evitar que o conteúdo cole nas bordas em mobile */}
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, mb: 4, gap: 2 }}>
         <Box>
           <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
           <Typography color="text.secondary">Crie e organize as sequências de músicas para os seus shows.</Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirCriarDialogo}>
+        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirCriarDialogo} sx={{ width: { xs: '100%', sm: 'auto' } }}>
           Novo Setlist
         </Button>
       </Box>
@@ -94,10 +94,10 @@ function Setlists() {
           {setlists.map((setlist) => (
             <Grid item xs={12} sm={6} md={4} key={setlist.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <PlaylistPlayIcon sx={{ color: 'primary.main', mr: 1.5 }} />
-                    <Typography variant="h6" fontWeight="bold">{setlist.nome}</Typography>
+                <CardContent sx={{ flexGrow: 1, p: 2 }}> {/* Reduzido o padding para mobile se necessário */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, overflow: 'hidden' }}> {/* Adicionado overflow: 'hidden' */}
+                    <PlaylistPlayIcon sx={{ color: 'primary.main', mr: 1.5, flexShrink: 0 }} /> {/* flexShrink para o ícone não diminuir */}
+                    <Typography variant="h6" fontWeight="bold" noWrap sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{setlist.nome}</Typography>
                   </Box>
                   <Typography variant="body2" color="text.secondary" sx={{
                       display: '-webkit-box',
@@ -105,11 +105,12 @@ function Setlists() {
                       WebkitBoxOrient: 'vertical',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
+                      whiteSpace: 'normal', // Garante quebra de linha
                   }}>
                     {setlist.notas_adicionais || 'Nenhuma nota adicional.'}
                   </Typography>
                 </CardContent>
-                <CardActions sx={{ justifyContent: 'flex-end' }}>
+                <CardActions sx={{ justifyContent: 'flex-end', p: 1 }}> {/* Ajustado o padding para os botões */}
                   {/* --- 2. BOTÃO "MODO PALCO" ADICIONADO AQUI --- */}
                   <Tooltip title="Modo Palco">
                     <IconButton color="secondary" onClick={() => navigate(`/setlists/palco/${setlist.id}`)}>
@@ -122,6 +123,7 @@ function Setlists() {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Excluir">
+                    {/* Futuramente, você pode adicionar a lógica de exclusão e um diálogo de confirmação aqui */}
                     <IconButton color="error">
                       <DeleteIcon />
                     </IconButton>

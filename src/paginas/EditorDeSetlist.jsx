@@ -145,6 +145,7 @@ function EditorDeSetlist() {
         </Paper>
 
         <Grid container spacing={3} sx={{ flexGrow: 1, overflow: 'hidden' }}>
+          {/* Ajuste aqui: xs=12 para ocupar a largura total em telas pequenas */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
             <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', mb: { xs: 3, md: 0 } }}> {/* Adiciona margem inferior em mobile */}
               <Typography variant="h6" gutterBottom>Repertório Geral</Typography>
@@ -180,6 +181,7 @@ function EditorDeSetlist() {
             </Paper>
           </Grid>
 
+          {/* Ajuste aqui: xs=12 para ocupar a largura total em telas pequenas */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
             <Paper sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'action.selected' }}>
               <Typography variant="h6" gutterBottom>Músicas no Setlist ({musicasNoSetlist.length})</Typography>
