@@ -28,9 +28,13 @@ const ALL_NOTES = [
 ];
 
 const getNoteIndex = (note) => {
-    const upperNote = note.toUpperCase();
+    // Normaliza a nota para o formato "A#" ou "Bb" (primeira letra maiúscula)
+    const normalizedNote = note.length > 1 
+        ? note.charAt(0).toUpperCase() + note.charAt(1).toLowerCase() 
+        : note.toUpperCase();
+
     for (let i = 0; i < ALL_NOTES.length; i++) {
-        if (ALL_NOTES[i].sharp === upperNote || ALL_NOTES[i].flat === upperNote) {
+        if (ALL_NOTES[i].sharp === normalizedNote || ALL_NOTES[i].flat === normalizedNote) {
             return i;
         }
     }
@@ -39,19 +43,19 @@ const getNoteIndex = (note) => {
 
 const transposeNote = (note, amount) => {
     const index = getNoteIndex(note);
-    if (index === -1) return note; // Retorna a nota original se não for encontrada
+    if (index === -1) return note; 
     
     const newIndex = (index + amount + ALL_NOTES.length) % ALL_NOTES.length;
     
-    // Prefere sustenidos ao subir e bemóis ao descer, exceto para notas sem equivalentes
     const newNote = ALL_NOTES[newIndex];
     if (newNote.sharp === newNote.flat) return newNote.sharp;
-    return amount > 0 ? newNote.sharp : newNote.flat;
+    
+    // Prefere sustenidos (#) por padrão, a menos que a nota original fosse bemol (b)
+    return note.includes('b') ? newNote.flat : newNote.sharp;
 };
 
 const transposeChord = (chord, amount) => {
     if (!chord || amount === 0) return chord;
-    // Regex melhorado para capturar a nota e o resto do acorde
     const match = chord.match(/^([A-G][#b]?)(.*)/);
     if (!match) return chord;
 
@@ -59,15 +63,12 @@ const transposeChord = (chord, amount) => {
     const rest = match[2];
     
     const transposedNote = transposeNote(note, amount);
-    if (transposedNote === note) return chord; // Se a nota não pôde ser transposta, retorna o acorde original
-    
     return transposedNote + rest;
 };
 
 const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
     if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
     
-    // Regex que identifica uma linha que provavelmente contém cifras
     const regexChordLine = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?(\s+[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?)*\s*$/i;
 
     return textoCifra.split('\n').map((linha, index) => {
@@ -94,7 +95,6 @@ const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
 
 // O resto do componente ModoPalco permanece o mesmo...
 function ModoPalco() {
-    // ... (todo o código do componente que já tinhamos, sem alterações)
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
