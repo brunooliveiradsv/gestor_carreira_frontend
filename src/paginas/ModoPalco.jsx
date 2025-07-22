@@ -4,7 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
-    Box, Typography, CircularProgress, IconButton, Paper, useTheme, Button
+    Box, Typography, CircularProgress, IconButton, Paper, useTheme, Button, Container,
+    AppBar, Toolbar // <-- CORRIGIDO AQUI: AppBar e Toolbar foram adicionados de volta
 } from '@mui/material';
 import {
     ArrowBackIos, ArrowForwardIos, Close as CloseIcon,
@@ -52,8 +53,7 @@ function ModoPalco() {
   const scrollAnimationRef = useRef();
   const countdownIntervalRef = useRef();
 
-  // --- NOVA FUNÇÃO PARA SAIR ---
-  // Verifica se está em tela cheia antes de navegar
+  // Função para sair, agora também fecha o modo de tela cheia
   const handleSair = () => {
     if (document.fullscreenElement) {
       document.exitFullscreen();
@@ -114,8 +114,7 @@ function ModoPalco() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [irParaProxima, irParaAnterior, handleSair]);
-
-  // As outras funções (iniciarContagemParaScroll, handleToggleScroll, etc.) permanecem iguais...
+  
   const iniciarContagemParaScroll = () => {
     clearInterval(countdownIntervalRef.current);
     setCountdown(3);
@@ -180,6 +179,7 @@ function ModoPalco() {
     return () => clearTimeout(scrollAnimationRef.current);
   }, [isScrolling, scrollSpeed, mostrarNotificacao, irParaProxima]);
 
+
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: 'background.default' }}><CircularProgress /></Box>;
   }
@@ -203,7 +203,6 @@ function ModoPalco() {
       <AppBar sx={{ position: 'relative', bgcolor: 'background.paper' }}>
           <Toolbar>
             <Box sx={{ flex: 1, textAlign: 'left', display: 'flex', alignItems: 'center' }}>
-                {/* BOTÃO DE SAIR AGORA USA A NOVA FUNÇÃO */}
                 <IconButton edge="start" color="inherit" onClick={handleSair} aria-label="close"><CloseIcon /></IconButton>
                 <Typography sx={{ ml: 2, display: { xs: 'none', sm: 'block' } }}>Música {indiceAtual + 1} de {setlist.musicas.length}</Typography>
             </Box>
@@ -219,40 +218,64 @@ function ModoPalco() {
           </Toolbar>
         </AppBar>
 
-      <Box ref={letraRef} sx={{
-          position: 'relative', flexGrow: 1, overflowY: 'auto',
-          p: {xs: 2, md: 4}, pb: '100px', // Aumentado o padding inferior
-          '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none'
-      }}>
-          {/* O conteúdo da cifra permanece igual */}
+      <Box
+          ref={letraRef}
+          sx={{
+              position: 'relative',
+              flexGrow: 1,
+              overflowY: 'auto',
+              p: {xs: 2, md: 4},
+              pb: '100px',
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none'
+          }}
+      >
+          <Container maxWidth="md">
+              <Box sx={{ lineHeight: 2, fontFamily: 'monospace', textAlign: 'center', whiteSpace: 'pre-wrap' }}>
+                  {formatarCifra(musicaAtual.notas_adicionais, theme, fontSize)}
+              </Box>
+          </Container>
+
+          {countdown !== null && countdown > 0 && (
+              <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 20 }}>
+                  <Typography sx={{ fontSize: {xs: '15rem', sm: '25rem'}, fontWeight: 'bold', color: 'white', animation: 'countdown-zoom 1s infinite' }}>
+                      {countdown}
+                  </Typography>
+                  <style>
+                      {`
+                      @keyframes countdown-zoom {
+                          0% { transform: scale(1); opacity: 1; }
+                          50% { transform: scale(1.1); opacity: 0.7; }
+                          100% { transform: scale(1); opacity: 1; }
+                      }
+                      `}
+                  </style>
+              </Box>
+          )}
       </Box>
 
-      {/* Botões laterais permanecem iguais */}
       <IconButton onClick={irParaAnterior} sx={{ position: 'fixed', left: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowBackIos /></IconButton>
       <IconButton onClick={irParaProxima} sx={{ position: 'fixed', right: {xs: 4, md: 16}, top: '50%', transform: 'translateY(-50%)', zIndex: 10, bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}><ArrowForwardIos /></IconButton>
 
-      {/* --- BARRA DE CONTROLOS INFERIOR REESTRUTURADA --- */}
       <Paper sx={{
             position: 'fixed',
             bottom: 0,
             left: 0,
             right: 0,
             display: 'flex',
-            justifyContent: 'space-between', // Distribui o espaço entre os grupos
+            justifyContent: 'space-between',
             alignItems: 'center',
-            p: { xs: 0.5, sm: 1 }, // Padding responsivo
+            p: { xs: 0.5, sm: 1 },
             bgcolor: 'background.paper',
             borderTop: '1px solid',
             borderColor: 'divider',
             zIndex: 10
         }}>
-            {/* Grupo da Esquerda: Controlo de Zoom */}
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <IconButton onClick={() => setFontSize(s => Math.max(1, s - 0.1))}><ZoomOutIcon /></IconButton>
                 <IconButton onClick={() => setFontSize(s => Math.min(4, s + 0.1))}><ZoomInIcon /></IconButton>
             </Box>
 
-            {/* Grupo Central: Controlo de Rolagem */}
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <IconButton onClick={() => setScrollSpeed(s => s + 10)}><RemoveIcon /></IconButton>
                 <IconButton onClick={handleToggleScroll} color="secondary" size="large">
@@ -261,8 +284,6 @@ function ModoPalco() {
                 <IconButton onClick={() => setScrollSpeed(s => Math.max(10, s - 10))}><AddIcon /></IconButton>
             </Box>
             
-            {/* Grupo da Direita: Espaçador para manter o centro alinhado */}
-            {/* Oculto em telas pequenas para dar mais espaço aos controlos centrais */}
             <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', visibility: 'hidden' }}>
                 <IconButton><ZoomOutIcon /></IconButton>
                 <IconButton><ZoomInIcon /></IconButton>
