@@ -157,7 +157,7 @@ function Mural() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" component="h1" fontWeight="bold">
-            Mural e Vitrine
+          Configuração de Showcase e Mural
           </Typography>
           <Typography color="text.secondary">
             Gerencie as publicações e as informações da sua página pública.
