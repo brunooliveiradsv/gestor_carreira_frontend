@@ -157,7 +157,7 @@ function Mural() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" component="h1" fontWeight="bold">
-          Configurações e Mural
+          Painel Showcase e Mural
           </Typography>
           <Typography color="text.secondary">
             Gerencie as publicações e as informações da sua página pública.
@@ -169,9 +169,9 @@ function Mural() {
       </Box>
 
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-        <Typography variant="h6" component="h2" gutterBottom>Configurações da Vitrine</Typography>
+        <Typography variant="h6" component="h2" gutterBottom>Configurações da Showcase</Typography>
         {usuario?.url_unica && (
-            <Link href={`/vitrine/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Link href={`/showcase/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <LinkIcon sx={{ mr: 1 }} /> Visualizar minha página pública
             </Link>
         )}
@@ -220,7 +220,7 @@ function Mural() {
             <TextField id="link_spotify" name="link_spotify" label="Spotify" value={links.spotify} onChange={(e) => handleLinkChange('spotify', e.target.value)} InputProps={{ startAdornment: <MusicNote sx={{ mr: 1, color: 'text.secondary' }} /> }} />
             
             <Button type="submit" variant="contained" disabled={carregandoPublico} sx={{ alignSelf: "flex-start", mt: 2 }}>
-                {carregandoPublico ? <CircularProgress size={24} /> : "Salvar Informações da Vitrine"}
+                {carregandoPublico ? <CircularProgress size={24} /> : "Salvar Informações do Showcase"}
             </Button>
         </Box>
       </Paper>
