@@ -1,8 +1,8 @@
 // src/paginas/Contatos.jsx
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import apiClient from "../api";
 import { useNotificacao } from "../contextos/NotificationContext";
+import useApi from "../hooks/useApi";
 
 import {
   Box, Button, Typography, CircularProgress, Card, CardContent,
@@ -18,56 +18,19 @@ import {
 import FormularioContato from "../componentes/FormularioContato.jsx";
 
 function Contatos() {
-  const [contatos, setContatos] = useState([]);
-  const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
   const theme = useTheme();
+
+  const { data: contatos, carregando, refetch: buscarContatos } = useApi('/api/contatos');
 
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [dialogoConfirmacaoAberto, setDialogoConfirmacaoAberto] = useState(false);
   const [contatoSelecionadoId, setContatoSelecionadoId] = useState(null);
   const [contatoParaApagar, setContatoParaApagar] = useState(null);
 
-  const buscarContatos = async () => {
-    try {
-      // Não é necessário resetar o carregamento aqui para evitar piscar da tela
-      const resposta = await apiClient.get("/api/contatos");
-      setContatos(resposta.data);
-    } catch (erro) {
-      mostrarNotificacao("Não foi possível carregar os contatos.", "error");
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  useEffect(() => {
-    setCarregando(true);
-    buscarContatos();
-  }, []);
-
-  const handleAbrirFormulario = (id = null) => {
-    setContatoSelecionadoId(id);
-    setDialogoFormularioAberto(true);
-  };
-
-  const handleFecharFormulario = () => {
-    setContatoSelecionadoId(null);
-    setDialogoFormularioAberto(false);
-  };
-
   const handleSucessoFormulario = () => {
     handleFecharFormulario();
     buscarContatos();
-  };
-
-  const handleAbrirConfirmacaoApagar = (contato) => {
-    setContatoParaApagar(contato);
-    setDialogoConfirmacaoAberto(true);
-  };
-
-  const handleFecharConfirmacaoApagar = () => {
-    setContatoParaApagar(null);
-    setDialogoConfirmacaoAberto(false);
   };
 
   const handleConfirmarApagar = async () => {
@@ -82,19 +45,21 @@ function Contatos() {
       handleFecharConfirmacaoApagar();
     }
   };
-
-  // --- NOVA FUNÇÃO ---
-  // Função para definir um contato como público para a vitrine
+  
   const handleDefinirPublico = async (contatoId) => {
     try {
       await apiClient.patch(`/api/contatos/${contatoId}/definir-publico`);
       mostrarNotificacao('Contato destacado na sua página vitrine!', 'success');
-      // Atualiza a lista para refletir a mudança visual
       buscarContatos(); 
     } catch (error) {
       mostrarNotificacao('Erro ao destacar o contato.', 'error');
     }
   };
+
+  const handleAbrirFormulario = (id = null) => { setContatoSelecionadoId(id); setDialogoFormularioAberto(true); };
+  const handleFecharFormulario = () => { setContatoSelecionadoId(null); setDialogoFormularioAberto(false); };
+  const handleAbrirConfirmacaoApagar = (contato) => { setContatoParaApagar(contato); setDialogoConfirmacaoAberto(true); };
+  const handleFecharConfirmacaoApagar = () => { setContatoParaApagar(null); setDialogoConfirmacaoAberto(false); };
 
   if (carregando) {
     return <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}><CircularProgress color="inherit" /></Box>;

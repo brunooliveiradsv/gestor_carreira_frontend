@@ -1,10 +1,9 @@
 // src/paginas/Agenda.jsx
-
 import { useState, useEffect } from 'react';
-// --- ETAPA 1: Importar useLocation e useNavigate ---
 import { useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '../api';
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
+import useApi from '../hooks/useApi'; // IMPORTADO
 
 import {
   Box, Button, Typography, CircularProgress, Card,
@@ -21,48 +20,26 @@ import {
 import FormularioCompromisso from '../componentes/FormularioCompromisso.jsx';
 
 function Agenda() {
-  const [compromissos, setCompromissos] = useState([]);
-  const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
   const theme = useTheme();
-  
-  // --- ETAPA 2: Inicializar os hooks ---
   const location = useLocation();
   const navigate = useNavigate();
+
+  const { data: compromissos, carregando, refetch: buscarCompromissos } = useApi('/api/compromissos');
 
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [dialogoDetalhesAberto, setDialogoDetalhesAberto] = useState(false);
   const [compromissoSelecionado, setCompromissoSelecionado] = useState(null);
-  const [dialogoApagarAberto, setDialogoApagarAberto] = useState(false); // <-- ADICIONADO
-  const [compromissoParaApagar, setCompromissoParaApagar] = useState(null); // <-- ADICIONADO
+  const [dialogoApagarAberto, setDialogoApagarAberto] = useState(false);
+  const [compromissoParaApagar, setCompromissoParaApagar] = useState(null);
 
-
-  const buscarCompromissos = async () => {
-    try {
-      const resposta = await apiClient.get('/api/compromissos');
-      setCompromissos(resposta.data);
-    } catch (erro) {
-      console.error("Erro ao buscar compromissos:", erro);
-      mostrarNotificacao("Não foi possível carregar os compromissos.", "error");
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  useEffect(() => {
-    buscarCompromissos();
-  }, []);
-  
-  // --- ETAPA 3: Adicionar useEffect para verificar o 'state' da navegação ---
   useEffect(() => {
     if (location.state?.abrirFormulario) {
       handleAbrirFormulario();
-      // Limpa o state para que o formulário não abra novamente ao navegar pela página
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
 
-  // --- LÓGICA DE APAGAR ATUALIZADA PARA USAR UM DIALOG DE CONFIRMAÇÃO ---
   const handleAbrirApagarDialogo = (compromisso) => {
     setCompromissoParaApagar(compromisso);
     setDialogoApagarAberto(true);
