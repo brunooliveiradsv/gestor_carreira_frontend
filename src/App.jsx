@@ -32,7 +32,7 @@ function App() {
       <Route path="/login" element={<Autenticacao />} />
       <Route path="/cadastro" element={<Autenticacao />} />
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
-      <Route path="/vitrine/:url_unica" element={<PaginaVitrine />} />
+      <Route path="/showcase/:url_unica" element={<ShowCase />} />
 
       {/* --- ROTA DE TELA CHEIA (SEM LAYOUT) --- */}
       {/* Esta rota é protegida, mas renderiza APENAS o ModoPalco, sem o menu lateral */}
