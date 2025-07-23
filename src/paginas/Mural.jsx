@@ -8,7 +8,7 @@ import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
 import {
-  Box, Typography, Button, CircularProgress, Paper,
+  Box, Typography, Button, CircularProgress, Paper, Grid,
   Dialog, DialogActions, DialogContent, DialogTitle, Link, TextField, IconButton, Tooltip,
   List, ListItem, ListItemText
 } from '@mui/material';
@@ -153,7 +153,7 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
         />
       )}
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-        <Typography variant="h6" component="h2" gutterBottom>Fotos de Capa</Typography>
+        <Typography variant="h6" component="h2" gutterBottom>Fotos de Capa da Vitrine (Arraste para reordenar)</Typography>
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="capasDroppable" direction="horizontal">
             {(provided) => (
@@ -168,7 +168,7 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
                       <Box 
                         ref={provided.innerRef} 
                         {...provided.draggableProps}
-                        sx={{ flex: '1 1 0', minWidth: '200px' }} // Itens flexíveis
+                        sx={{ flex: '1 1 0', minWidth: '200px' }}
                       >
                           <Paper 
                             variant="outlined" 
@@ -238,7 +238,8 @@ function Mural() {
   const buscarPosts = useCallback(async () => {
     try {
       const resposta = await apiClient.get('/api/posts');
-      setPosts(resposta.data);
+      // --- ALTERAÇÃO AQUI: Limita aos últimos 3 posts ---
+      setPosts(resposta.data.slice(0, 3));
     } catch (error) {
       mostrarNotificacao('Erro ao carregar as publicações.', 'error');
     } finally {
@@ -284,7 +285,7 @@ function Mural() {
       await apiClient.post('/api/posts', novoPost);
       mostrarNotificacao('Publicação criada com sucesso!', 'success');
       handleFecharDialogo();
-      buscarPosts();
+      buscarPosts(); // Recarrega os posts para mostrar o mais recente
     } catch (error) {
       mostrarNotificacao('Erro ao salvar a publicação.', 'error');
     }
@@ -318,33 +319,11 @@ function Mural() {
         </Button>
       </Box>
       
-      <GerirCapas usuario={usuario} setUsuario={setUsuario} mostrarNotificacao={mostrarNotificacao} />
-
-      <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-        <Typography variant="h6" component="h2" gutterBottom>Informações Gerais</Typography>
-        {usuario?.url_unica && (
-            <Link href={`/showcase/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <LinkIcon sx={{ mr: 1 }} /> Visualizar minha página pública
-            </Link>
-        )}
-        <Box component="form" onSubmit={handleSalvarPerfilPublico} noValidate sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
-            <TextField id="url_unica" name="url_unica" label="URL Única" helperText="Ex: o-nome-da-sua-banda" value={urlUnica} onChange={(e) => setUrlUnica(e.target.value.toLowerCase().replace(/\s+/g, '-'))} fullWidth />
-            <TextField id="biografia" name="biografia" label="Biografia" multiline rows={4} value={biografia} onChange={(e) => setBiografia(e.target.value)} fullWidth />
-            <TextField id="video_destaque" name="video_destaque" label="Link do Vídeo Destaque (YouTube)" value={videoDestaque} onChange={(e) => setVideoDestaque(e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            <Typography color="text.secondary">Links e Redes Sociais</Typography>
-            <TextField id="link_instagram" name="link_instagram" label="Instagram" value={links.instagram} onChange={(e) => handleLinkChange('instagram', e.target.value)} InputProps={{ startAdornment: <Instagram sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            <TextField id="link_youtube" name="link_youtube" label="YouTube (Canal)" value={links.youtube} onChange={(e) => handleLinkChange('youtube', e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            <TextField id="link_spotify" name="link_spotify" label="Spotify" value={links.spotify} onChange={(e) => handleLinkChange('spotify', e.target.value)} InputProps={{ startAdornment: <MusicNote sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            
-            <Button type="submit" variant="contained" disabled={carregandoPublico} sx={{ alignSelf: "flex-start", mt: 2 }}>
-                {carregandoPublico ? <CircularProgress size={24} /> : "Salvar Informações Gerais"}
-            </Button>
-        </Box>
-      </Paper>
-
-      <Paper>
+      {/* --- NOVA ORDEM --- */}
+      
+      <Paper sx={{ mb: 4 }}>
         <Typography variant="h6" component="h2" sx={{ p: { xs: 2, md: 3 }, pb: 0 }}>
-          Publicações do Mural
+          Últimas 3 Publicações do Mural
         </Typography>
         {carregandoPosts ? <CircularProgress sx={{ m: 4 }}/> : (
             <List>
@@ -380,6 +359,30 @@ function Mural() {
             )}
             </List>
         )}
+      </Paper>
+      
+      <GerirCapas usuario={usuario} setUsuario={setUsuario} mostrarNotificacao={mostrarNotificacao} />
+
+      <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
+        <Typography variant="h6" component="h2" gutterBottom>Informações Gerais da Vitrine</Typography>
+        {usuario?.url_unica && (
+            <Link href={`/showcase/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <LinkIcon sx={{ mr: 1 }} /> Visualizar minha página pública
+            </Link>
+        )}
+        <Box component="form" onSubmit={handleSalvarPerfilPublico} noValidate sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
+            <TextField id="url_unica" name="url_unica" label="URL Única" helperText="Ex: o-nome-da-sua-banda" value={urlUnica} onChange={(e) => setUrlUnica(e.target.value.toLowerCase().replace(/\s+/g, '-'))} fullWidth />
+            <TextField id="biografia" name="biografia" label="Biografia" multiline rows={4} value={biografia} onChange={(e) => setBiografia(e.target.value)} fullWidth />
+            <TextField id="video_destaque" name="video_destaque" label="Link do Vídeo Destaque (YouTube)" value={videoDestaque} onChange={(e) => setVideoDestaque(e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+            <Typography color="text.secondary">Links e Redes Sociais</Typography>
+            <TextField id="link_instagram" name="link_instagram" label="Instagram" value={links.instagram} onChange={(e) => handleLinkChange('instagram', e.target.value)} InputProps={{ startAdornment: <Instagram sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+            <TextField id="link_youtube" name="link_youtube" label="YouTube (Canal)" value={links.youtube} onChange={(e) => handleLinkChange('youtube', e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+            <TextField id="link_spotify" name="link_spotify" label="Spotify" value={links.spotify} onChange={(e) => handleLinkChange('spotify', e.target.value)} InputProps={{ startAdornment: <MusicNote sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+            
+            <Button type="submit" variant="contained" disabled={carregandoPublico} sx={{ alignSelf: "flex-start", mt: 2 }}>
+                {carregandoPublico ? <CircularProgress size={24} /> : "Salvar Informações Gerais"}
+            </Button>
+        </Box>
       </Paper>
 
       <Dialog open={dialogoAberto} onClose={handleFecharDialogo} fullWidth maxWidth="sm">
