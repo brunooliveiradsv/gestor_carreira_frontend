@@ -6,7 +6,7 @@ import {
   Box, Typography, CircularProgress, Paper, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Chip,
   TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel, Grid, Tooltip,
-  useTheme, useMediaQuery, List, ListItem, ListItemText, Divider, Avatar
+  useTheme, useMediaQuery, List, Divider, Avatar
 } from '@mui/material';
 import { Search as SearchIcon, History as HistoryIcon, Person as PersonIcon } from '@mui/icons-material';
 
