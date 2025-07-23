@@ -1,5 +1,4 @@
 // src/paginas/Dashboard.jsx
-
 import { useState, useEffect, useContext } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
@@ -28,7 +27,7 @@ import {
   EmojiEvents as EmojiEventsIcon,
   ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
-import Anuncio from '../componentes/Anuncio'; // Assumindo que o componente de anúncio existe
+import Anuncio from '../componentes/Anuncio';
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
 
@@ -40,9 +39,7 @@ function Dashboard() {
   const navigate = useNavigate();
 
   const abrirFormulario = (path) => {
-    // A navegação para abrir formulário em outra página pode ser mais complexa,
-    // por enquanto, vamos apenas navegar para a página.
-    navigate(path);
+    navigate(path, { state: { abrirFormulario: true } });
   };
 
   useEffect(() => {
@@ -91,7 +88,6 @@ function Dashboard() {
 
       {erro && <Alert severity="warning" sx={{ mb: 4 }}>{erro}</Alert>}
 
-      {/* --- LAYOUT ATUALIZADO COM FLEXBOX --- */}
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4 }}>
         
         {/* Coluna Principal (Esquerda) */}
