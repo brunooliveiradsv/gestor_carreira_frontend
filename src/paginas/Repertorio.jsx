@@ -10,7 +10,8 @@ import {
 import {
   AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon,
   Delete as DeleteIcon, MusicNote as MusicNoteIcon, PlaylistAddCheck as SuggestionIcon,
-  ImportExport as ImportExportIcon
+  ImportExport as ImportExportIcon,
+  Sync as SyncIcon
 } from "@mui/icons-material";
 
 import FormularioMusica from "../componentes/FormularioMusica.jsx";
@@ -112,6 +113,16 @@ function Repertorio() {
 
     return () => clearTimeout(timer);
   }, [filtros, buscarMusicas]);
+
+  const handleSincronizarComMestre = async (musicaId) => {
+      try {
+          await apiClient.post(`/api/musicas/${musicaId}/sincronizar`);
+          mostrarNotificacao('Música sincronizada com sucesso!', 'success');
+          buscarMusicas(); // Recarrega a lista para mostrar os dados atualizados
+      } catch (error) {
+          mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao sincronizar a música.', 'error');
+      }
+  };
 
   const handleFiltroChange = (e) => {
     const { name, value } = e.target;
