@@ -7,11 +7,12 @@ import { AuthContext } from "../contextos/AuthContext";
 import {
   Box, Button, Typography, CircularProgress, Paper, TextField,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, 
-  Grid, Avatar, Badge, IconButton, Chip
+  Grid, Avatar, Badge, IconButton, Tooltip, Chip
 } from "@mui/material";
 import { 
     PhotoCamera, 
-    WorkspacePremium as WorkspacePremiumIcon 
+    WorkspacePremium as WorkspacePremiumIcon,
+    Link as LinkIcon 
 } from "@mui/icons-material";
 
 const FormCard = ({ title, children }) => (
@@ -42,13 +43,7 @@ function Configuracoes() {
     if (usuario) {
       setNome(usuario.nome || "");
       setEmail(usuario.email || "");
-      let fotoUrlCompleta = null;
-      if (usuario.foto_url) {
-        fotoUrlCompleta = usuario.foto_url.startsWith('http') 
-          ? usuario.foto_url 
-          : `${apiClient.defaults.baseURL}${usuario.foto_url}`;
-      }
-      setPreviewFoto(fotoUrlCompleta);
+      setPreviewFoto(usuario.foto_url || null);
     }
   }, [usuario]);
   
@@ -100,10 +95,19 @@ function Configuracoes() {
   const handleSalvarFoto = async () => {
     if (!novaFoto) return;
     setCarregando(prev => ({ ...prev, foto: true }));
-    const formData = new FormData();
-    formData.append('foto', novaFoto);
     try {
-      const { data } = await apiClient.put('/api/usuarios/perfil/foto', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      let dadosParaEnviar;
+      let config = {};
+
+      if (novaFoto instanceof File) {
+        dadosParaEnviar = new FormData();
+        dadosParaEnviar.append('foto', novaFoto);
+        config = { headers: { 'Content-Type': 'multipart/form-data' } };
+      } else {
+        dadosParaEnviar = { foto_url: novaFoto };
+      }
+
+      const { data } = await apiClient.put('/api/usuarios/perfil/foto', dadosParaEnviar, config);
       setUsuario(data);
       mostrarNotificacao('Foto de perfil atualizada!', 'success');
       setNovaFoto(null);
@@ -149,6 +153,16 @@ function Configuracoes() {
     }
   };
 
+  const handleAbrirPromptUrl = () => {
+    const url = prompt("Cole o link da imagem que deseja usar como foto de perfil:");
+    if (url && url.startsWith('http')) {
+        setNovaFoto(url);
+        setPreviewFoto(url);
+    } else if (url) {
+        mostrarNotificacao("O link fornecido não parece ser uma URL válida.", "warning");
+    }
+  };
+
   if (!usuario) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
@@ -159,10 +173,7 @@ function Configuracoes() {
         <Typography variant="h4" component="h1" fontWeight="bold">Configurações</Typography>
         <Typography color="text.secondary">Gerencie as suas informações de acesso e assinatura.</Typography>
       </Box>
-
-      {/* --- ESTRUTURA DE LAYOUT ATUALIZADA COM FLEXBOX --- */}
       
-      {/* CARTÃO DE ASSINATURA (OCUPA SEMPRE A LARGURA TODA) */}
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4}}>
           <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
@@ -177,16 +188,22 @@ function Configuracoes() {
           </Box>
       </Paper>
       
-      {/* CONTENTOR FLEXBOX PARA OS OUTROS CARDS */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          {/* FOTO DE PERFIL */}
           <Box sx={{ flex: '1 1 280px' }}>
               <FormCard title="Foto de Perfil">
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
-                      <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<IconButton color="primary" onClick={() => fileInputRef.current.click()}><PhotoCamera /></IconButton>}>
-                          <Avatar src={previewFoto} sx={{ width: 120, height: 120, mb: 2, fontSize: '3rem' }}>{usuario?.nome?.charAt(0).toUpperCase()}</Avatar>
-                      </Badge>
+                      <Avatar src={previewFoto} sx={{ width: 120, height: 120, mb: 2, fontSize: '3rem' }}>
+                        {usuario?.nome?.charAt(0).toUpperCase()}
+                      </Avatar>
                       <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleFileChange} />
+                      
+                      <Box sx={{display: 'flex', gap: 1, alignItems: 'center'}}>
+                        <Button variant="outlined" startIcon={<PhotoCamera />} onClick={() => fileInputRef.current.click()}>Enviar Ficheiro</Button>
+                        <Tooltip title="Usar URL da Imagem">
+                            <IconButton onClick={handleAbrirPromptUrl}><LinkIcon /></IconButton>
+                        </Tooltip>
+                      </Box>
+
                       <Button variant="contained" sx={{mt: 2}} disabled={!novaFoto || carregando.foto} onClick={handleSalvarFoto}>
                           {carregando.foto ? <CircularProgress size={24} /> : 'Salvar Foto'}
                       </Button>
@@ -194,7 +211,6 @@ function Configuracoes() {
               </FormCard>
           </Box>
 
-          {/* ALTERAR NOME */}
           <Box sx={{ flex: '1 1 280px' }}>
               <FormCard title="Alterar Nome">
                   <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
@@ -206,7 +222,6 @@ function Configuracoes() {
               </FormCard>
           </Box>
 
-          {/* ALTERAR E-MAIL */}
           <Box sx={{ flex: '1 1 280px' }}>
               <FormCard title="Alterar E-mail">
                   <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
@@ -218,7 +233,6 @@ function Configuracoes() {
               </FormCard>
           </Box>
 
-          {/* ALTERAR SENHA */}
           <Box sx={{ flex: '1 1 280px' }}>
               <FormCard title="Alterar Senha">
                   <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
