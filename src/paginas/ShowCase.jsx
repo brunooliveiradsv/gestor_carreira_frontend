@@ -73,7 +73,7 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
                     <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: {xs: 'center', md: 'flex-start'} }}>
                         {artista.links_redes?.instagram && (<IconButton component="a" href={artista.links_redes.instagram} target="_blank" aria-label="Instagram"><Instagram /></IconButton>)}
                         {artista.links_redes?.youtube && (<IconButton component="a" href={artista.links_redes.youtube} target="_blank" aria-label="YouTube"><YouTubeIcon /></IconButton>)}
-                        {artista.links_redes?.spotify && (<IconButton component="a" href={artista.links_redes.spotify} target="_blank" aria-label="Spotify"><MusicNote /></IconButton>)}
+                        {artista.links_redes?.spotify && (<IconButton component="a" href={artista.links_redes.spotify} target="_blank" aria-label="Spotify"><MusicNoteIcon /></IconButton>)}
                     </Box>
                 </Box>
 
@@ -135,7 +135,6 @@ function ShowCase() {
   const [reacoesPosts, setReacoesPosts] = useState({});
   const [indiceCapa, setIndiceCapa] = useState(0);
 
-  // --- FUNÇÃO CORRIGIDA PARA EXTRAIR O ID DO YOUTUBE ---
   const getYoutubeVideoId = (url) => {
     if (!url) return null;
     let videoId = null;
@@ -191,8 +190,48 @@ function ShowCase() {
     }
   }, [capas.length]);
   
-  const handleAplaudir = async () => { /* ... (sem alterações) ... */ };
-  const handleReacao = async (postId, tipo) => { /* ... (sem alterações) ... */ };
+  const handleAplaudir = async () => {
+      if (jaAplaudido) return;
+      
+      setTotalAplausos(prev => prev + 1);
+      setJaAplaudido(true);
+      localStorage.setItem(`aplauso_${url_unica}`, 'true');
+
+      try {
+          await apiClient.post(`/api/vitrine/${url_unica}/aplaudir`);
+      } catch (error) {
+          console.error("Erro ao registar aplauso", error);
+          setTotalAplausos(prev => prev - 1);
+          setJaAplaudido(false);
+          localStorage.removeItem(`aplauso_${url_unica}`);
+      }
+  };
+  
+  const handleReacao = async (postId, tipo) => {
+      if (reacoesPosts[postId]) return;
+
+      setVitrine(prev => ({
+          ...prev,
+          postsRecentes: prev.postsRecentes.map(p => 
+              p.id === postId ? { ...p, [tipo === 'like' ? 'likes' : 'dislikes']: p[tipo === 'like' ? 'likes' : 'dislikes'] + 1 } : p
+          )
+      }));
+      setReacoesPosts(prev => ({ ...prev, [postId]: tipo }));
+      localStorage.setItem(`reacao_post_${postId}`, tipo);
+
+      try {
+          await apiClient.post(`/api/vitrine/posts/${postId}/reacao`, { tipo });
+      } catch (error) {
+          console.error("Erro ao registar reação:", error);
+          setReacoesPosts(prev => {
+              const novo = { ...prev };
+              delete novo[postId];
+              return novo;
+          });
+          localStorage.removeItem(`reacao_post_${postId}`);
+          buscarDadosVitrine();
+      }
+  };
 
   if (carregando) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
   if (erro) return (
@@ -209,8 +248,36 @@ function ShowCase() {
 
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
-        <Box sx={{ /* ... (estilos da capa - sem alterações) ... */ }}>
-            {/* ... (lógica de exibição das capas - sem alterações) ... */}
+        <Box sx={{
+            position: 'relative',
+            height: { xs: '30vh', md: '50vh' },
+            bgcolor: '#000'
+        }}>
+            <Box sx={{
+                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                backgroundImage: `url(${capas.length > 0 ? capas[0] : fallbackCapa})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+            }} />
+            
+            {capas.map((url, index) => (
+                <Box
+                    key={index}
+                    sx={{
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                        backgroundImage: `url(${url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        opacity: indiceCapa === index ? 1 : 0,
+                        transition: 'opacity 1.5s ease-in-out',
+                    }}
+                />
+            ))}
+            
+            <Box sx={{
+                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                backgroundImage: `linear-gradient(to top, rgba(18,18,18,1) 0%, rgba(18,18,18,0.2) 50%)`,
+            }} />
         </Box>
         
         <Container maxWidth="lg" sx={{ pb: 5 }}>
@@ -218,7 +285,6 @@ function ShowCase() {
             
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4 }}>
                 
-                {/* --- COLUNA PRINCIPAL (VÍDEO E ATUALIZAÇÕES) --- */}
                 <Box sx={{ flex: '2 1 60%', display: 'flex', flexDirection: 'column', gap: 4, order: { xs: 2, lg: 1 } }}>
                     {videoDestaqueId && (
                         <Paper sx={{ p: {xs: 1, sm: 2}, aspectRatio: '16/9' }}>
@@ -230,7 +296,6 @@ function ShowCase() {
                     )}
                 </Box>
 
-                {/* --- COLUNA LATERAL (SHOWS E CONTATO) --- */}
                 <Box sx={{ flex: '1 1 30%', display: 'flex', flexDirection: 'column', gap: 4, order: { xs: 1, lg: 2 } }}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Próximos Shows</Typography>
