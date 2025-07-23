@@ -153,7 +153,7 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
         />
       )}
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-        <Typography variant="h6" component="h2" gutterBottom>Fotos de Capa da Vitrine (Arraste para reordenar)</Typography>
+        <Typography variant="h6" component="h2" gutterBottom>Fotos de Capa</Typography>
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="capasDroppable" direction="horizontal">
             {(provided) => (
@@ -323,7 +323,7 @@ function Mural() {
       
       <Paper sx={{ mb: 4 }}>
         <Typography variant="h6" component="h2" sx={{ p: { xs: 2, md: 3 }, pb: 0 }}>
-          Últimas 3 Publicações do Mural
+          Últimas Publicações do Mural
         </Typography>
         {carregandoPosts ? <CircularProgress sx={{ m: 4 }}/> : (
             <List>
