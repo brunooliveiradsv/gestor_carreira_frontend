@@ -21,6 +21,7 @@ import {
   DialogContent,
   Tooltip,
   useTheme,
+  Grid,
   DialogActions,
 } from "@mui/material";
 import {
@@ -35,9 +36,11 @@ import {
   Groups as GroupsIcon,
   Handshake as HandshakeIcon,
   AttachMoney as AttachMoneyIcon,
+  Assignment as AssignmentIcon // Ícone para o contrato
 } from "@mui/icons-material";
 
 import FormularioCompromisso from "../componentes/FormularioCompromisso.jsx";
+import FormularioContrato from '../componentes/FormularioContrato'; // Importar o novo formulário
 
 function Agenda() {
   const { mostrarNotificacao } = useNotificacao();
@@ -56,6 +59,8 @@ function Agenda() {
   const [compromissoSelecionado, setCompromissoSelecionado] = useState(null);
   const [dialogoApagarAberto, setDialogoApagarAberto] = useState(false);
   const [compromissoParaApagar, setCompromissoParaApagar] = useState(null);
+  const [dialogoContratoAberto, setDialogoContratoAberto] = useState(false);
+  const [carregandoContrato, setCarregandoContrato] = useState(false);
 
   useEffect(() => {
     if (location.state?.abrirFormulario) {
@@ -109,6 +114,43 @@ function Agenda() {
   const handleFecharDetalhes = () => {
     setCompromissoSelecionado(null);
     setDialogoDetalhesAberto(false);
+  };
+
+  const handleAbrirDialogoContrato = (compromisso) => {
+    setCompromissoSelecionado(compromisso);
+    setDialogoContratoAberto(true);
+  };
+  
+  const handleFecharDialogoContrato = () => {
+    setDialogoContratoAberto(false);
+  };
+
+  const handleGerarContrato = async (dadosContratante) => {
+    if (!compromissoSelecionado) return;
+    setCarregandoContrato(true);
+    try {
+      const resposta = await apiClient.post(
+        `/api/compromissos/${compromissoSelecionado.id}/gerar-contrato`,
+        dadosContratante,
+        { responseType: 'blob' }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([resposta.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `contrato_${compromissoSelecionado.nome_evento.replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      mostrarNotificacao("Contrato gerado com sucesso!", "success");
+      handleFecharDialogoContrato();
+    } catch (error) {
+      mostrarNotificacao("Erro ao gerar o contrato.", "error");
+    } finally {
+      setCarregandoContrato(false);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -183,7 +225,6 @@ function Agenda() {
           </Typography>
         </Paper>
       ) : (
-        // --- LAYOUT ATUALIZADO COM FLEXBOX ---
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           {(compromissos || []).map((c) => (
             <Box key={c.id} sx={{ flex: '1 1 350px', minWidth: '300px' }}>
@@ -248,6 +289,13 @@ function Agenda() {
                   )}
                 </CardContent>
                 <CardActions sx={{ justifyContent: "flex-end", borderTop: `1px solid ${theme.palette.divider}` }}>
+                  <Tooltip title="Gerar Contrato">
+                    <span>
+                      <IconButton onClick={() => handleAbrirDialogoContrato(c)} disabled={c.status !== 'Agendado'}>
+                        <AssignmentIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                   <Tooltip title="Detalhes">
                     <IconButton onClick={() => handleAbrirDetalhes(c)}><InfoIcon /></IconButton>
                   </Tooltip>
@@ -268,7 +316,6 @@ function Agenda() {
         </Box>
       )}
 
-      {/* DIALOG DO FORMULÁRIO */}
       <Dialog
         open={dialogoFormularioAberto}
         onClose={handleFecharFormulario}
@@ -284,7 +331,6 @@ function Agenda() {
         </DialogContent>
       </Dialog>
 
-      {/* DIALOG DE APAGAR */}
       <Dialog open={dialogoApagarAberto} onClose={handleFecharApagarDialogo}>
         <DialogTitle>Confirmar Exclusão</DialogTitle>
         <DialogContent>
@@ -294,11 +340,12 @@ function Agenda() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleFecharApagarDialogo}>Cancelar</Button>
-          <Button onClick={handleConfirmarApagar} color="error">Apagar</Button>
+          <Button onClick={handleConfirmarApagar} color="error">
+            Apagar
+          </Button>
         </DialogActions>
       </Dialog>
 
-      {/* DIALOG DOS DETALHES */}
       <Dialog
         open={dialogoDetalhesAberto}
         onClose={handleFecharDetalhes}
@@ -338,6 +385,15 @@ function Agenda() {
           <Button onClick={handleFecharDetalhes}>Fechar</Button>
         </DialogActions>
       </Dialog>
+      
+      {compromissoSelecionado && (
+        <FormularioContrato
+          open={dialogoContratoAberto}
+          onClose={handleFecharDialogoContrato}
+          onGerarContrato={handleGerarContrato}
+          carregando={carregandoContrato}
+        />
+      )}
     </Box>
   );
 }
