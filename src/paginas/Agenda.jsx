@@ -1,9 +1,9 @@
 // src/paginas/Agenda.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import apiClient from "../apiClient.js";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
-import useApi from "../hooks/useApi"; // IMPORTADO
+import useApi from "../hooks/useApi";
 
 import {
   Box,
@@ -21,7 +21,6 @@ import {
   DialogContent,
   Tooltip,
   useTheme,
-  Grid,
   DialogActions,
 } from "@mui/material";
 import {
@@ -175,7 +174,7 @@ function Agenda() {
           Novo Compromisso
         </Button>
       </Box>
-      {compromissos.length === 0 ? (
+      {(compromissos || []).length === 0 ? (
         <Paper variant="outlined" sx={{ p: 4, textAlign: "center" }}>
           <EventIcon sx={{ fontSize: 48, color: "text.secondary", mb: 2 }} />
           <Typography variant="h6">Sua agenda está vazia!</Typography>
@@ -184,9 +183,10 @@ function Agenda() {
           </Typography>
         </Paper>
       ) : (
-        <Grid container spacing={3}>
-          {compromissos.map((c) => (
-            <Grid item xs={12} md={6} lg={4} key={c.id}>
+        // --- LAYOUT ATUALIZADO COM FLEXBOX ---
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          {(compromissos || []).map((c) => (
+            <Box key={c.id} sx={{ flex: '1 1 350px', minWidth: '300px' }}>
               <Card
                 sx={{
                   height: "100%",
@@ -224,46 +224,22 @@ function Agenda() {
                     {c.nome_evento}
                   </Typography>
 
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      color: "text.secondary",
-                      mb: 1,
-                    }}
-                  >
+                  <Box sx={{ display: "flex", alignItems: "center", color: "text.secondary", mb: 1 }}>
                     <EventIcon sx={{ fontSize: "1.2rem", mr: 1.5 }} />
                     <Typography variant="body2">
                       {new Date(c.data).toLocaleString("pt-BR", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
+                        day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
                       })}
                     </Typography>
                   </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      color: "text.secondary",
-                      mb: 1,
-                    }}
-                  >
+                  <Box sx={{ display: "flex", alignItems: "center", color: "text.secondary", mb: 1 }}>
                     <LocationOnIcon sx={{ fontSize: "1.2rem", mr: 1.5 }} />
                     <Typography variant="body2" noWrap>
                       {c.local || "Local não informado"}
                     </Typography>
                   </Box>
                   {c.valor_cache > 0 && (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        color: "text.secondary",
-                      }}
-                    >
+                    <Box sx={{ display: "flex", alignItems: "center", color: "text.secondary" }}>
                       <AttachMoneyIcon sx={{ fontSize: "1.2rem", mr: 1.5 }} />
                       <Typography variant="body2">
                         Cachê: R$ {parseFloat(c.valor_cache).toFixed(2)}
@@ -271,56 +247,25 @@ function Agenda() {
                     </Box>
                   )}
                 </CardContent>
-                <CardActions
-                  sx={{
-                    justifyContent: "flex-end",
-                    borderTop: `1px solid ${theme.palette.divider}`,
-                  }}
-                >
+                <CardActions sx={{ justifyContent: "flex-end", borderTop: `1px solid ${theme.palette.divider}` }}>
                   <Tooltip title="Detalhes">
-                    <IconButton onClick={() => handleAbrirDetalhes(c)}>
-                      <InfoIcon />
-                    </IconButton>
+                    <IconButton onClick={() => handleAbrirDetalhes(c)}><InfoIcon /></IconButton>
                   </Tooltip>
-                  <Tooltip
-                    title={
-                      c.status !== "Agendado"
-                        ? "Não é possível editar"
-                        : "Editar"
-                    }
-                  >
+                  <Tooltip title={c.status !== "Agendado" ? "Não é possível editar" : "Editar"}>
                     <Box component="span">
-                      <IconButton
-                        onClick={() => handleAbrirFormulario(c)}
-                        disabled={c.status !== "Agendado"}
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      <IconButton onClick={() => handleAbrirFormulario(c)} disabled={c.status !== "Agendado"}><EditIcon /></IconButton>
                     </Box>
                   </Tooltip>
-                  {/* --- BOTÃO DE APAGAR ATUALIZADO --- */}
-                  <Tooltip
-                    title={
-                      c.status === "Realizado"
-                        ? "Não é possível excluir"
-                        : "Excluir"
-                    }
-                  >
+                  <Tooltip title={c.status === "Realizado" ? "Não é possível excluir" : "Excluir"}>
                     <Box component="span">
-                      <IconButton
-                        onClick={() => handleAbrirApagarDialogo(c)}
-                        disabled={c.status === "Realizado"}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <IconButton onClick={() => handleAbrirApagarDialogo(c)} disabled={c.status === "Realizado"} color="error"><DeleteIcon /></IconButton>
                     </Box>
                   </Tooltip>
                 </CardActions>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* DIALOG DO FORMULÁRIO */}
@@ -339,20 +284,17 @@ function Agenda() {
         </DialogContent>
       </Dialog>
 
-      {/* --- DIALOG DE APAGAR ADICIONADO --- */}
+      {/* DIALOG DE APAGAR */}
       <Dialog open={dialogoApagarAberto} onClose={handleFecharApagarDialogo}>
         <DialogTitle>Confirmar Exclusão</DialogTitle>
         <DialogContent>
           <Typography>
-            Tem certeza que deseja apagar o compromisso "
-            {compromissoParaApagar?.nome_evento}"?
+            Tem certeza que deseja apagar o compromisso "{compromissoParaApagar?.nome_evento}"?
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleFecharApagarDialogo}>Cancelar</Button>
-          <Button onClick={handleConfirmarApagar} color="error">
-            Apagar
-          </Button>
+          <Button onClick={handleConfirmarApagar} color="error">Apagar</Button>
         </DialogActions>
       </Dialog>
 
@@ -369,47 +311,23 @@ function Agenda() {
         <DialogContent dividers>
           {compromissoSelecionado && (
             <Box sx={{ lineHeight: 1.8 }}>
-              <Typography>
-                <strong>Tipo:</strong> {compromissoSelecionado.tipo}
+              <Typography><strong>Tipo:</strong> {compromissoSelecionado.tipo}</Typography>
+              <Typography><strong>Data:</strong>{" "}
+                {new Date(compromissoSelecionado.data).toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" })}
               </Typography>
-              <Typography>
-                <strong>Data:</strong>{" "}
-                {new Date(compromissoSelecionado.data).toLocaleString("pt-BR", {
-                  dateStyle: "full",
-                  timeStyle: "short",
-                })}
-              </Typography>
-              <Typography>
-                <strong>Local:</strong>{" "}
-                {compromissoSelecionado.local || "Não informado"}
-              </Typography>
-              <Typography>
-                <strong>Status:</strong> {compromissoSelecionado.status}
-              </Typography>
+              <Typography><strong>Local:</strong> {compromissoSelecionado.local || "Não informado"}</Typography>
+              <Typography><strong>Status:</strong> {compromissoSelecionado.status}</Typography>
               {compromissoSelecionado.valor_cache && (
-                <Typography>
-                  <strong>Cachê:</strong> R${" "}
-                  {parseFloat(compromissoSelecionado.valor_cache).toFixed(2)}
-                </Typography>
+                <Typography><strong>Cachê:</strong> R$ {parseFloat(compromissoSelecionado.valor_cache).toFixed(2)}</Typography>
               )}
               {compromissoSelecionado.repertorio_id && (
-                <Typography>
-                  <strong>ID do Repertório:</strong>{" "}
-                  {compromissoSelecionado.repertorio_id}
-                </Typography>
+                <Typography><strong>ID do Repertório:</strong> {compromissoSelecionado.repertorio_id}</Typography>
               )}
-              {compromissoSelecionado.despesas &&
-                compromissoSelecionado.despesas.length > 0 && (
+              {compromissoSelecionado.despesas && compromissoSelecionado.despesas.length > 0 && (
                   <Box mt={2}>
-                    <Typography fontWeight="bold">
-                      Despesas Previstas:
-                    </Typography>
+                    <Typography fontWeight="bold">Despesas Previstas:</Typography>
                     <ul style={{ paddingLeft: "20px", margin: 0 }}>
-                      {compromissoSelecionado.despesas.map((d, index) => (
-                        <li key={index}>
-                          {d.descricao}: R$ {parseFloat(d.valor).toFixed(2)}
-                        </li>
-                      ))}
+                      {compromissoSelecionado.despesas.map((d, index) => (<li key={index}>{d.descricao}: R$ {parseFloat(d.valor).toFixed(2)}</li>))}
                     </ul>
                   </Box>
                 )}
