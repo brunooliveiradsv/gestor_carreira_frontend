@@ -21,7 +21,6 @@ import {
   DialogContent,
   Tooltip,
   useTheme,
-  Grid,
   DialogActions,
 } from "@mui/material";
 import {
@@ -36,7 +35,8 @@ import {
   Groups as GroupsIcon,
   Handshake as HandshakeIcon,
   AttachMoney as AttachMoneyIcon,
-  Assignment as AssignmentIcon
+  Assignment as AssignmentIcon,
+  PlaylistPlay as PlaylistPlayIcon // Ícone para o setlist
 } from "@mui/icons-material";
 
 import FormularioCompromisso from "../componentes/FormularioCompromisso.jsx";
@@ -360,8 +360,11 @@ function Agenda() {
               {compromissoSelecionado.valor_cache && (
                 <Typography><strong>Cachê:</strong> R$ {parseFloat(compromissoSelecionado.valor_cache).toFixed(2)}</Typography>
               )}
-              {compromissoSelecionado.repertorio_id && (
-                <Typography><strong>ID do Repertório:</strong> {compromissoSelecionado.repertorio_id}</Typography>
+              {compromissoSelecionado.setlist && (
+                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <PlaylistPlayIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    <Typography><strong>Setlist:</strong> {compromissoSelecionado.setlist.nome}</Typography>
+                </Box>
               )}
               {compromissoSelecionado.despesas && compromissoSelecionado.despesas.length > 0 && (
                   <Box mt={2}>
