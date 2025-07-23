@@ -14,12 +14,27 @@ import {
   TrendingDown as TrendingDownIcon,
   AccountBalanceWallet as AccountBalanceWalletIcon,
   EmojiEvents as EmojiEventsIcon,
-  ArrowForward as ArrowForwardIcon
+  ArrowForward as ArrowForwardIcon,
+  MusicNote as MusicNoteIcon,
+  TheaterComedy as TheaterComedyIcon
 } from '@mui/icons-material';
 import Anuncio from '../componentes/Anuncio';
 import GraficoBalanco from '../componentes/GraficoBalanco';
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
+
+const StatCard = ({ icon, valor, titulo, subtexto }) => (
+    <Paper variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', height: '100%' }}>
+        <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 48, height: 48 }}>
+            {icon}
+        </Avatar>
+        <Box>
+            <Typography variant="h5" component="p" fontWeight="bold">{valor}</Typography>
+            <Typography variant="body2" color="text.secondary">{titulo}</Typography>
+            {subtexto && <Typography variant="caption" color="text.secondary">{subtexto}</Typography>}
+        </Box>
+    </Paper>
+);
 
 function Dashboard() {
   const [resumo, setResumo] = useState(null);
@@ -35,18 +50,20 @@ function Dashboard() {
   useEffect(() => {
     async function carregarResumo() {
       try {
-        const [resumoFinanceiro, proximosCompromissos, ultimasConquistas] = await Promise.all([
+        const [resumoFinanceiro, resumoRepertorio, proximosCompromissos, ultimasConquistas] = await Promise.all([
           apiClient.get('/api/financeiro/resumo-mensal').catch(() => ({ data: null })),
+          apiClient.get('/api/setlists/estatisticas').catch(() => ({ data: null })),
           apiClient.get('/api/compromissos/proximos').catch(() => ({ data: [] })),
           apiClient.get('/api/conquistas/recentes').catch(() => ({ data: [] }))
         ]);
         
-        if (!resumoFinanceiro.data && !proximosCompromissos.data && !ultimasConquistas.data) {
+        if (!resumoFinanceiro.data && !proximosCompromissos.data && !ultimasConquistas.data && !resumoRepertorio.data) {
           setErro("Não foi possível carregar os dados do dashboard.");
         }
         
         setResumo({
           financeiro: resumoFinanceiro.data,
+          repertorio: resumoRepertorio.data,
           compromissos: proximosCompromissos.data,
           conquistas: ultimasConquistas.data
         });
@@ -78,10 +95,27 @@ function Dashboard() {
 
       {erro && <Alert severity="warning" sx={{ mb: 4 }}>{erro}</Alert>}
 
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={4}>
+              <StatCard 
+                icon={<TheaterComedyIcon />}
+                valor={resumo?.repertorio?.totalShowsAno ?? 0}
+                titulo="Shows Realizados no Ano"
+              />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+              <StatCard 
+                icon={<MusicNoteIcon />}
+                valor={resumo?.repertorio?.musicaMaisTocada?.nome ?? 'N/A'}
+                titulo="Música Mais Tocada"
+                subtexto={resumo?.repertorio?.musicaMaisTocada?.artista ?? 'Nenhuma música em setlists'}
+              />
+          </Grid>
+      </Grid>
+
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4 }}>
         
         <Box sx={{ flex: '2 1 65%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {/* GRÁFICO DE BALANÇO FINANCEIRO */}
           <Paper sx={{ p: {xs: 2, md: 3}, height: 350, display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" fontWeight="bold">Balanço dos Últimos Meses</Typography>
             <Box sx={{flexGrow: 1, mt: 2}}>
@@ -89,7 +123,6 @@ function Dashboard() {
             </Box>
           </Paper>
 
-          {/* BALANÇO DO MÊS ATUAL */}
           <Paper sx={{ p: 3 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>Balanço do Mês</Typography>
               {resumo?.financeiro ? (
@@ -129,7 +162,6 @@ function Dashboard() {
         </Box>
         
         <Box sx={{ flex: '1 1 35%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {/* PRÓXIMOS COMPROMISSOS */}
           <Paper sx={{ p: 3, flexGrow: 1 }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>Próximos Compromissos</Typography>
             {resumo?.compromissos && resumo.compromissos.length > 0 ? (
@@ -148,7 +180,6 @@ function Dashboard() {
               <Button component={RouterLink} to="/agenda" endIcon={<ArrowForwardIcon />} sx={{ mt: 2 }}>Ver agenda completa</Button>
           </Paper>
 
-          {/* ÚLTIMAS CONQUISTAS */}
           <Paper sx={{ p: 3, flexGrow: 1 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>Últimas Conquistas</Typography>
                 {resumo?.conquistas && resumo.conquistas.length > 0 ? (
