@@ -19,7 +19,7 @@ import {
     AddCircleOutline as TransposeUpIcon,
 } from '@mui/icons-material';
 
-// --- LÓGICA DE TRANSPOSIÇÃO ROBUSTA (sem alterações) ---
+// --- Lógica de Transposição Robusta (sem alterações) ---
 const ALL_NOTES = [
     { sharp: 'A', flat: 'A' }, { sharp: 'A#', flat: 'Bb' }, { sharp: 'B', flat: 'B' },
     { sharp: 'C', flat: 'C' }, { sharp: 'C#', flat: 'Db' }, { sharp: 'D', flat: 'D' },
@@ -58,13 +58,13 @@ const transposeChord = (chord, amount) => {
     return transposedNote + rest;
 };
 
+
 // --- FUNÇÃO DE FORMATAR CIFRA COM REGEX MELHORADO ---
 const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
     if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
     
-    // Regex melhorada para identificar uma linha que consiste quase exclusivamente de acordes e espaços.
-    // Isto evita que linhas de letra normal com palavras que começam com A-G sejam identificadas como acordes.
-    const regexLinhaDeAcordes = /^\s*([A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]?(\/[A-G][#b]?)?\s*)+$/i;
+    // Regex mais rigorosa para identificar uma linha que consiste APENAS de acordes e espaços.
+    const regexLinhaDeAcordes = /^\s*([A-G][#b]?(?:m|maj|min|dim|aug|sus|add)?[0-9b#]*(?:\/[A-G][#b]?)?\s*)+$/i;
 
     return textoCifra.split('\n').map((linha, index) => {
         const isLinhaDeAcordes = regexLinhaDeAcordes.test(linha.trim());
@@ -74,6 +74,8 @@ const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
             // Regex para encontrar CADA acorde individualmente na linha
             const regexAcordeIndividual = /[A-G][#b]?(?:m|maj|min|dim|aug|add|sus)?[0-9b#]*(?:\/[A-G][#b]?)?/g;
             linhaProcessada = linha.replace(regexAcordeIndividual, (acordeEncontrado) => {
+                // Apenas transpõe se for um acorde válido (ignora espaços vazios)
+                if (acordeEncontrado.trim() === '') return acordeEncontrado;
                 return transposeChord(acordeEncontrado, transposicao);
             });
         }
