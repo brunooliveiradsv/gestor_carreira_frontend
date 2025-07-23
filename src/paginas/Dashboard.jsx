@@ -4,19 +4,8 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
 import { AuthContext } from '../contextos/AuthContext';
 import {
-  Box,
-  Grid,
-  Typography,
-  Paper,
-  CircularProgress,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Avatar,
-  Chip,
-  Alert
+  Box, Grid, Typography, Paper, CircularProgress, Button, List,
+  ListItem, ListItemText, ListItemIcon, Avatar, Chip, Alert
 } from '@mui/material';
 import {
   Event as EventIcon,
@@ -28,6 +17,7 @@ import {
   ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
 import Anuncio from '../componentes/Anuncio';
+import GraficoBalanco from '../componentes/GraficoBalanco';
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
 
@@ -90,9 +80,16 @@ function Dashboard() {
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4 }}>
         
-        {/* Coluna Principal (Esquerda) */}
         <Box sx={{ flex: '2 1 65%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {/* Balanço do Mês */}
+          {/* GRÁFICO DE BALANÇO FINANCEIRO */}
+          <Paper sx={{ p: {xs: 2, md: 3}, height: 350, display: 'flex', flexDirection: 'column' }}>
+            <Typography variant="h6" fontWeight="bold">Balanço dos Últimos Meses</Typography>
+            <Box sx={{flexGrow: 1, mt: 2}}>
+                <GraficoBalanco />
+            </Box>
+          </Paper>
+
+          {/* BALANÇO DO MÊS ATUAL */}
           <Paper sx={{ p: 3 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>Balanço do Mês</Typography>
               {resumo?.financeiro ? (
@@ -129,21 +126,10 @@ function Dashboard() {
                   <Typography color="text.secondary" sx={{pt: 2}}>Não foi possível carregar o resumo financeiro.</Typography>
               )}
           </Paper>
-
-          {/* Ações Rápidas */}
-          <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>Ações Rápidas</Typography>
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 2 }}>
-                  <Button variant="contained" color="secondary" onClick={() => abrirFormulario('/agenda')} startIcon={<AddCircleOutlineIcon/>}>Novo Compromisso</Button>
-                  <Button variant="outlined" onClick={() => abrirFormulario('/financeiro')} startIcon={<AddCircleOutlineIcon/>}>Nova Transação</Button>
-                  <Button variant="outlined" onClick={() => abrirFormulario('/repertorio')} startIcon={<AddCircleOutlineIcon/>}>Nova Música</Button>
-              </Box>
-          </Paper>
         </Box>
         
-        {/* Coluna Secundária (Direita) */}
         <Box sx={{ flex: '1 1 35%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {/* Próximos Compromissos */}
+          {/* PRÓXIMOS COMPROMISSOS */}
           <Paper sx={{ p: 3, flexGrow: 1 }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>Próximos Compromissos</Typography>
             {resumo?.compromissos && resumo.compromissos.length > 0 ? (
@@ -162,7 +148,7 @@ function Dashboard() {
               <Button component={RouterLink} to="/agenda" endIcon={<ArrowForwardIcon />} sx={{ mt: 2 }}>Ver agenda completa</Button>
           </Paper>
 
-          {/* Últimas Conquistas */}
+          {/* ÚLTIMAS CONQUISTAS */}
           <Paper sx={{ p: 3, flexGrow: 1 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>Últimas Conquistas</Typography>
                 {resumo?.conquistas && resumo.conquistas.length > 0 ? (
