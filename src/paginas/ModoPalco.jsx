@@ -62,13 +62,12 @@ const transposeChord = (chord, amount) => {
 const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
     if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
     
-    // Regex mais flexível para identificar uma linha que CONTÉM acordes.
-    // Procura por padrões comuns de acordes, permitindo outros caracteres na linha.
-    const regexLinhaDeAcordes = /(\b[A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]?(\/[A-G][#b]?)?\b)/;
+    // Regex melhorada para identificar uma linha que consiste quase exclusivamente de acordes e espaços.
+    // Isto evita que linhas de letra normal com palavras que começam com A-G sejam identificadas como acordes.
+    const regexLinhaDeAcordes = /^\s*([A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]?(\/[A-G][#b]?)?\s*)+$/i;
 
     return textoCifra.split('\n').map((linha, index) => {
-        // Testa se a linha parece ser uma linha de acordes
-        const isLinhaDeAcordes = regexLinhaDeAcordes.test(linha);
+        const isLinhaDeAcordes = regexLinhaDeAcordes.test(linha.trim());
         
         let linhaProcessada = linha;
         if (isLinhaDeAcordes && transposicao !== 0) {
