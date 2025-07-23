@@ -1,4 +1,3 @@
-// src/paginas/Mural.jsx
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
@@ -6,15 +5,15 @@ import { AuthContext } from '../contextos/AuthContext';
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-
 import {
   Box, Typography, Button, CircularProgress, Paper, Grid,
-  Dialog, DialogActions, DialogContent, DialogTitle, Link, TextField, IconButton, Tooltip
+  Dialog, DialogActions, DialogContent, DialogTitle, Link, TextField, IconButton, Tooltip,
+  List, ListItem, ListItemText // <-- CORREÇÃO AQUI: Componentes de lista adicionados
 } from '@mui/material';
 import { 
     AddCircleOutline as AddCircleOutlineIcon, Delete as DeleteIcon, Link as LinkIcon,
-    Instagram, YouTube, MusicNote, PhotoCamera as PhotoCameraIcon,
-    AddPhotoAlternate as AddPhotoIcon, DragIndicator as DragIndicatorIcon, Crop as CropIcon
+    Instagram, YouTube, MusicNote,
+    AddPhotoAlternate as AddPhotoIcon, DragIndicator as DragIndicatorIcon
 } from '@mui/icons-material';
 
 // Função utilitária para reordenar
