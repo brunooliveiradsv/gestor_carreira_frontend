@@ -5,9 +5,36 @@ import { useNotificacao } from '../contextos/NotificationContext';
 import {
   Box, Typography, CircularProgress, Paper, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Chip,
-  TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel, Grid, Tooltip // <-- CORRIGIDO AQUI
+  TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel, Grid, Tooltip,
+  useTheme, useMediaQuery, Card, CardContent, List, ListItem, ListItemText, Divider, Avatar
 } from '@mui/material';
-import { Search as SearchIcon, History as HistoryIcon } from '@mui/icons-material';
+import { Search as SearchIcon, History as HistoryIcon, Person as PersonIcon } from '@mui/icons-material';
+
+// --- NOVA FUNÇÃO PARA TRADUZIR OS LOGS ---
+const formatarDetalhesLog = (log) => {
+    const { action_type, details } = log;
+    if (!details) return '-';
+
+    switch (action_type) {
+        case 'USER_REGISTER': return 'Novo utilizador registado na plataforma.';
+        case 'USER_LOGIN': return 'Utilizador autenticado com sucesso.';
+        case 'PASSWORD_RECOVERY': return 'Iniciou o processo de recuperação de senha.';
+        case 'UPDATE_PROFILE_NAME': return `Alterou o nome para "${details.new_name}".`;
+        case 'UPDATE_PROFILE_EMAIL': return `Alterou o e-mail para "${details.new_email}".`;
+        case 'UPDATE_PASSWORD': return 'Alterou a sua senha de acesso.';
+        case 'UPDATE_PROFILE_PICTURE': return 'Atualizou a foto de perfil.';
+        case 'UPDATE_COVER_PICTURE': return 'Atualizou a foto de capa da vitrine.';
+        case 'UPDATE_PUBLIC_PROFILE': return `Atualizou a vitrine. Campos afetados: ${details.changes.join(', ')}.`;
+        case 'CREATE_SETLIST': return `Criou o setlist: "${details.setlistName}" (ID: ${details.setlistId}).`;
+        case 'UPDATE_SETLIST_DETAILS': return `Atualizou os detalhes do setlist #${details.setlistId}.`;
+        case 'DELETE_SETLIST': return `Apagou o setlist #${details.setlistId}.`;
+        case 'UPDATE_SETLIST_MUSICS': return `Atualizou ${details.musicCount} músicas no setlist #${details.setlistId}.`;
+        default:
+            // Fallback para mostrar os detalhes em JSON se não houver uma tradução
+            const detailsString = JSON.stringify(details);
+            return detailsString === '{}' ? '-' : detailsString;
+    }
+};
 
 // Função auxiliar para formatar o tempo relativo
 const formatarTempoRelativo = (dataString) => {
@@ -26,27 +53,19 @@ const formatarTempoRelativo = (dataString) => {
     return `há ${dias}d`;
 };
 
-const DetalhesLog = ({ details }) => {
-    if (!details || Object.keys(details).length === 0) return '-';
-    return (
-        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-            {Object.entries(details).map(([key, value]) => (
-                <Chip key={key} label={`${key}: ${value}`} size="small" />
-            ))}
-        </Box>
-    );
-};
-
 function AdminLogs() {
   const [logs, setLogs] = useState([]);
   const [utilizadores, setUtilizadores] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [filtros, setFiltros] = useState({ utilizadorId: '', acao: '' });
   const { mostrarNotificacao } = useNotificacao();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     const buscarDados = async () => {
       try {
+        setCarregando(true);
         const [respostaLogs, respostaUtilizadores] = await Promise.all([
           apiClient.get('/api/admin/logs'),
           apiClient.get('/api/admin/usuarios')
@@ -69,6 +88,7 @@ function AdminLogs() {
 
   const logsFiltrados = useMemo(() => {
     return logs.filter(log => {
+      if (!log.user) return false; // Garante que logs sem utilizador não quebrem a aplicação
       const correspondeUtilizador = !filtros.utilizadorId || log.user.id === filtros.utilizadorId;
       const correspondeAcao = !filtros.acao || log.action_type.toLowerCase().includes(filtros.acao.toLowerCase());
       return correspondeUtilizador && correspondeAcao;
@@ -79,20 +99,71 @@ function AdminLogs() {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
 
+  const renderDesktopView = () => (
+    <TableContainer component={Paper}>
+      <Table sx={{ minWidth: 650 }}>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{width: '25%'}}>Utilizador</TableCell>
+            <TableCell sx={{width: '20%'}}>Ação</TableCell>
+            <TableCell>Detalhes</TableCell>
+            <TableCell sx={{width: '15%'}} align="right">Quando</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {logsFiltrados.map((log) => (
+            <TableRow key={log.id} hover>
+              <TableCell>
+                <Typography variant="body2" fontWeight="bold">{log.user.nome}</Typography>
+                <Typography variant="caption" color="text.secondary">{log.user.email}</Typography>
+              </TableCell>
+              <TableCell><Chip label={log.action_type} size="small" /></TableCell>
+              <TableCell>
+                <Typography variant="body2">{formatarDetalhesLog(log)}</Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Tooltip title={new Date(log.created_at).toLocaleString('pt-BR')}>
+                    <Typography variant="body2" color="text.secondary">
+                        {formatarTempoRelativo(log.created_at)}
+                    </Typography>
+                </Tooltip>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  const renderMobileView = () => (
+    <List sx={{ p: 0 }}>
+      {logsFiltrados.map(log => (
+        <Paper key={log.id} sx={{ mb: 2, p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+            <Avatar sx={{ bgcolor: 'primary.main', mr: 1.5 }}><PersonIcon /></Avatar>
+            <Box>
+                <Typography variant="body1" fontWeight="bold">{log.user.nome}</Typography>
+                <Typography variant="caption" color="text.secondary">{new Date(log.created_at).toLocaleString('pt-BR')}</Typography>
+            </Box>
+          </Box>
+          <Divider sx={{ mb: 1.5 }} />
+          <Chip label={log.action_type} size="small" sx={{ mb: 1 }} />
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{formatarDetalhesLog(log)}</Typography>
+        </Paper>
+      ))}
+    </List>
+  );
+
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          Log de Atividades
-        </Typography>
-        <Typography color="text.secondary">
-          Monitore as ações recentes realizadas na plataforma.
-        </Typography>
+        <Typography variant="h4" component="h1" fontWeight="bold">Log de Atividades</Typography>
+        <Typography color="text.secondary">Monitore as ações recentes na plataforma.</Typography>
       </Box>
 
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} md={6}>
             <FormControl fullWidth>
               <InputLabel>Filtrar por Utilizador</InputLabel>
               <Select
@@ -108,12 +179,12 @@ function AdminLogs() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               name="acao"
               label="Filtrar por Ação"
-              placeholder="Ex: LOGIN, CREATE_SETLIST..."
+              placeholder="Ex: LOGIN, UPDATE_PASSWORD..."
               value={filtros.acao}
               onChange={handleFiltroChange}
               InputProps={{
@@ -124,50 +195,14 @@ function AdminLogs() {
         </Grid>
       </Paper>
 
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{width: '25%'}}>Utilizador</TableCell>
-              <TableCell sx={{width: '20%'}}>Ação</TableCell>
-              <TableCell>Detalhes</TableCell>
-              <TableCell sx={{width: '15%'}} align="right">Quando</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {logsFiltrados.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
-                  <HistoryIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
-                  <Typography color="text.secondary">Nenhum log encontrado com os filtros atuais.</Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              logsFiltrados.map((log) => (
-                <TableRow key={log.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell component="th" scope="row">
-                    <Typography variant="body2" fontWeight="bold">{log.user.nome}</Typography>
-                    <Typography variant="caption" color="text.secondary">{log.user.email}</Typography>
-                  </TableCell>
-                  <TableCell>
-                      <Chip label={log.action_type} size="small" />
-                  </TableCell>
-                  <TableCell>
-                      <DetalhesLog details={log.details} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title={new Date(log.created_at).toLocaleString('pt-BR')}>
-                        <Typography variant="body2" color="text.secondary">
-                            {formatarTempoRelativo(log.created_at)}
-                        </Typography>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {logsFiltrados.length === 0 ? (
+        <Paper sx={{ py: 5, textAlign: 'center' }}>
+          <HistoryIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+          <Typography color="text.secondary">Nenhum log encontrado com os filtros atuais.</Typography>
+        </Paper>
+      ) : (
+        isMobile ? renderMobileView() : renderDesktopView()
+      )}
     </Box>
   );
 }
