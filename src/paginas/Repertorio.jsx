@@ -216,7 +216,7 @@ function Repertorio() {
                                 </CardContent>
                                 <CardActions sx={{justifyContent: 'flex-end'}}>
                                    {musica.master_id && (
-                                        <Tooltip title="Sincronizar com a música mestre (atualiza todos os dados)">
+                                        <Tooltip title="Sincronizar com Banco de Dados">
                                             <IconButton onClick={() => handleSincronizarComMestre(musica.id)}>
                                                 <SyncIcon color="primary" />
                                             </IconButton>
