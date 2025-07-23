@@ -6,17 +6,22 @@ import { AuthContext } from '../contextos/AuthContext';
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+
 import {
   Box, Typography, Button, CircularProgress, Paper, Grid,
   Dialog, DialogActions, DialogContent, DialogTitle, Link, TextField, IconButton, Tooltip,
-  List, ListItem, ListItemText, DialogContentText
+  List, ListItem, ListItemText, DialogContentText, Divider, Chip
 } from '@mui/material';
 import { 
     AddCircleOutline as AddCircleOutlineIcon, Delete as DeleteIcon, Link as LinkIcon,
     Instagram, YouTube, MusicNote,
-    AddPhotoAlternate as AddPhotoIcon, DragIndicator as DragIndicatorIcon
+    AddPhotoAlternate as AddPhotoIcon, DragIndicator as DragIndicatorIcon,
+    CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
+import useApi from '../hooks/useApi';
+import FormularioEnquete from '../componentes/FormularioEnquete';
 
+// Função utilitária para reordenar
 const reorder = (list, startIndex, endIndex) => {
   const result = Array.from(list);
   const [removed] = result.splice(startIndex, 1);
@@ -24,6 +29,7 @@ const reorder = (list, startIndex, endIndex) => {
   return result;
 };
 
+// Componente de Recorte
 function EditorDeRecorte({ imagemSrc, onRecorteCompleto, onCancelar }) {
     const [crop, setCrop] = useState();
     const [completedCrop, setCompletedCrop] = useState(null);
@@ -241,17 +247,19 @@ function Mural() {
   const { usuario, setUsuario } = useContext(AuthContext);
   const { mostrarNotificacao } = useNotificacao();
   
-  const [posts, setPosts] = useState([]);
-  const [carregandoPosts, setCarregandoPosts] = useState(true);
-  const [dialogoAberto, setDialogoAberto] = useState(false);
+  const { data: posts, carregando: carregandoPosts, refetch: buscarPosts } = useApi('/api/posts');
+  const [dialogoPostAberto, setDialogoPostAberto] = useState(false);
   const [novoPost, setNovoPost] = useState({ content: '', link: '' });
 
   const [biografia, setBiografia] = useState("");
   const [urlUnica, setUrlUnica] = useState("");
   const [links, setLinks] = useState({ instagram: '', youtube: '', spotify: '' });
   const [videoDestaque, setVideoDestaque] = useState("");
-  
   const [carregandoPublico, setCarregandoPublico] = useState(false);
+
+  const { data: enquetes, carregando: carregandoEnquetes, refetch: buscarEnquetes } = useApi('/api/enquetes');
+  const [dialogoEnqueteAberto, setDialogoEnqueteAberto] = useState(false);
+  const [salvandoEnquete, setSalvandoEnquete] = useState(false);
   
   useEffect(() => {
     if (usuario) {
@@ -261,22 +269,6 @@ function Mural() {
       setVideoDestaque(usuario.video_destaque_url || "");
     }
   }, [usuario]);
-
-  const buscarPosts = useCallback(async () => {
-    try {
-      const resposta = await apiClient.get('/api/posts');
-      setPosts(resposta.data.slice(0, 3));
-    } catch (error) {
-      mostrarNotificacao('Erro ao carregar as publicações.', 'error');
-    } finally {
-      setCarregandoPosts(false);
-    }
-  }, [mostrarNotificacao]);
-
-  useEffect(() => {
-    setCarregandoPosts(true);
-    buscarPosts();
-  }, [buscarPosts]);
 
   const handleLinkChange = (plataforma, valor) => setLinks(prev => ({ ...prev, [plataforma]: valor }));
 
@@ -295,12 +287,12 @@ function Mural() {
     }
   };
     
-  const handleAbrirDialogo = () => {
+  const handleAbrirDialogoPost = () => {
     setNovoPost({ content: '', link: '' });
-    setDialogoAberto(true);
+    setDialogoPostAberto(true);
   };
 
-  const handleFecharDialogo = () => setDialogoAberto(false);
+  const handleFecharDialogoPost = () => setDialogoPostAberto(false);
 
   const handleSalvarPost = async () => {
     if (!novoPost.content.trim()) {
@@ -310,14 +302,14 @@ function Mural() {
     try {
       await apiClient.post('/api/posts', novoPost);
       mostrarNotificacao('Publicação criada com sucesso!', 'success');
-      handleFecharDialogo();
+      handleFecharDialogoPost();
       buscarPosts();
     } catch (error) {
       mostrarNotificacao('Erro ao salvar a publicação.', 'error');
     }
   };
 
-  const handleApagar = async (id) => {
+  const handleApagarPost = async (id) => {
     if (window.confirm("Tem certeza que deseja apagar esta publicação?")) {
         try {
             await apiClient.delete(`/api/posts/${id}`);
@@ -329,39 +321,120 @@ function Mural() {
     }
   };
 
+  const handleSalvarEnquete = async (dadosEnquete) => {
+    setSalvandoEnquete(true);
+    try {
+        await apiClient.post('/api/enquetes', dadosEnquete);
+        mostrarNotificacao('Enquete criada com sucesso!', 'success');
+        buscarEnquetes();
+        setDialogoEnqueteAberto(false);
+    } catch (error) {
+        mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao criar enquete.', 'error');
+    } finally {
+        setSalvandoEnquete(false);
+    }
+  };
+
+  const handleAtivarEnquete = async (id) => {
+    try {
+        await apiClient.patch(`/api/enquetes/${id}/ativar`);
+        mostrarNotificacao('Enquete ativada no seu Showcase!', 'success');
+        buscarEnquetes();
+    } catch (error) {
+        mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao ativar enquete.', 'error');
+    }
+  };
+
+  const handleApagarEnquete = async (id) => {
+    if (window.confirm("Tem certeza que deseja apagar esta enquete e todos os seus votos?")) {
+        try {
+            await apiClient.delete(`/api/enquetes/${id}`);
+            mostrarNotificacao('Enquete apagada com sucesso.', 'success');
+            buscarEnquetes();
+        } catch (error) {
+            mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao apagar enquete.', 'error');
+        }
+    }
+  };
+
   if (!usuario) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h4" component="h1" fontWeight="bold">Painel Showcase</Typography>
-          <Typography color="text.secondary">Gerencie as informações da sua página pública e mural.</Typography>
+          <Typography color="text.secondary">Gerencie o conteúdo da sua página pública.</Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirDialogo}>
-          Nova Publicação
-        </Button>
+        <Box>
+            <Button variant="outlined" startIcon={<AddCircleOutlineIcon />} onClick={() => setDialogoEnqueteAberto(true)} sx={{ mr: 1 }}>
+                Nova Enquete
+            </Button>
+            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirDialogoPost}>
+                Nova Publicação
+            </Button>
+        </Box>
       </Box>
       
-      <Paper sx={{ mb: 4 }}>
-        <Typography variant="h6" component="h2" sx={{ p: { xs: 2, md: 3 }, pb: 0 }}>
+      <Paper sx={{ mb: 4, p: { xs: 2, md: 3 } }}>
+        <Typography variant="h6" component="h2" gutterBottom>Minhas Enquetes</Typography>
+        {carregandoEnquetes ? <CircularProgress /> : (
+            <List>
+                {(enquetes || []).length === 0 ? (
+                    <Typography color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+                        Crie uma enquete para interagir com o seu público!
+                    </Typography>
+                ) : (
+                    (enquetes || []).map(enquete => (
+                        <ListItem key={enquete.id} divider
+                            secondaryAction={
+                                <Box>
+                                    <Tooltip title="Ativar esta enquete no Showcase (desativa as outras)">
+                                        <span>
+                                            <IconButton onClick={() => handleAtivarEnquete(enquete.id)} disabled={enquete.ativa} color="success">
+                                                <CheckCircleIcon />
+                                            </IconButton>
+                                        </span>
+                                    </Tooltip>
+                                    <Tooltip title="Apagar Enquete">
+                                        <IconButton onClick={() => handleApagarEnquete(enquete.id)} color="error">
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Box>
+                            }
+                        >
+                            <ListItemText
+                                primary={enquete.pergunta}
+                                secondary={`Opções: ${enquete.opcoes.map(o => o.texto_opcao).join(' / ')}`}
+                            />
+                            {enquete.ativa && <Chip label="Ativa" color="success" size="small" />}
+                        </ListItem>
+                    ))
+                )}
+            </List>
+        )}
+      </Paper>
+      
+      <Paper sx={{ mb: 4, p: { xs: 2, md: 3 } }}>
+        <Typography variant="h6" component="h2">
           Últimas Publicações do Mural
         </Typography>
-        {carregandoPosts ? <CircularProgress sx={{ m: 4 }}/> : (
+        {carregandoPosts ? <CircularProgress sx={{ mt: 2 }}/> : (
             <List>
-            {posts.length === 0 ? (
-                <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
+            {(posts || []).length === 0 ? (
+                <Typography sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
                 Nenhuma publicação no seu mural.
                 </Typography>
             ) : (
-                posts.map((post) => (
+                (posts || []).map((post) => (
                 <ListItem
                     key={post.id}
                     secondaryAction={
                     <Tooltip title="Apagar Publicação">
-                        <IconButton edge="end" color="error" onClick={() => handleApagar(post.id)}>
+                        <IconButton edge="end" color="error" onClick={() => handleApagarPost(post.id)}>
                         <DeleteIcon />
                         </IconButton>
                     </Tooltip>
@@ -399,9 +472,9 @@ function Mural() {
             <TextField id="biografia" name="biografia" label="Biografia" multiline rows={4} value={biografia} onChange={(e) => setBiografia(e.target.value)} fullWidth />
             <TextField id="video_destaque" name="video_destaque" label="Link do Vídeo Destaque (YouTube)" value={videoDestaque} onChange={(e) => setVideoDestaque(e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
             <Typography color="text.secondary">Links e Redes Sociais</Typography>
-            <TextField id="link_instagram" name="link_instagram" label="Instagram" value={links.instagram} onChange={(e) => handleLinkChange('instagram', e.target.value)} InputProps={{ startAdornment: <Instagram sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            <TextField id="link_youtube" name="link_youtube" label="YouTube (Canal)" value={links.youtube} onChange={(e) => handleLinkChange('youtube', e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
-            <TextField id="link_spotify" name="link_spotify" label="Spotify" value={links.spotify} onChange={(e) => handleLinkChange('spotify', e.target.value)} InputProps={{ startAdornment: <MusicNote sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+            <TextField id="link_instagram" name="link_instagram" label="Instagram" value={links.instagram || ''} onChange={(e) => handleLinkChange('instagram', e.target.value)} InputProps={{ startAdornment: <Instagram sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+            <TextField id="link_youtube" name="link_youtube" label="YouTube (Canal)" value={links.youtube || ''} onChange={(e) => handleLinkChange('youtube', e.target.value)} InputProps={{ startAdornment: <YouTube sx={{ mr: 1, color: 'text.secondary' }} /> }} />
+            <TextField id="link_spotify" name="link_spotify" label="Spotify" value={links.spotify || ''} onChange={(e) => handleLinkChange('spotify', e.target.value)} InputProps={{ startAdornment: <MusicNote sx={{ mr: 1, color: 'text.secondary' }} /> }} />
             
             <Button type="submit" variant="contained" disabled={carregandoPublico} sx={{ alignSelf: "flex-start", mt: 2 }}>
                 {carregandoPublico ? <CircularProgress size={24} /> : "Salvar Informações Gerais"}
@@ -409,17 +482,24 @@ function Mural() {
         </Box>
       </Paper>
 
-      <Dialog open={dialogoAberto} onClose={handleFecharDialogo} fullWidth maxWidth="sm">
+      <Dialog open={dialogoPostAberto} onClose={handleFecharDialogoPost} fullWidth maxWidth="sm">
         <DialogTitle>Nova publicação</DialogTitle>
         <DialogContent>
           <TextField autoFocus margin="dense" label="Conteúdo da publicação *" type="text" fullWidth multiline rows={4} variant="outlined" value={novoPost.content} onChange={(e) => setNovoPost(p => ({ ...p, content: e.target.value }))} sx={{ mb: 2 }} />
           <TextField margin="dense" label="Link (opcional)" type="url" fullWidth variant="outlined" value={novoPost.link} onChange={(e) => setNovoPost(p => ({ ...p, link: e.target.value }))} />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleFecharDialogo}>Cancelar</Button>
+          <Button onClick={handleFecharDialogoPost}>Cancelar</Button>
           <Button onClick={handleSalvarPost} variant="contained">Publicar</Button>
         </DialogActions>
       </Dialog>
+      
+      <FormularioEnquete
+        open={dialogoEnqueteAberto}
+        onClose={() => setDialogoEnqueteAberto(false)}
+        onSave={handleSalvarEnquete}
+        carregando={salvandoEnquete}
+      />
     </Box>
   );
 }
