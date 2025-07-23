@@ -244,7 +244,7 @@ function ShowCase() {
     );
   if (!vitrine) return null;
 
-  const { artista, proximosShows, contatoPublico, postsRecentes } = vitrine;
+  const { artista, proximosShows, contatoPublico, postsRecentes, enqueteAtiva } = vitrine;
   const fallbackCapa = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80';
   const videoDestaqueId = getYoutubeVideoId(artista.video_destaque_url);
 
