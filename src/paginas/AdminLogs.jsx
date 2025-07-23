@@ -5,7 +5,7 @@ import { useNotificacao } from '../contextos/NotificationContext';
 import {
   Box, Typography, CircularProgress, Paper, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Chip,
-  TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel
+  TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel, Grid // <-- CORRIGIDO AQUI
 } from '@mui/material';
 import { Search as SearchIcon, History as HistoryIcon } from '@mui/icons-material';
 
@@ -16,6 +16,7 @@ const formatarTempoRelativo = (dataString) => {
     const segundos = Math.round((agora - data) / 1000);
 
     const minutos = Math.round(segundos / 60);
+    if (minutos < 1) return 'agora mesmo'
     if (minutos < 60) return `há ${minutos} min`;
 
     const horas = Math.round(minutos / 60);
