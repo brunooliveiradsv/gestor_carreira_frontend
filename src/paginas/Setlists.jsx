@@ -5,14 +5,16 @@ import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
   Box, Typography, Button, CircularProgress, Paper,
-  Grid, Card, CardContent, CardActions, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField
+  Grid, Card, CardContent, CardActions, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  Snackbar, Alert
 } from '@mui/material';
 import {
   AddCircleOutline as AddCircleOutlineIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   PlaylistPlay as PlaylistPlayIcon,
-  MusicVideo as MusicVideoIcon // <-- 1. Importe o ícone novo
+  MusicVideo as MusicVideoIcon,
+  Share as ShareIcon
 } from '@mui/icons-material';
 
 function Setlists() {
@@ -23,6 +25,10 @@ function Setlists() {
 
   const [dialogoCriarAberto, setDialogoCriarAberto] = useState(false);
   const [novoNomeSetlist, setNovoNomeSetlist] = useState('');
+  const [dialogoPartilhaAberto, setDialogoPartilhaAberto] = useState(false);
+  const [setlistSelecionado, setSetlistSelecionado] = useState(null);
+  const [linkPublico, setLinkPublico] = useState('');
+  const [copiado, setCopiado] = useState(false);
 
   const buscarSetlists = useCallback(async () => {
     try {
@@ -67,6 +73,39 @@ function Setlists() {
       }
   };
 
+  const handleAbrirDialogoPartilha = (setlist) => {
+    setSetlistSelecionado(setlist);
+    if (setlist.publico_uuid) {
+      setLinkPublico(`${window.location.origin}/setlist/${setlist.publico_uuid}`);
+    } else {
+      setLinkPublico('');
+    }
+    setDialogoPartilhaAberto(true);
+  };
+
+  const handleFecharDialogoPartilha = () => setDialogoPartilhaAberto(false);
+
+  const handleTogglePartilha = async (event) => {
+    const partilhar = event.target.checked;
+    try {
+      const { data } = await apiClient.patch(`/api/setlists/${setlistSelecionado.id}/partilhar`, { partilhar });
+      setSetlistSelecionado(data);
+      setSetlists(prev => prev.map(s => s.id === data.id ? data : s));
+
+      if (data.publico_uuid) {
+        setLinkPublico(`${window.location.origin}/setlist/${data.publico_uuid}`);
+      } else {
+        setLinkPublico('');
+      }
+    } catch (error) {
+      mostrarNotificacao("Erro ao alterar o estado de partilha.", "error");
+    }
+  };
+  
+  const copiarLink = () => {
+      navigator.clipboard.writeText(linkPublico);
+      setCopiado(true);
+  };
 
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
@@ -90,10 +129,8 @@ function Setlists() {
           <Typography color="text.secondary">Clique em "Novo Setlist" para criar o seu primeiro.</Typography>
         </Paper>
       ) : (
-        // Alterado de Grid container para Box com display flex
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'flex-start' }}> 
           {setlists.map((setlist) => (
-            // Grid item substituído por Box e flex: '1 1 auto' para responsividade flexbox
             <Box key={setlist.id} sx={{ flex: '1 1 300px', maxWidth: '100%', '@media (min-width:600px)': { maxWidth: 'calc(50% - 16px)' }, '@media (min-width:960px)': { maxWidth: 'calc(33.33% - 16px)' } }}> 
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
@@ -112,7 +149,11 @@ function Setlists() {
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
-                  {/* --- 2. BOTÃO "MODO PALCO" ADICIONADO AQUI --- */}
+                  <Tooltip title="Partilhar Setlist">
+                    <IconButton color={setlist.publico_uuid ? "primary" : "default"} onClick={() => handleAbrirDialogoPartilha(setlist)}>
+                      <ShareIcon />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Modo Palco">
                     <IconButton color="secondary" onClick={() => navigate(`/setlists/palco/${setlist.id}`)}>
                       <MusicVideoIcon />
@@ -154,6 +195,37 @@ function Setlists() {
           <Button onClick={handleCriarNovoSetlist} variant="contained">Criar e Editar Músicas</Button>
         </DialogActions>
       </Dialog>
+      
+      <Dialog open={dialogoPartilhaAberto} onClose={handleFecharDialogoPartilha} fullWidth maxWidth="sm">
+            <DialogTitle>Partilhar Setlist "{setlistSelecionado?.nome}"</DialogTitle>
+            <DialogContent>
+                <FormControlLabel
+                    control={<Switch checked={!!setlistSelecionado?.publico_uuid} onChange={handleTogglePartilha} />}
+                    label="Ativar link público de partilha"
+                />
+                {setlistSelecionado?.publico_uuid && (
+                    <Box sx={{ mt: 2 }}>
+                        <DialogContentText>Qualquer pessoa com este link poderá ver o setlist.</DialogContentText>
+                        <TextField
+                            fullWidth
+                            readOnly
+                            value={linkPublico}
+                            sx={{ mt: 1 }}
+                        />
+                        <Button onClick={copiarLink} sx={{ mt: 1 }}>{copiado ? "Copiado!" : "Copiar Link"}</Button>
+                    </Box>
+                )}
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleFecharDialogoPartilha}>Fechar</Button>
+            </DialogActions>
+        </Dialog>
+        
+        <Snackbar open={copiado} autoHideDuration={2000} onClose={() => setCopiado(false)}>
+            <Alert onClose={() => setCopiado(false)} severity="success" sx={{ width: '100%' }}>
+                Link copiado para a área de transferência!
+            </Alert>
+        </Snackbar>
     </Box>
   );
 }
