@@ -202,7 +202,11 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
                 {capas.map((capa, index) => (
                   <Draggable key={index} draggableId={`capa-${index}`} index={index}>
                     {(provided) => (
-                      <Grid item xs={12} sm={4} ref={provided.innerRef} {...provided.draggableProps}>
+                      <Grid 
+                        item xs={12} sm={4} 
+                        ref={provided.innerRef} 
+                        {...provided.draggableProps}
+                        sx={{ display: 'flex' }}>
                           <Paper variant="outlined" sx={{ height: 150, backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: `url(${typeof capa === 'string' ? capa : URL.createObjectURL(capa)})`, position: 'relative' }}>
                               <Box {...provided.dragHandleProps} sx={{ position: 'absolute', top: 4, left: 4, bgcolor: 'rgba(0,0,0,0.5)', borderRadius: '50%', display: 'flex', cursor: 'grab' }}>
                                   <DragIndicatorIcon sx={{ color: 'white' }} />
