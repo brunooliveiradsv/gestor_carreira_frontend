@@ -303,6 +303,9 @@ function ShowCase() {
                             <List dense>{proximosShows.map((show, index) => (<ListItem key={index} disableGutters><ListItemIcon><CalendarMonthIcon color="primary" /></ListItemIcon><ListItemText primary={show.nome_evento} secondary={<>{new Date(show.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}{show.local && ` - ${show.local}`}</>} /></ListItem>))}</List>
                         ) : ( <Typography color="text.secondary">Nenhum show agendado no momento.</Typography> )}
                     </Paper>
+                    {enqueteAtiva && (
+                        <EnqueteShowcase enquete={enqueteAtiva} />
+                    )}
                     {contatoPublico && (
                         <Paper sx={{ p: 3 }}>
                             <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Contato</Typography>
