@@ -364,7 +364,7 @@ function Mural() {
       <GerirCapas usuario={usuario} setUsuario={setUsuario} mostrarNotificacao={mostrarNotificacao} />
 
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-        <Typography variant="h6" component="h2" gutterBottom>Informações Gerais da Vitrine</Typography>
+        <Typography variant="h6" component="h2" gutterBottom>Informações Gerais</Typography>
         {usuario?.url_unica && (
             <Link href={`/showcase/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <LinkIcon sx={{ mr: 1 }} /> Visualizar minha página pública
@@ -386,7 +386,7 @@ function Mural() {
       </Paper>
 
       <Dialog open={dialogoAberto} onClose={handleFecharDialogo} fullWidth maxWidth="sm">
-        <DialogTitle>Nova Publicação</DialogTitle>
+        <DialogTitle>Nova publicação</DialogTitle>
         <DialogContent>
           <TextField autoFocus margin="dense" label="Conteúdo da publicação *" type="text" fullWidth multiline rows={4} variant="outlined" value={novoPost.content} onChange={(e) => setNovoPost(p => ({ ...p, content: e.target.value }))} sx={{ mb: 2 }} />
           <TextField margin="dense" label="Link (opcional)" type="url" fullWidth variant="outlined" value={novoPost.link} onChange={(e) => setNovoPost(p => ({ ...p, link: e.target.value }))} />
