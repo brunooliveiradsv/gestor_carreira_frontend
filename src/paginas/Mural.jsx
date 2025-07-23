@@ -6,11 +6,10 @@ import { AuthContext } from '../contextos/AuthContext';
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-
 import {
   Box, Typography, Button, CircularProgress, Paper, Grid,
   Dialog, DialogActions, DialogContent, DialogTitle, Link, TextField, IconButton, Tooltip,
-  List, ListItem, ListItemText
+  List, ListItem, ListItemText, DialogContentText
 } from '@mui/material';
 import { 
     AddCircleOutline as AddCircleOutlineIcon, Delete as DeleteIcon, Link as LinkIcon,
@@ -18,7 +17,6 @@ import {
     AddPhotoAlternate as AddPhotoIcon, DragIndicator as DragIndicatorIcon
 } from '@mui/icons-material';
 
-// Função utilitária para reordenar
 const reorder = (list, startIndex, endIndex) => {
   const result = Array.from(list);
   const [removed] = result.splice(startIndex, 1);
@@ -26,7 +24,6 @@ const reorder = (list, startIndex, endIndex) => {
   return result;
 };
 
-// Componente de Recorte
 function EditorDeRecorte({ imagemSrc, onRecorteCompleto, onCancelar }) {
     const [crop, setCrop] = useState();
     const [completedCrop, setCompletedCrop] = useState(null);
@@ -71,6 +68,8 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
   const [carregando, setCarregando] = useState(false);
   const fileInputRef = useRef();
   const [imagemParaRecortar, setImagemParaRecortar] = useState(null);
+  const [dialogoUrlAberto, setDialogoUrlAberto] = useState(false);
+  const [urlImagem, setUrlImagem] = useState("");
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
@@ -103,10 +102,15 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
       mostrarNotificacao("Pode ter no máximo 3 imagens de capa.", "warning");
       return;
     }
-    const url = prompt("Cole o link da imagem hospedada (não será possível recortar):");
-    if (url && url.startsWith('http')) {
-      setCapas(prev => [...prev, url]);
-    } else if (url) {
+    setUrlImagem("");
+    setDialogoUrlAberto(true);
+  };
+  
+  const handleConfirmarUrl = () => {
+    if (urlImagem && urlImagem.startsWith('http')) {
+      setCapas(prev => [...prev, urlImagem]);
+      setDialogoUrlAberto(false);
+    } else {
       mostrarNotificacao("O link fornecido não é válido.", "error");
     }
   };
@@ -158,7 +162,7 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
           <Droppable droppableId="capasDroppable" direction="horizontal">
             {(provided) => (
               <Box 
-                sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' } }} 
+                sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' }, overflowX: 'auto', pb: 1 }} 
                 {...provided.droppableProps} 
                 ref={provided.innerRef}
               >
@@ -206,6 +210,29 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
           <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
         </Box>
       </Paper>
+      
+      <Dialog open={dialogoUrlAberto} onClose={() => setDialogoUrlAberto(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Adicionar Imagem de Capa por Link</DialogTitle>
+        <DialogContent>
+            <DialogContentText sx={{ mb: 2 }}>
+                Cole o link completo (URL) da imagem que deseja usar. Lembre-se que imagens de links externos não podem ser recortadas.
+            </DialogContentText>
+            <TextField
+                autoFocus
+                margin="dense"
+                label="URL da Imagem"
+                type="url"
+                fullWidth
+                variant="outlined"
+                value={urlImagem}
+                onChange={(e) => setUrlImagem(e.target.value)}
+            />
+        </DialogContent>
+        <DialogActions>
+            <Button onClick={() => setDialogoUrlAberto(false)}>Cancelar</Button>
+            <Button onClick={handleConfirmarUrl} variant="contained">Confirmar</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
@@ -238,7 +265,6 @@ function Mural() {
   const buscarPosts = useCallback(async () => {
     try {
       const resposta = await apiClient.get('/api/posts');
-      // --- ALTERAÇÃO AQUI: Limita aos últimos 3 posts ---
       setPosts(resposta.data.slice(0, 3));
     } catch (error) {
       mostrarNotificacao('Erro ao carregar as publicações.', 'error');
@@ -285,7 +311,7 @@ function Mural() {
       await apiClient.post('/api/posts', novoPost);
       mostrarNotificacao('Publicação criada com sucesso!', 'success');
       handleFecharDialogo();
-      buscarPosts(); // Recarrega os posts para mostrar o mais recente
+      buscarPosts();
     } catch (error) {
       mostrarNotificacao('Erro ao salvar a publicação.', 'error');
     }
@@ -318,8 +344,6 @@ function Mural() {
           Nova Publicação
         </Button>
       </Box>
-      
-      {/* --- NOVA ORDEM --- */}
       
       <Paper sx={{ mb: 4 }}>
         <Typography variant="h6" component="h2" sx={{ p: { xs: 2, md: 3 }, pb: 0 }}>

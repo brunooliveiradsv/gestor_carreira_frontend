@@ -6,13 +6,13 @@ import { useNotificacao } from "../contextos/NotificationContext";
 import { AuthContext } from "../contextos/AuthContext";
 import {
   Box, Button, Typography, CircularProgress, Paper, TextField,
-  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, 
-  Grid, Avatar, Badge, IconButton, Tooltip, Chip
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+  Grid, Avatar, IconButton, Tooltip, Chip
 } from "@mui/material";
-import { 
-    PhotoCamera, 
+import {
+    PhotoCamera,
     WorkspacePremium as WorkspacePremiumIcon,
-    Link as LinkIcon 
+    Link as LinkIcon
 } from "@mui/icons-material";
 
 const FormCard = ({ title, children }) => (
@@ -34,9 +34,10 @@ function Configuracoes() {
   const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
   const [novaFoto, setNovaFoto] = useState(null);
   const [previewFoto, setPreviewFoto] = useState(null);
-  
   const [carregando, setCarregando] = useState({ nome: false, email: false, senha: false, foto: false, portal: false });
   const [dialogoSenhaAberto, setDialogoSenhaAberto] = useState(false);
+  const [dialogoUrlAberto, setDialogoUrlAberto] = useState(false);
+  const [urlImagem, setUrlImagem] = useState("");
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -46,12 +47,12 @@ function Configuracoes() {
       setPreviewFoto(usuario.foto_url || null);
     }
   }, [usuario]);
-  
+
   const capitalizar = (texto) => {
     if (!texto) return '';
     return texto.charAt(0).toUpperCase() + texto.slice(1);
   };
-  
+
   const handleSalvarNome = async (e) => {
     e.preventDefault();
     setCarregando(prev => ({ ...prev, nome: true }));
@@ -117,7 +118,7 @@ function Configuracoes() {
       setCarregando(prev => ({ ...prev, foto: false }));
     }
   };
-  
+
   const handleSalvarSenha = async () => {
     fecharDialogoSenha();
     setCarregando(prev => ({ ...prev, senha: true }));
@@ -153,12 +154,21 @@ function Configuracoes() {
     }
   };
 
-  const handleAbrirPromptUrl = () => {
-    const url = prompt("Cole o link da imagem que deseja usar como foto de perfil:");
-    if (url && url.startsWith('http')) {
-        setNovaFoto(url);
-        setPreviewFoto(url);
-    } else if (url) {
+  const handleAbrirDialogoUrl = () => {
+    setUrlImagem("");
+    setDialogoUrlAberto(true);
+  };
+
+  const handleFecharDialogoUrl = () => {
+    setDialogoUrlAberto(false);
+  };
+  
+  const handleConfirmarUrl = () => {
+    if (urlImagem && urlImagem.startsWith('http')) {
+        setNovaFoto(urlImagem);
+        setPreviewFoto(urlImagem);
+        handleFecharDialogoUrl();
+    } else {
         mostrarNotificacao("O link fornecido não parece ser uma URL válida.", "warning");
     }
   };
@@ -200,7 +210,7 @@ function Configuracoes() {
                       <Box sx={{display: 'flex', gap: 1, alignItems: 'center'}}>
                         <Button variant="outlined" startIcon={<PhotoCamera />} onClick={() => fileInputRef.current.click()}>Enviar Ficheiro</Button>
                         <Tooltip title="Usar URL da Imagem">
-                            <IconButton onClick={handleAbrirPromptUrl}><LinkIcon /></IconButton>
+                            <IconButton onClick={handleAbrirDialogoUrl}><LinkIcon /></IconButton>
                         </Tooltip>
                       </Box>
 
@@ -255,6 +265,29 @@ function Configuracoes() {
         <DialogActions>
           <Button onClick={fecharDialogoSenha}>Cancelar</Button>
           <Button onClick={handleSalvarSenha} color="primary" autoFocus disabled={carregando.senha}>{carregando.senha ? <CircularProgress size={24} /> : "Confirmar"}</Button>
+        </DialogActions>
+      </Dialog>
+      
+      <Dialog open={dialogoUrlAberto} onClose={handleFecharDialogoUrl} fullWidth maxWidth="sm">
+        <DialogTitle>Adicionar Imagem por Link</DialogTitle>
+        <DialogContent>
+            <DialogContentText sx={{ mb: 2 }}>
+                Cole o link completo (URL) da imagem que deseja usar como foto de perfil.
+            </DialogContentText>
+            <TextField
+                autoFocus
+                margin="dense"
+                label="URL da Imagem"
+                type="url"
+                fullWidth
+                variant="outlined"
+                value={urlImagem}
+                onChange={(e) => setUrlImagem(e.target.value)}
+            />
+        </DialogContent>
+        <DialogActions>
+            <Button onClick={handleFecharDialogoUrl}>Cancelar</Button>
+            <Button onClick={handleConfirmarUrl} variant="contained">Confirmar</Button>
         </DialogActions>
       </Dialog>
     </Box>
