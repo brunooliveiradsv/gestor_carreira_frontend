@@ -24,6 +24,7 @@ import Mural from "./paginas/Mural.jsx";
 import Assinatura from "./paginas/Assinatura.jsx";
 import VerificarAssinatura from "./componentes/VerificarAssinatura.jsx";
 import ModoPalco from "./paginas/ModoPalco.jsx";
+import PaginaSetlistPublico from "./paginas/PaginaSetlistPublico.jsx";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
       <Route path="/cadastro" element={<Autenticacao />} />
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/showcase/:url_unica" element={<ShowCase />} />
+       <Route path="/setlist/:uuid" element={<PaginaSetlistPublico />} />
 
       {/* --- ROTA DE TELA CHEIA (SEM LAYOUT) --- */}
       {/* Esta rota é protegida, mas renderiza APENAS o ModoPalco, sem o menu lateral */}
