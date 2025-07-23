@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
-  Box, Typography, Button, CircularProgress, Paper,
-  Grid, Card, CardContent, CardActions, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Snackbar, Alert
+   Box, Typography, Button, CircularProgress, Paper,
+  Card, CardContent, CardActions, IconButton, Tooltip, Dialog, DialogTitle, 
+  DialogContent, DialogActions, TextField, DialogContentText, Switch, 
+  FormControlLabel, Snackbar, Alert
 } from '@mui/material';
 import {
   AddCircleOutline as AddCircleOutlineIcon,
