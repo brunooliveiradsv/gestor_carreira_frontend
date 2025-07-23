@@ -36,11 +36,11 @@ import {
   Groups as GroupsIcon,
   Handshake as HandshakeIcon,
   AttachMoney as AttachMoneyIcon,
-  Assignment as AssignmentIcon // Ícone para o contrato
+  Assignment as AssignmentIcon
 } from "@mui/icons-material";
 
 import FormularioCompromisso from "../componentes/FormularioCompromisso.jsx";
-import FormularioContrato from '../componentes/FormularioContrato'; // Importar o novo formulário
+import FormularioContrato from '../componentes/FormularioContrato';
 
 function Agenda() {
   const { mostrarNotificacao } = useNotificacao();
@@ -279,14 +279,7 @@ function Agenda() {
                       {c.local || "Local não informado"}
                     </Typography>
                   </Box>
-                  {c.valor_cache > 0 && (
-                    <Box sx={{ display: "flex", alignItems: "center", color: "text.secondary" }}>
-                      <AttachMoneyIcon sx={{ fontSize: "1.2rem", mr: 1.5 }} />
-                      <Typography variant="body2">
-                        Cachê: R$ {parseFloat(c.valor_cache).toFixed(2)}
-                      </Typography>
-                    </Box>
-                  )}
+                  {/* --- BLOCO DO CACHÊ REMOVIDO DAQUI --- */}
                 </CardContent>
                 <CardActions sx={{ justifyContent: "flex-end", borderTop: `1px solid ${theme.palette.divider}` }}>
                   <Tooltip title="Gerar Contrato">
