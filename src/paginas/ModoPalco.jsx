@@ -19,7 +19,7 @@ import {
     AddCircleOutline as TransposeUpIcon,
 } from '@mui/icons-material';
 
-// --- Lógica de Transposição (sem alterações) ---
+// --- LÓGICA DE TRANSPOSIÇÃO ROBUSTA (sem alterações) ---
 const ALL_NOTES = [
     { sharp: 'A', flat: 'A' }, { sharp: 'A#', flat: 'Bb' }, { sharp: 'B', flat: 'B' },
     { sharp: 'C', flat: 'C' }, { sharp: 'C#', flat: 'Db' }, { sharp: 'D', flat: 'D' },
@@ -58,25 +58,33 @@ const transposeChord = (chord, amount) => {
     return transposedNote + rest;
 };
 
+// --- FUNÇÃO DE FORMATAR CIFRA COM REGEX MELHORADO ---
 const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
     if (!textoCifra) return <Typography sx={{ fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` } }}>Nenhuma cifra ou letra adicionada.</Typography>;
-    const regexChordLine = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?(\s+[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?)*\s*$/i;
+    
+    // Regex mais flexível para identificar uma linha que CONTÉM acordes.
+    // Procura por padrões comuns de acordes, permitindo outros caracteres na linha.
+    const regexLinhaDeAcordes = /(\b[A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]?(\/[A-G][#b]?)?\b)/;
+
     return textoCifra.split('\n').map((linha, index) => {
-        const isChordLine = regexChordLine.test(linha.trim());
+        // Testa se a linha parece ser uma linha de acordes
+        const isLinhaDeAcordes = regexLinhaDeAcordes.test(linha);
+        
         let linhaProcessada = linha;
-        if (isChordLine && transposicao !== 0) {
-            const chordRegex = /([A-G][#b]?(?:m|maj|min|dim|aug|sus|add)?[0-9\/b#]*)/g;
-            linhaProcessada = linha.replace(chordRegex, (match) => {
-                if (match.trim() === '') return match;
-                return transposeChord(match, transposicao);
+        if (isLinhaDeAcordes && transposicao !== 0) {
+            // Regex para encontrar CADA acorde individualmente na linha
+            const regexAcordeIndividual = /[A-G][#b]?(?:m|maj|min|dim|aug|add|sus)?[0-9b#]*(?:\/[A-G][#b]?)?/g;
+            linhaProcessada = linha.replace(regexAcordeIndividual, (acordeEncontrado) => {
+                return transposeChord(acordeEncontrado, transposicao);
             });
         }
+
         return (
             <Typography key={index} component="span" sx={{
                 display: 'block',
                 fontSize: { xs: `${fontSize * 0.7}rem`, md: `${fontSize}rem` },
-                color: isChordLine ? theme.palette.secondary.main : 'inherit',
-                fontWeight: isChordLine ? 'bold' : 'normal',
+                color: isLinhaDeAcordes ? theme.palette.secondary.main : 'inherit',
+                fontWeight: isLinhaDeAcordes ? 'bold' : 'normal',
                 transition: 'font-size 0.2s ease-in-out'
             }}>
                 {linhaProcessada || <br />}
@@ -86,6 +94,7 @@ const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
 };
 
 function ModoPalco() {
+  // O resto do componente permanece o mesmo...
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -287,10 +296,9 @@ function ModoPalco() {
 
       <Box ref={letraRef} sx={{
           position: 'relative', flexGrow: 1, overflowY: 'auto',
-          // --- ALTERAÇÃO AQUI ---
-          pt: '45vh', // Adiciona padding no topo para começar no meio
-          pb: '50vh', // Adiciona padding em baixo para a última linha chegar ao meio
-          px: {xs: 2, md: 4}, // Mantém os paddings laterais
+          pt: '45vh',
+          pb: '50vh',
+          px: {xs: 2, md: 4},
           '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none'
       }}>
           <Container maxWidth="md">
