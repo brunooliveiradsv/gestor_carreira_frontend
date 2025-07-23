@@ -33,11 +33,18 @@ const StatCard = ({ icon, value, label }) => (
 );
 
 const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, handleAplaudir }) => {
+    let fotoUrlCompleta = null;
+    if (artista.foto_url) {
+        fotoUrlCompleta = artista.foto_url.startsWith('http')
+        ? artista.foto_url
+        : `${apiClient.defaults.baseURL}${artista.foto_url}`;
+    }
+
     return (
         <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4, position: 'relative', mt: -15, bgcolor: 'background.paper' }}>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', gap: 3 }}>
                 <Avatar 
-                    src={artista.foto_url} 
+                    src={fotoUrlCompleta} 
                     sx={{ 
                         width: { xs: 120, md: 160 }, 
                         height: { xs: 120, md: 160 },
@@ -130,7 +137,7 @@ function ShowCase() {
 
   const getYoutubeVideoId = (url) => {
     if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const regExp = /^.*(http:\/\/googleusercontent.com\/youtube.com\/3\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
   };
@@ -173,9 +180,58 @@ function ShowCase() {
       return () => clearInterval(timer);
     }
   }, [capas.length]);
+  
+  // --- LÓGICA DO BOTÃO APLAUDIR ---
+  const handleAplaudir = async () => {
+      if (jaAplaudido) return;
+      
+      // Atualização otimista da UI
+      setTotalAplausos(prev => prev + 1);
+      setJaAplaudido(true);
+      localStorage.setItem(`aplauso_${url_unica}`, 'true');
 
-  const handleAplaudir = async () => { /* ... */ };
-  const handleReacao = async (postId, tipo) => { /* ... */ };
+      try {
+          // Envia a requisição para o backend
+          await apiClient.post(`/api/vitrine/${url_unica}/aplaudir`);
+      } catch (error) {
+          console.error("Erro ao registar aplauso", error);
+          // Reverte a UI em caso de erro
+          setTotalAplausos(prev => prev - 1);
+          setJaAplaudido(false);
+          localStorage.removeItem(`aplauso_${url_unica}`);
+      }
+  };
+  
+  // --- LÓGICA DOS BOTÕES LIKE/DISLIKE ---
+  const handleReacao = async (postId, tipo) => {
+      if (reacoesPosts[postId]) return;
+
+      // Atualização otimista da UI
+      setVitrine(prev => ({
+          ...prev,
+          postsRecentes: prev.postsRecentes.map(p => 
+              p.id === postId ? { ...p, [tipo === 'like' ? 'likes' : 'dislikes']: p[tipo === 'like' ? 'likes' : 'dislikes'] + 1 } : p
+          )
+      }));
+      setReacoesPosts(prev => ({ ...prev, [postId]: tipo }));
+      localStorage.setItem(`reacao_post_${postId}`, tipo);
+
+      try {
+          // Envia a requisição para o backend
+          await apiClient.post(`/api/vitrine/posts/${postId}/reacao`, { tipo });
+      } catch (error) {
+          console.error("Erro ao registar reação:", error);
+          // Reverte a UI em caso de erro
+          setReacoesPosts(prev => {
+              const novo = { ...prev };
+              delete novo[postId];
+              return novo;
+          });
+          localStorage.removeItem(`reacao_post_${postId}`);
+          // Reverte a contagem (opcional, mas mais preciso)
+          buscarDadosVitrine();
+      }
+  };
 
   if (carregando) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
   if (erro) return (
@@ -187,18 +243,43 @@ function ShowCase() {
   if (!vitrine) return null;
 
   const { artista, proximosShows, contatoPublico, postsRecentes } = vitrine;
-  const urlFotoCapa = capas[indiceCapa] || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80';
+  const fallbackCapa = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80';
   const videoDestaqueId = getYoutubeVideoId(artista.video_destaque_url);
 
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
         <Box sx={{
+            position: 'relative',
             height: { xs: '30vh', md: '50vh' },
-            backgroundImage: `linear-gradient(to top, rgba(18,18,18,1) 0%, rgba(18,18,18,0.2) 50%), url(${urlFotoCapa})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            transition: 'background-image 1s ease-in-out',
-        }}/>
+            bgcolor: '#000'
+        }}>
+            <Box sx={{
+                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                backgroundImage: `url(${capas.length > 0 ? capas[0] : fallbackCapa})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+            }} />
+            
+            {capas.map((url, index) => (
+                <Box
+                    key={index}
+                    sx={{
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                        backgroundImage: `url(${url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        opacity: indiceCapa === index ? 1 : 0,
+                        transition: 'opacity 1.5s ease-in-out',
+                    }}
+                />
+            ))}
+            
+            <Box sx={{
+                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                backgroundImage: `linear-gradient(to top, rgba(18,18,18,1) 0%, rgba(18,18,18,0.2) 50%)`,
+            }} />
+        </Box>
+        
         <Container maxWidth="lg" sx={{ pb: 5 }}>
             <VitrineHeader artista={artista} estatisticas={vitrine.estatisticas} jaAplaudido={jaAplaudido} totalAplausos={totalAplausos} handleAplaudir={handleAplaudir} />
             

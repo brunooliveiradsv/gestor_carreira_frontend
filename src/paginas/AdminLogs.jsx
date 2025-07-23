@@ -6,11 +6,10 @@ import {
   Box, Typography, CircularProgress, Paper, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Chip,
   TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel, Grid, Tooltip,
-  useTheme, useMediaQuery, Card, CardContent, List, ListItem, ListItemText, Divider, Avatar // <-- CORRIGIDO AQUI
+  useTheme, useMediaQuery, List, ListItem, ListItemText, Divider, Avatar
 } from '@mui/material';
 import { Search as SearchIcon, History as HistoryIcon, Person as PersonIcon } from '@mui/icons-material';
 
-// --- NOVA FUNÇÃO PARA TRADUZIR OS LOGS ---
 const formatarDetalhesLog = (log) => {
     const { action_type, details } = log;
     if (!details) return '-';
@@ -23,20 +22,18 @@ const formatarDetalhesLog = (log) => {
         case 'UPDATE_PROFILE_EMAIL': return `Alterou o e-mail para "${details.new_email}".`;
         case 'UPDATE_PASSWORD': return 'Alterou a sua senha de acesso.';
         case 'UPDATE_PROFILE_PICTURE': return 'Atualizou a foto de perfil.';
-        case 'UPDATE_COVER_PICTURE': return 'Atualizou a foto de capa da vitrine.';
+        case 'UPDATE_COVER_PICTURES': return 'Atualizou as fotos de capa da vitrine.';
         case 'UPDATE_PUBLIC_PROFILE': return `Atualizou a vitrine. Campos afetados: ${details.changes.join(', ')}.`;
         case 'CREATE_SETLIST': return `Criou o setlist: "${details.setlistName}" (ID: ${details.setlistId}).`;
         case 'UPDATE_SETLIST_DETAILS': return `Atualizou os detalhes do setlist #${details.setlistId}.`;
         case 'DELETE_SETLIST': return `Apagou o setlist #${details.setlistId}.`;
         case 'UPDATE_SETLIST_MUSICS': return `Atualizou ${details.musicCount} músicas no setlist #${details.setlistId}.`;
         default:
-            // Fallback para mostrar os detalhes em JSON se não houver uma tradução
             const detailsString = JSON.stringify(details);
             return detailsString === '{}' ? '-' : detailsString;
     }
 };
 
-// Função auxiliar para formatar o tempo relativo
 const formatarTempoRelativo = (dataString) => {
     const data = new Date(dataString);
     const agora = new Date();
@@ -88,7 +85,7 @@ function AdminLogs() {
 
   const logsFiltrados = useMemo(() => {
     return logs.filter(log => {
-      if (!log.user) return false; // Garante que logs sem utilizador não quebrem a aplicação
+      if (!log.user) return false;
       const correspondeUtilizador = !filtros.utilizadorId || log.user.id === filtros.utilizadorId;
       const correspondeAcao = !filtros.acao || log.action_type.toLowerCase().includes(filtros.acao.toLowerCase());
       return correspondeUtilizador && correspondeAcao;
@@ -163,35 +160,35 @@ function AdminLogs() {
 
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Filtrar por Utilizador</InputLabel>
-              <Select
-                name="utilizadorId"
-                value={filtros.utilizadorId}
-                label="Filtrar por Utilizador"
+            <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                <InputLabel>Filtrar por Utilizador</InputLabel>
+                <Select
+                    name="utilizadorId"
+                    value={filtros.utilizadorId}
+                    label="Filtrar por Utilizador"
+                    onChange={handleFiltroChange}
+                >
+                    <MenuItem value=""><em>Todos os Utilizadores</em></MenuItem>
+                    {utilizadores.map(u => (
+                    <MenuItem key={u.id} value={u.id}>{u.nome} ({u.email})</MenuItem>
+                    ))}
+                </Select>
+                </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+                <TextField
+                fullWidth
+                name="acao"
+                label="Filtrar por Ação"
+                placeholder="Ex: LOGIN, UPDATE_PASSWORD..."
+                value={filtros.acao}
                 onChange={handleFiltroChange}
-              >
-                <MenuItem value=""><em>Todos os Utilizadores</em></MenuItem>
-                {utilizadores.map(u => (
-                  <MenuItem key={u.id} value={u.id}>{u.nome} ({u.email})</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              name="acao"
-              label="Filtrar por Ação"
-              placeholder="Ex: LOGIN, UPDATE_PASSWORD..."
-              value={filtros.acao}
-              onChange={handleFiltroChange}
-              InputProps={{
-                startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>),
-              }}
-            />
-          </Grid>
+                InputProps={{
+                    startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>),
+                }}
+                />
+            </Grid>
         </Grid>
       </Paper>
 

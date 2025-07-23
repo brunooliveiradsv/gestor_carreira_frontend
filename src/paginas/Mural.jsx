@@ -1,3 +1,4 @@
+// src/paginas/Mural.jsx
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
@@ -24,7 +25,7 @@ const reorder = (list, startIndex, endIndex) => {
   return result;
 };
 
-// --- NOVO COMPONENTE DE RECORTE ---
+// Componente de Recorte
 function EditorDeRecorte({ imagemSrc, onRecorteCompleto, onCancelar }) {
     const [crop, setCrop] = useState();
     const [completedCrop, setCompletedCrop] = useState(null);
@@ -32,75 +33,34 @@ function EditorDeRecorte({ imagemSrc, onRecorteCompleto, onCancelar }) {
 
     function onImageLoad(e) {
         const { width, height } = e.currentTarget;
-        // Cria um recorte inicial com aspeto 16:9 que cobre 80% da imagem
-        const initialCrop = makeAspectCrop(
-            { unit: '%', width: 80 },
-            16 / 9,
-            width,
-            height
-        );
+        const initialCrop = makeAspectCrop({ unit: '%', width: 90 }, 16 / 9, width, height);
         const centeredCrop = centerCrop(initialCrop, width, height);
         setCrop(centeredCrop);
+        setCompletedCrop(centeredCrop);
     }
 
     const handleConfirmarRecorte = () => {
-        if (!completedCrop || !imgRef.current) {
-            alert('Por favor, selecione uma área para recortar.');
-            return;
-        }
-
+        if (!completedCrop || !imgRef.current) return;
         const canvas = document.createElement('canvas');
         const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
         const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
-        
         canvas.width = Math.floor(completedCrop.width * scaleX);
         canvas.height = Math.floor(completedCrop.height * scaleY);
-
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(
-            imgRef.current,
-            completedCrop.x * scaleX,
-            completedCrop.y * scaleY,
-            completedCrop.width * scaleX,
-            completedCrop.height * scaleY,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
-
+        ctx.drawImage(imgRef.current, completedCrop.x * scaleX, completedCrop.y * scaleY, completedCrop.width * scaleX, completedCrop.height * scaleY, 0, 0, canvas.width, canvas.height);
         canvas.toBlob((blob) => {
             if (blob) {
                 const croppedFile = new File([blob], "cropped_cover.jpeg", { type: "image/jpeg" });
                 onRecorteCompleto(croppedFile);
             }
-        }, 'image/jpeg', 0.9); // Qualidade de 90%
+        }, 'image/jpeg', 0.9);
     };
 
     return (
         <Dialog open onClose={onCancelar} fullWidth maxWidth="md">
             <DialogTitle>Recortar Imagem de Capa (16:9)</DialogTitle>
-            <DialogContent>
-                <ReactCrop
-                    crop={crop}
-                    onChange={c => setCrop(c)}
-                    onComplete={c => setCompletedCrop(c)}
-                    aspect={16 / 9}
-                    minWidth={200}
-                >
-                    <img
-                        ref={imgRef}
-                        src={imagemSrc}
-                        onLoad={onImageLoad}
-                        style={{ maxHeight: '70vh', width: '100%' }}
-                        alt="A recortar"
-                    />
-                </ReactCrop>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onCancelar}>Cancelar</Button>
-                <Button onClick={handleConfirmarRecorte} variant="contained">Confirmar Recorte</Button>
-            </DialogActions>
+            <DialogContent><ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)} aspect={16 / 9} minWidth={200}><img ref={imgRef} src={imagemSrc} onLoad={onImageLoad} style={{ maxHeight: '70vh', width: '100%' }} alt="A recortar" /></ReactCrop></DialogContent>
+            <DialogActions><Button onClick={onCancelar}>Cancelar</Button><Button onClick={handleConfirmarRecorte} variant="contained">Confirmar Recorte</Button></DialogActions>
         </Dialog>
     );
 }
@@ -109,7 +69,6 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
   const [capas, setCapas] = useState(usuario.foto_capa_url || []);
   const [carregando, setCarregando] = useState(false);
   const fileInputRef = useRef();
-  
   const [imagemParaRecortar, setImagemParaRecortar] = useState(null);
 
   const onDragEnd = (result) => {
@@ -129,14 +88,13 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
         mostrarNotificacao('A imagem é muito grande (máx 10MB).', 'error');
         return;
       }
-      // Abre o editor de recorte em vez de adicionar o ficheiro diretamente
       setImagemParaRecortar(URL.createObjectURL(file));
     }
   };
   
   const handleRecorteCompleto = (ficheiroRecortado) => {
     setCapas(prev => [...prev, ficheiroRecortado]);
-    setImagemParaRecortar(null); // Fecha o editor
+    setImagemParaRecortar(null);
   };
 
   const handleAdicionarLink = () => {
@@ -202,12 +160,18 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
                 {capas.map((capa, index) => (
                   <Draggable key={index} draggableId={`capa-${index}`} index={index}>
                     {(provided) => (
-                      <Grid 
-                        item xs={12} sm={4} 
-                        ref={provided.innerRef} 
-                        {...provided.draggableProps}
-                        sx={{ display: 'flex' }}>
-                          <Paper variant="outlined" sx={{ height: 150, backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: `url(${typeof capa === 'string' ? capa : URL.createObjectURL(capa)})`, position: 'relative' }}>
+                      <Grid item xs={12} sm={4} ref={provided.innerRef} {...provided.draggableProps} sx={{ display: 'flex' }}>
+                          <Paper 
+                            variant="outlined" 
+                            sx={{ 
+                                width: '100%', 
+                                height: 150, 
+                                backgroundSize: 'cover', 
+                                backgroundPosition: 'center', 
+                                backgroundImage: `url(${typeof capa === 'string' ? capa : URL.createObjectURL(capa)})`, 
+                                position: 'relative' 
+                            }}
+                          >
                               <Box {...provided.dragHandleProps} sx={{ position: 'absolute', top: 4, left: 4, bgcolor: 'rgba(0,0,0,0.5)', borderRadius: '50%', display: 'flex', cursor: 'grab' }}>
                                   <DragIndicatorIcon sx={{ color: 'white' }} />
                               </Box>
