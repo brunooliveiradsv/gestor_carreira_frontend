@@ -8,7 +8,7 @@ import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
 import {
-  Box, Typography, Button, CircularProgress, Paper, Grid,
+  Box, Typography, Button, CircularProgress, Paper,
   Dialog, DialogActions, DialogContent, DialogTitle, Link, TextField, IconButton, Tooltip,
   List, ListItem, ListItemText
 } from '@mui/material';
@@ -153,19 +153,22 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
         />
       )}
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-        <Typography variant="h6" component="h2" gutterBottom>Fotos de Capa da Vitrine (Arraste para reordenar)</Typography>
+        <Typography variant="h6" component="h2" gutterBottom>Fotos de Capa</Typography>
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="capasDroppable" direction="horizontal">
             {(provided) => (
-              <Grid container spacing={2} {...provided.droppableProps} ref={provided.innerRef}>
+              <Box 
+                sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' } }} 
+                {...provided.droppableProps} 
+                ref={provided.innerRef}
+              >
                 {capas.map((capa, index) => (
                   <Draggable key={index} draggableId={`capa-${index}`} index={index}>
                     {(provided) => (
-                      <Grid 
-                        item xs={12} sm={4} 
+                      <Box 
                         ref={provided.innerRef} 
                         {...provided.draggableProps}
-                        sx={{ display: 'flex' }}
+                        sx={{ flex: '1 1 0', minWidth: '200px' }} // Itens flexíveis
                       >
                           <Paper 
                             variant="outlined" 
@@ -185,12 +188,12 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
                                   <DeleteIcon fontSize="small" />
                               </IconButton>
                           </Paper>
-                      </Grid>
+                      </Box>
                     )}
                   </Draggable>
                 ))}
                 {provided.placeholder}
-              </Grid>
+              </Box>
             )}
           </Droppable>
         </DragDropContext>
@@ -318,9 +321,8 @@ function Mural() {
       <GerirCapas usuario={usuario} setUsuario={setUsuario} mostrarNotificacao={mostrarNotificacao} />
 
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-        <Typography variant="h6" component="h2" gutterBottom>Informações Gerais da Vitrine</Typography>
+        <Typography variant="h6" component="h2" gutterBottom>Informações Gerais</Typography>
         {usuario?.url_unica && (
-            // --- CORREÇÃO AQUI ---
             <Link href={`/showcase/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <LinkIcon sx={{ mr: 1 }} /> Visualizar minha página pública
             </Link>
