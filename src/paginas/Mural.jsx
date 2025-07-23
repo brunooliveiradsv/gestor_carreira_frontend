@@ -1,3 +1,4 @@
+// src/paginas/Mural.jsx
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
@@ -5,10 +6,11 @@ import { AuthContext } from '../contextos/AuthContext';
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+
 import {
   Box, Typography, Button, CircularProgress, Paper, Grid,
   Dialog, DialogActions, DialogContent, DialogTitle, Link, TextField, IconButton, Tooltip,
-  List, ListItem, ListItemText // <-- CORREÇÃO AQUI: Componentes de lista adicionados
+  List, ListItem, ListItemText
 } from '@mui/material';
 import { 
     AddCircleOutline as AddCircleOutlineIcon, Delete as DeleteIcon, Link as LinkIcon,
@@ -318,7 +320,8 @@ function Mural() {
       <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
         <Typography variant="h6" component="h2" gutterBottom>Informações Gerais da Vitrine</Typography>
         {usuario?.url_unica && (
-            <Link href={`/vitrine/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            // --- CORREÇÃO AQUI ---
+            <Link href={`/showcase/${usuario.url_unica}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <LinkIcon sx={{ mr: 1 }} /> Visualizar minha página pública
             </Link>
         )}
