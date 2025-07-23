@@ -1,51 +1,150 @@
-// src/paginas/Mural.jsx
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import { AuthContext } from '../contextos/AuthContext';
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
 import {
-  Box, Typography, Button, CircularProgress, Paper, List, ListItem,
-  ListItemText, IconButton, Tooltip, TextField, Dialog, DialogActions,
-  DialogContent, DialogTitle, Link, Grid
+  Box, Typography, Button, CircularProgress, Paper, Grid,
+  Dialog, DialogActions, DialogContent, DialogTitle, Link, TextField, IconButton, Tooltip
 } from '@mui/material';
 import { 
-    AddCircleOutline as AddCircleOutlineIcon, 
-    Delete as DeleteIcon, 
-    Link as LinkIcon,
-    Instagram, 
-    YouTube, 
-    MusicNote,
-    PhotoCamera as PhotoCameraIcon,
-    AddPhotoAlternate as AddPhotoIcon
+    AddCircleOutline as AddCircleOutlineIcon, Delete as DeleteIcon, Link as LinkIcon,
+    Instagram, YouTube, MusicNote, PhotoCamera as PhotoCameraIcon,
+    AddPhotoAlternate as AddPhotoIcon, DragIndicator as DragIndicatorIcon, Crop as CropIcon
 } from '@mui/icons-material';
 
-// --- NOVO COMPONENTE PARA GERIR AS CAPAS ---
+// Função utilitária para reordenar
+const reorder = (list, startIndex, endIndex) => {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+  return result;
+};
+
+// --- NOVO COMPONENTE DE RECORTE ---
+function EditorDeRecorte({ imagemSrc, onRecorteCompleto, onCancelar }) {
+    const [crop, setCrop] = useState();
+    const [completedCrop, setCompletedCrop] = useState(null);
+    const imgRef = useRef(null);
+
+    function onImageLoad(e) {
+        const { width, height } = e.currentTarget;
+        // Cria um recorte inicial com aspeto 16:9 que cobre 80% da imagem
+        const initialCrop = makeAspectCrop(
+            { unit: '%', width: 80 },
+            16 / 9,
+            width,
+            height
+        );
+        const centeredCrop = centerCrop(initialCrop, width, height);
+        setCrop(centeredCrop);
+    }
+
+    const handleConfirmarRecorte = () => {
+        if (!completedCrop || !imgRef.current) {
+            alert('Por favor, selecione uma área para recortar.');
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
+        const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
+        
+        canvas.width = Math.floor(completedCrop.width * scaleX);
+        canvas.height = Math.floor(completedCrop.height * scaleY);
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(
+            imgRef.current,
+            completedCrop.x * scaleX,
+            completedCrop.y * scaleY,
+            completedCrop.width * scaleX,
+            completedCrop.height * scaleY,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const croppedFile = new File([blob], "cropped_cover.jpeg", { type: "image/jpeg" });
+                onRecorteCompleto(croppedFile);
+            }
+        }, 'image/jpeg', 0.9); // Qualidade de 90%
+    };
+
+    return (
+        <Dialog open onClose={onCancelar} fullWidth maxWidth="md">
+            <DialogTitle>Recortar Imagem de Capa (16:9)</DialogTitle>
+            <DialogContent>
+                <ReactCrop
+                    crop={crop}
+                    onChange={c => setCrop(c)}
+                    onComplete={c => setCompletedCrop(c)}
+                    aspect={16 / 9}
+                    minWidth={200}
+                >
+                    <img
+                        ref={imgRef}
+                        src={imagemSrc}
+                        onLoad={onImageLoad}
+                        style={{ maxHeight: '70vh', width: '100%' }}
+                        alt="A recortar"
+                    />
+                </ReactCrop>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onCancelar}>Cancelar</Button>
+                <Button onClick={handleConfirmarRecorte} variant="contained">Confirmar Recorte</Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
 function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
   const [capas, setCapas] = useState(usuario.foto_capa_url || []);
   const [carregando, setCarregando] = useState(false);
   const fileInputRef = useRef();
+  
+  const [imagemParaRecortar, setImagemParaRecortar] = useState(null);
+
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = reorder(capas, result.source.index, result.destination.index);
+    setCapas(items);
+  };
 
   const handleFileChange = (e) => {
     if (capas.length >= 3) {
-      mostrarNotificacao("Você pode ter no máximo 3 imagens de capa.", "warning");
+      mostrarNotificacao("Pode ter no máximo 3 imagens de capa.", "warning");
       return;
     }
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) { // 10MB
+      if (file.size > 10 * 1024 * 1024) {
         mostrarNotificacao('A imagem é muito grande (máx 10MB).', 'error');
         return;
       }
-      setCapas(prev => [...prev, file]);
+      // Abre o editor de recorte em vez de adicionar o ficheiro diretamente
+      setImagemParaRecortar(URL.createObjectURL(file));
     }
+  };
+  
+  const handleRecorteCompleto = (ficheiroRecortado) => {
+    setCapas(prev => [...prev, ficheiroRecortado]);
+    setImagemParaRecortar(null); // Fecha o editor
   };
 
   const handleAdicionarLink = () => {
     if (capas.length >= 3) {
-      mostrarNotificacao("Você pode ter no máximo 3 imagens de capa.", "warning");
+      mostrarNotificacao("Pode ter no máximo 3 imagens de capa.", "warning");
       return;
     }
-    const url = prompt("Cole o link da imagem hospedada:");
+    const url = prompt("Cole o link da imagem hospedada (não será possível recortar):");
     if (url && url.startsWith('http')) {
       setCapas(prev => [...prev, url]);
     } else if (url) {
@@ -60,21 +159,16 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
   const handleSalvarCapas = async () => {
     setCarregando(true);
     const formData = new FormData();
-    const linksCapa = [];
-
-    capas.forEach(capa => {
+    const ordemCapas = capas.map(capa => {
       if (typeof capa === 'string') {
-        linksCapa.push(capa);
+        return capa;
       } else {
         formData.append('capas', capa);
+        return 'UPLOAD';
       }
     });
     
-    // É importante adicionar os links ao FormData, mesmo que vazios
-    linksCapa.forEach(link => formData.append('linksCapa[]', link));
-    if (linksCapa.length === 0) {
-        formData.append('linksCapa[]', '');
-    }
+    formData.append('ordemCapas', JSON.stringify(ordemCapas));
 
     try {
       const { data } = await apiClient.put('/api/usuarios/perfil/capas', formData, {
@@ -91,28 +185,51 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
   };
 
   return (
-    <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-      <Typography variant="h6" component="h2" gutterBottom>Fotos de Capa da Vitrine (Máx. 3)</Typography>
-      <Grid container spacing={2}>
-        {capas.map((capa, index) => (
-          <Grid item xs={12} sm={4} key={index}>
-            <Paper variant="outlined" sx={{ height: 150, backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: `url(${typeof capa === 'string' ? capa : URL.createObjectURL(capa)})`, position: 'relative' }}>
-              <IconButton onClick={() => handleRemoverCapa(index)} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', '&:hover': {bgcolor: 'rgba(0,0,0,0.7)'} }}>
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-      <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-        <Button variant="outlined" startIcon={<AddPhotoIcon />} onClick={() => fileInputRef.current.click()} disabled={capas.length >= 3}>Enviar Ficheiro</Button>
-        <Button variant="outlined" startIcon={<LinkIcon />} onClick={handleAdicionarLink} disabled={capas.length >= 3}>Usar Link</Button>
-        <Button variant="contained" onClick={handleSalvarCapas} disabled={carregando} sx={{ ml: 'auto' }}>
-            {carregando ? <CircularProgress size={24} /> : "Salvar Capas"}
-        </Button>
-        <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
-      </Box>
-    </Paper>
+    <>
+      {imagemParaRecortar && (
+        <EditorDeRecorte 
+            imagemSrc={imagemParaRecortar}
+            onRecorteCompleto={handleRecorteCompleto}
+            onCancelar={() => setImagemParaRecortar(null)}
+        />
+      )}
+      <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
+        <Typography variant="h6" component="h2" gutterBottom>Fotos de Capa da Vitrine (Arraste para reordenar)</Typography>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="capasDroppable" direction="horizontal">
+            {(provided) => (
+              <Grid container spacing={2} {...provided.droppableProps} ref={provided.innerRef}>
+                {capas.map((capa, index) => (
+                  <Draggable key={index} draggableId={`capa-${index}`} index={index}>
+                    {(provided) => (
+                      <Grid item xs={12} sm={4} ref={provided.innerRef} {...provided.draggableProps}>
+                          <Paper variant="outlined" sx={{ height: 150, backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: `url(${typeof capa === 'string' ? capa : URL.createObjectURL(capa)})`, position: 'relative' }}>
+                              <Box {...provided.dragHandleProps} sx={{ position: 'absolute', top: 4, left: 4, bgcolor: 'rgba(0,0,0,0.5)', borderRadius: '50%', display: 'flex', cursor: 'grab' }}>
+                                  <DragIndicatorIcon sx={{ color: 'white' }} />
+                              </Box>
+                              <IconButton onClick={() => handleRemoverCapa(index)} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'white' }}>
+                                  <DeleteIcon fontSize="small" />
+                              </IconButton>
+                          </Paper>
+                      </Grid>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </Grid>
+            )}
+          </Droppable>
+        </DragDropContext>
+        <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+          <Button variant="outlined" startIcon={<AddPhotoIcon />} onClick={() => fileInputRef.current.click()} disabled={capas.length >= 3}>Enviar Ficheiro</Button>
+          <Button variant="outlined" startIcon={<LinkIcon />} onClick={handleAdicionarLink} disabled={capas.length >= 3}>Usar Link Externo</Button>
+          <Button variant="contained" onClick={handleSalvarCapas} disabled={carregando} sx={{ ml: 'auto' }}>
+              {carregando ? <CircularProgress size={24} /> : "Salvar Capas"}
+          </Button>
+          <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
+        </Box>
+      </Paper>
+    </>
   );
 }
 
@@ -165,9 +282,7 @@ function Mural() {
     try {
       const payload = { biografia, url_unica: urlUnica, links_redes: links, video_destaque_url: videoDestaque };
       const { data: dadosAtualizados } = await apiClient.put('/api/usuarios/perfil/publico', payload);
-      
       setUsuario(prevUsuario => ({ ...prevUsuario, ...dadosAtualizados }));
-      
       mostrarNotificacao(`Perfil público atualizado com sucesso!`, "success");
     } catch (error) {
       mostrarNotificacao(error.response?.data?.mensagem || `Falha ao atualizar perfil.`, "error");
