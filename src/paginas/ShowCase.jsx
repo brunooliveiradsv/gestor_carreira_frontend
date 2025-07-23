@@ -24,7 +24,7 @@ import {
   ThumbDown
 } from '@mui/icons-material';
 
-import EnqueteShowcase from '../componentes/EnqueteShowCase';
+import EnqueteShowcase from '../componentes/EnqueteShowcase';
 
 const StatCard = ({ icon, value, label }) => (
     <Box sx={{ textAlign: 'center', flex: '1 1 0', minWidth: '90px', p: 1 }}>
