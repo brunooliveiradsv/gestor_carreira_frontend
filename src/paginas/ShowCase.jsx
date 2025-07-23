@@ -23,8 +23,7 @@ import {
   ThumbUp,
   ThumbDown
 } from '@mui/icons-material';
-
-import EnqueteShowcase from '../componentes/EnqueteShowCase';
+import EnqueteShowcase from '../componentes/EnqueteShowcase';
 
 const StatCard = ({ icon, value, label }) => (
     <Box sx={{ textAlign: 'center', flex: '1 1 0', minWidth: '90px', p: 1 }}>
@@ -244,6 +243,7 @@ function ShowCase() {
     );
   if (!vitrine) return null;
 
+  // --- AQUI ESTÁ A CORREÇÃO ---
   const { artista, proximosShows, contatoPublico, postsRecentes, enqueteAtiva } = vitrine;
   const fallbackCapa = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80';
   const videoDestaqueId = getYoutubeVideoId(artista.video_destaque_url);
@@ -305,9 +305,11 @@ function ShowCase() {
                             <List dense>{proximosShows.map((show, index) => (<ListItem key={index} disableGutters><ListItemIcon><CalendarMonthIcon color="primary" /></ListItemIcon><ListItemText primary={show.nome_evento} secondary={<>{new Date(show.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}{show.local && ` - ${show.local}`}</>} /></ListItem>))}</List>
                         ) : ( <Typography color="text.secondary">Nenhum show agendado no momento.</Typography> )}
                     </Paper>
+
                     {enqueteAtiva && (
                         <EnqueteShowcase enquete={enqueteAtiva} />
                     )}
+
                     {contatoPublico && (
                         <Paper sx={{ p: 3 }}>
                             <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Contato</Typography>
