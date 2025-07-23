@@ -160,7 +160,12 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
                 {capas.map((capa, index) => (
                   <Draggable key={index} draggableId={`capa-${index}`} index={index}>
                     {(provided) => (
-                      <Grid item xs={12} sm={4} ref={provided.innerRef} {...provided.draggableProps} sx={{ display: 'flex' }}>
+                      <Grid 
+                        item xs={12} sm={4} 
+                        ref={provided.innerRef} 
+                        {...provided.draggableProps}
+                        sx={{ display: 'flex' }}
+                      >
                           <Paper 
                             variant="outlined" 
                             sx={{ 
