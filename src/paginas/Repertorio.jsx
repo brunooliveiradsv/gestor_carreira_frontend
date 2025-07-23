@@ -215,6 +215,13 @@ function Repertorio() {
                                     </Box>
                                 </CardContent>
                                 <CardActions sx={{justifyContent: 'flex-end'}}>
+                                   {musica.master_id && (
+                                        <Tooltip title="Sincronizar com a música mestre (atualiza todos os dados)">
+                                            <IconButton onClick={() => handleSincronizarComMestre(musica.id)}>
+                                                <SyncIcon color="primary" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
                                     {musica.master_id && <Tooltip title="Sugerir Melhoria"><IconButton onClick={() => handleAbrirSugestao(musica)}><SuggestionIcon /></IconButton></Tooltip>}
                                     <Tooltip title="Editar"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
                                     <Tooltip title="Apagar"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
