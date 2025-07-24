@@ -1,9 +1,7 @@
-// src/contextos/AuthContext.jsx
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
 import { useNotificacao } from './NotificationContext';
-import { API_ENDPOINTS } from '../constants';
 
 export const AuthContext = createContext();
 
@@ -18,7 +16,7 @@ export const AuthProvider = ({ children }) => {
         if (token) {
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             try {
-                const { data } = await apiClient.get(API_ENDPOINTS.PERFIL);
+                const { data } = await apiClient.get('/api/usuarios/perfil');
                 setUsuario(data);
             } catch (error) {
                 console.error("Token inválido ou expirado, limpando...");
@@ -36,26 +34,23 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, senha) => {
         try {
-            const { data } = await apiClient.post(API_ENDPOINTS.LOGIN, { email, senha });
+            const { data } = await apiClient.post('/api/usuarios/login', { email, senha });
             localStorage.setItem('token', data.token);
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             
             setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Login bem-sucedido!', 'success');
 
-            // LÓGICA DE REDIRECIONAMENTO PÓS-LOGIN
+            // --- LÓGICA DE REDIRECIONAMENTO ATUALIZADA ---
             const user = data.usuario;
-            const hoje = new Date();
-            const dataTerminoTeste = user.teste_termina_em ? new Date(user.teste_termina_em) : null;
-
-            const isTesteValido = user.status_assinatura === 'teste' && dataTerminoTeste > hoje;
-            const isAssinaturaAtiva = user.status_assinatura === 'ativa';
-
-            if (isTesteValido || isAssinaturaAtiva) {
+            // Se o plano for 'padrao' ou 'premium', vai para o dashboard.
+            if (user.plano === 'padrao' || user.plano === 'premium') {
                 navigate('/');
             } else {
+                // Se for 'free' ou outro status, vai para a página de assinatura para incentivar o upgrade.
                 navigate('/assinatura');
             }
+            // --- FIM DA ALTERAÇÃO ---
             
             return true;
         } catch (error) {
@@ -66,14 +61,17 @@ export const AuthProvider = ({ children }) => {
     
     const registrar = async (nome, email, senha) => {
         try {
-            const { data } = await apiClient.post(API_ENDPOINTS.REGISTRAR, { nome, email, senha });
+            const { data } = await apiClient.post('/api/usuarios/registrar', { nome, email, senha });
             localStorage.setItem('token', data.token);
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             
-            // Após o registo, o usuário já começa o teste, então vai para o dashboard
             setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Cadastro realizado com sucesso!', 'success');
-            navigate('/'); // Redireciona para o dashboard, pois o teste já está ativo
+
+            // --- LÓGICA DE REDIRECIONAMENTO ATUALIZADA ---
+            // Após o registo, o utilizador é 'free', então redirecionamos para a página de assinatura
+            navigate('/assinatura'); 
+            // --- FIM DA ALTERAÇÃO ---
             
             return true;
         } catch (error) {
@@ -86,6 +84,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         delete apiClient.defaults.headers.common['Authorization'];
         setUsuario(null);
+        // Redireciona para a página de login ao sair para uma melhor experiência
+        navigate('/login');
     };
 
     const valorDoContexto = {
