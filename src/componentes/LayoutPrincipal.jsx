@@ -1,8 +1,7 @@
-// src/componentes/LayoutPrincipal.jsx
-
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navegacao from './Navegacao';
+import Anuncio from './Anuncio'; // 1. Importar o componente de anúncio
 import { Box, CssBaseline, Toolbar } from '@mui/material';
 
 function LayoutPrincipal() {
@@ -10,22 +9,25 @@ function LayoutPrincipal() {
     <Box sx={{
       display: 'flex',
       minHeight: '100vh',
-      bgcolor: 'background.default', // Usando a cor de fundo sólida do novo tema
+      bgcolor: 'background.default',
     }}>
       <CssBaseline />
       <Navegacao />
 
-      {/* O 'main' agora conterá nossas páginas */}
+      {/* 2. Adicionar o componente Anuncio aqui */}
+      {/* Ele irá gerir a sua própria visibilidade e aparecerá por cima de tudo */}
+      <Anuncio />
+
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2, sm: 3, md: 4 }, // Padding responsivo para o conteúdo
-          width: { sm: `calc(100% - 270px)` }, // Considera o drawer no desktop
-          ml: { sm: `270px` }, // Espaçamento para o drawer no desktop
+          p: { xs: 2, sm: 3, md: 4 },
+          width: { sm: `calc(100% - 270px)` },
+          ml: { sm: `270px` },
         }}
       >
-        <Toolbar /> {/* Espaço para a AppBar não cobrir o conteúdo */}
+        <Toolbar />
         <Outlet />
       </Box>
     </Box>
