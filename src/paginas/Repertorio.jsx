@@ -1,7 +1,7 @@
-// src/paginas/Repertorio.jsx
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react"; // Adicionado useContext
 import apiClient from '../apiClient';
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
+import { AuthContext } from "../contextos/AuthContext"; // Importar AuthContext
 import {
   Box, Button, Typography, CircularProgress, Paper, Grid, TextField,
   InputAdornment, Chip, IconButton, Tooltip, Dialog, Card,
@@ -17,7 +17,8 @@ import {
 import FormularioMusica from "../componentes/FormularioMusica.jsx";
 import FormularioSugestao from "../componentes/FormularioSugestao.jsx";
 
-const SeletorDeMusica = ({ onSave, onCancel }) => {
+// O componente SeletorDeMusica agora recebe o 'usuario' como prop
+const SeletorDeMusica = ({ onSave, onCancel, usuario }) => {
     const [modo, setModo] = useState('buscar');
     const [termoBusca, setTermoBusca] = useState('');
     const [resultados, setResultados] = useState([]);
@@ -30,222 +31,203 @@ const SeletorDeMusica = ({ onSave, onCancel }) => {
         try {
             const resposta = await apiClient.get(`/api/musicas/buscar-publicas?termoBusca=${termoBusca}`);
             setResultados(resposta.data);
-        } catch (error) { mostrarNotificacao("Erro ao buscar músicas.", "error"); }
-        finally { setBuscando(false); }
+        } catch (error) {
+            mostrarNotificacao('Erro ao buscar músicas.', 'error');
+        } finally {
+            setBuscando(false);
+        }
     };
-
+    
     const handleImportar = async (masterId) => {
         try {
             await apiClient.post('/api/musicas/importar', { master_id: masterId });
-            mostrarNotificacao('Música importada com sucesso!', 'success');
-            onSave();
+            mostrarNotificacao('Música importada para o seu repertório com sucesso!', 'success');
+            onSave(); // Fecha o dialog e atualiza a lista
         } catch (error) {
             mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao importar música.', 'error');
         }
     };
 
-    if (modo === 'manual') {
-        return <FormularioMusica onSave={onSave} onCancel={onCancel} />;
-    }
 
     return (
         <Box sx={{p: {xs: 2, md: 3}}}>
-            <Typography variant="h5" gutterBottom>Adicionar Música ao Repertório</Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                 <Button color={modo === 'buscar' ? 'primary' : 'inherit'} onClick={() => setModo('buscar')}>Buscar no Banco de Dados</Button>
-                <Button color={modo === 'manual' ? 'primary' : 'inherit'} onClick={() => setModo('manual')}>Criar Manualmente</Button>
+                {/* --- LÓGICA DE BLOQUEIO AQUI --- */}
+                {/* O botão "Criar Manualmente" só aparece se o plano não for 'free' */}
+                {usuario.plano !== 'free' && (
+                    <Button color={modo === 'manual' ? 'primary' : 'inherit'} onClick={() => setModo('manual')}>Criar Manualmente</Button>
+                )}
             </Box>
-            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                <TextField fullWidth label="Buscar por nome ou artista..." value={termoBusca}
-                    onChange={(e) => setTermoBusca(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleBusca()}
-                    InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} />
-                <Button variant="contained" onClick={handleBusca} disabled={buscando}>
-                    {buscando ? <CircularProgress size={24} /> : 'Buscar'}
-                </Button>
-            </Box>
-            <Paper variant="outlined" sx={{ minHeight: '300px', maxHeight: '300px', overflowY: 'auto' }}>
-                <List>
-                    {resultados.map(musica => (
-                        <ListItem key={musica.id} secondaryAction={
-                            <Tooltip title="Importar para o seu repertório"><IconButton onClick={() => handleImportar(musica.id)}><ImportExportIcon color="primary" /></IconButton></Tooltip>
-                        }>
-                            <ListItemText primary={musica.nome} secondary={musica.artista} />
-                        </ListItem>
-                    ))}
-                </List>
-            </Paper>
+
+            {modo === 'buscar' ? (
+                <Box>
+                    <Box component="form" onSubmit={(e) => { e.preventDefault(); handleBusca(); }} sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                        <TextField
+                            fullWidth
+                            autoFocus
+                            label="Buscar por nome ou artista..."
+                            value={termoBusca}
+                            onChange={(e) => setTermoBusca(e.target.value)}
+                        />
+                        <Button type="submit" variant="contained" disabled={buscando}>
+                            {buscando ? <CircularProgress size={24} /> : <SearchIcon />}
+                        </Button>
+                    </Box>
+                    <List>
+                        {resultados.map(musica => (
+                            <ListItem key={musica.id} secondaryAction={
+                                <Button size="small" variant="outlined" onClick={() => handleImportar(musica.id)}>Importar</Button>
+                            }>
+                                <ListItemText primary={musica.nome} secondary={musica.artista} />
+                            </ListItem>
+                        ))}
+                    </List>
+                </Box>
+            ) : (
+                <FormularioMusica onSave={onSave} onCancel={onCancel} />
+            )}
         </Box>
     );
 };
 
+
 function Repertorio() {
   const [musicas, setMusicas] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [filtros, setFiltros] = useState({ termoBusca: "", tom: "", bpm: "" });
+  const { mostrarNotificacao } = useNotificacao();
+  const { usuario } = useContext(AuthContext); // Obter o utilizador do contexto
+
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [musicaEmEdicaoId, setMusicaEmEdicaoId] = useState(null);
+  
   const [dialogoSugestaoAberto, setDialogoSugestaoAberto] = useState(false);
   const [musicaParaSugerir, setMusicaParaSugerir] = useState(null);
-  const { mostrarNotificacao } = useNotificacao();
+  
+  const [filtros, setFiltros] = useState({ termoBusca: '', tom: '', bpm: '' });
 
   const buscarMusicas = useCallback(async () => {
     try {
-      const filtrosAtivos = Object.fromEntries(
-        Object.entries(filtros).filter(([_, v]) => v != null && v !== '')
-      );
-      const params = new URLSearchParams(filtrosAtivos);
-      
-      const resposta = await apiClient.get(`/api/musicas?${params.toString()}`);
+      const resposta = await apiClient.get('/api/musicas', { params: filtros });
       setMusicas(resposta.data);
-    } catch (erro) {
-      mostrarNotificacao("Não foi possível carregar o repertório.", "error");
+    } catch (error) {
+      mostrarNotificacao('Erro ao carregar seu repertório.', 'error');
     } finally {
       setCarregando(false);
     }
-  }, [mostrarNotificacao, filtros]);
+  }, [filtros, mostrarNotificacao]);
 
   useEffect(() => {
-    setCarregando(true);
-    const timer = setTimeout(() => {
-      buscarMusicas();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [filtros, buscarMusicas]);
-
-  const handleSincronizarComMestre = async (musicaId) => {
-      try {
-          await apiClient.post(`/api/musicas/${musicaId}/sincronizar`);
-          mostrarNotificacao('Música sincronizada com sucesso!', 'success');
-          buscarMusicas(); // Recarrega a lista para mostrar os dados atualizados
-      } catch (error) {
-          mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao sincronizar a música.', 'error');
-      }
-  };
-
-  const handleFiltroChange = (e) => {
-    const { name, value } = e.target;
-    setFiltros(f => ({ ...f, [name]: value }));
-  };
+    buscarMusicas();
+  }, [buscarMusicas]);
 
   const handleAbrirFormulario = (id = null) => {
     setMusicaEmEdicaoId(id);
     setDialogoFormularioAberto(true);
   };
-
   const handleFecharFormulario = () => {
-    setDialogoFormularioAberto(false);
     setMusicaEmEdicaoId(null);
+    setDialogoFormularioAberto(false);
   };
-
   const handleSucessoFormulario = () => {
     handleFecharFormulario();
     buscarMusicas();
   };
 
+  const handleApagar = async (id) => {
+    if (window.confirm("Tem certeza que deseja apagar esta música do seu repertório?")) {
+      try {
+        await apiClient.delete(`/api/musicas/${id}`);
+        mostrarNotificacao('Música apagada com sucesso!', 'success');
+        buscarMusicas();
+      } catch (error) {
+        mostrarNotificacao('Erro ao apagar música.', 'error');
+      }
+    }
+  };
+  
   const handleAbrirSugestao = (musica) => {
     setMusicaParaSugerir(musica);
     setDialogoSugestaoAberto(true);
   };
 
-  const handleApagar = async (id) => {
-    if (window.confirm("Tem certeza que deseja apagar esta música?")) {
+  const handleSincronizar = async (id) => {
       try {
-        await apiClient.delete(`/api/musicas/${id}`);
-        mostrarNotificacao("Música apagada com sucesso!", "success");
-        buscarMusicas();
-      } catch (erro) {
-        mostrarNotificacao("Falha ao apagar a música.", "error");
+          await apiClient.post(`/api/musicas/${id}/sincronizar`);
+          mostrarNotificacao('Música sincronizada com a versão mais recente!', 'success');
+          buscarMusicas();
+      } catch (error) {
+          mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao sincronizar.', 'error');
       }
-    }
   };
 
   return (
     <Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
-            <Box>
-                <Typography variant="h4" component="h1" fontWeight="bold">Repertório</Typography>
-                <Typography color="text.secondary">Adicione, filtre e gerencie todas as suas músicas.</Typography>
-            </Box>
-            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => handleAbrirFormulario()}>
-            Adicionar Música
-            </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+            <Typography variant="h4" component="h1" fontWeight="bold">Meu Repertório</Typography>
+            <Typography color="text.secondary">Gerencie todas as suas músicas aqui.</Typography>
         </Box>
+        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => handleAbrirFormulario()}>
+            Adicionar Música
+        </Button>
+      </Box>
 
-        <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                  <TextField fullWidth name="termoBusca" label="Buscar por Nome ou Artista..."
-                    value={filtros.termoBusca} onChange={handleFiltroChange}
-                    InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
-                  />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                  <TextField fullWidth name="tom" label="Filtrar por Tom"
-                    value={filtros.tom} onChange={handleFiltroChange}
-                  />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                  <TextField fullWidth name="bpm" label="Filtrar por BPM" type="number"
-                    value={filtros.bpm} onChange={handleFiltroChange}
-                  />
-              </Grid>
-            </Grid>
-        </Paper>
-
-        {carregando ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>
-        ) : (
-            musicas.length > 0 ? (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                    {musicas.map((musica) => (
-                        <Box key={musica.id} sx={{ flex: '1 1 350px', minWidth: '300px' }}>
-                            <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                                <CardContent sx={{flexGrow: 1}}>
-                                    <Typography variant="h6" fontWeight="medium">{musica.nome}</Typography>
-                                    <Typography component="div" color="text.secondary" variant="body2">
-                                    {musica.artista}
-                                    {musica.master_id && <Chip label="Importada" size="small" variant="outlined" color="primary" sx={{ ml: 1 }} />}
-                                    {musica.is_modificada && <Chip label="Modificada" size="small" variant="outlined" color="secondary" sx={{ ml: 1 }} />}
-                                    </Typography>
-                                    <Typography color="text.secondary" variant="body2" sx={{mt: 0.5}}>Tom: {musica.tom || "N/A"} | BPM: {musica.bpm || "N/A"}</Typography>
-                                    <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                        {musica.tags?.map((tag) => <Chip key={tag.id} label={tag.nome} size="small" variant="outlined" />)}
-                                    </Box>
-                                </CardContent>
-                                <CardActions sx={{justifyContent: 'flex-end'}}>
-                                   {musica.master_id && (
-                                        <Tooltip title="Sincronizar com Banco de Dados">
-                                            <IconButton onClick={() => handleSincronizarComMestre(musica.id)}>
-                                                <SyncIcon color="primary" />
-                                            </IconButton>
-                                        </Tooltip>
-                                    )}
-                                    {musica.master_id && <Tooltip title="Sugerir Melhoria"><IconButton onClick={() => handleAbrirSugestao(musica)}><SuggestionIcon /></IconButton></Tooltip>}
-                                    <Tooltip title="Editar"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
-                                    <Tooltip title="Apagar"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
-                                </CardActions>
-                            </Card>
-                        </Box>
-                    ))}
-                </Box>
-            ) : (
-                <Paper variant="outlined" sx={{p: 4, textAlign: 'center', width: '100%'}}>
-                    <MusicNoteIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
-                    <Typography variant="h6">Nenhuma música encontrada</Typography>
-                    <Typography color="text.secondary">Adicione uma música ou ajuste a sua busca.</Typography>
-                </Paper>
-            )
-        )}
-      
-      <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="md">
-        {musicaEmEdicaoId ? (
-            <Box sx={{p: {xs: 2, md: 3}}}>
-                <FormularioMusica id={musicaEmEdicaoId} onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} />
+      {carregando ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+      ) : (
+        musicas.length > 0 ? (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'flex-start' }}>
+                {musicas.map(musica => (
+                    <Box key={musica.id} sx={{ flex: '1 1 300px', maxWidth: '100%', '@media (min-width:600px)': { maxWidth: 'calc(50% - 12px)' }, '@media (min-width:960px)': { maxWidth: 'calc(33.33% - 16px)' } }}>
+                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <CardContent sx={{ flexGrow: 1 }}>
+                                <Typography variant="h6" fontWeight="bold">{musica.nome}</Typography>
+                                <Typography color="text.secondary" gutterBottom>{musica.artista}</Typography>
+                                {musica.tom && <Chip label={`Tom: ${musica.tom}`} size="small" sx={{mr: 1}} />}
+                                {musica.bpm && <Chip label={`${musica.bpm} BPM`} size="small" />}
+                                {musica.is_modificada && <Chip label="Modificada" size="small" color="warning" sx={{ml: 1}} />}
+                            </CardContent>
+                            <CardActions>
+                                {musica.master_id && (
+                                    <Tooltip title="Sincronizar com a música original do banco de dados">
+                                        <IconButton onClick={() => handleSincronizar(musica.id)}><SyncIcon /></IconButton>
+                                    </Tooltip>
+                                )}
+                                <Box sx={{ flexGrow: 1 }} />
+                                {usuario.plano !== 'free' && (
+                                    <>
+                                        {musica.master_id && (
+                                            <Tooltip title="Sugerir Melhoria para a música no banco de dados">
+                                                <IconButton onClick={() => handleAbrirSugestao(musica)}>
+                                                    <SuggestionIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+                                        <Tooltip title="Editar"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
+                                    </>
+                                )}
+                                <Tooltip title="Apagar"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
+                            </CardActions>
+                        </Card>
+                    </Box>
+                ))}
             </Box>
         ) : (
-            <SeletorDeMusica onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} />
+            <Paper variant="outlined" sx={{p: 4, textAlign: 'center', width: '100%'}}>
+                <MusicNoteIcon sx={{fontSize: 48, color: 'text.secondary', mb: 2}} />
+                <Typography variant="h6">Nenhuma música encontrada</Typography>
+                <Typography color="text.secondary">Adicione uma música ou ajuste a sua busca.</Typography>
+            </Paper>
+        )
+      )}
+      
+      <Dialog open={dialogoFormularioAberto} onClose={handleFecharFormulario} fullWidth maxWidth="sm">
+        {musicaEmEdicaoId ? (
+            <FormularioMusica id={musicaEmEdicaoId} onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} />
+        ) : (
+            // Passa o objeto 'usuario' como prop para o seletor
+            <SeletorDeMusica onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} usuario={usuario} />
         )}
       </Dialog>
       
