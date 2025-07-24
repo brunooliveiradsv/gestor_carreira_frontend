@@ -3,17 +3,18 @@ import { AuthContext } from '../contextos/AuthContext';
 import { useNotificacao } from '../contextos/NotificationContext';
 import apiClient from '../apiClient';
 import {
-  Box, Typography, Paper, Grid, Button, CircularProgress, Chip, List, ListItem,
+  Box, Typography, Paper, Button, CircularProgress, Chip, List, ListItem,
   ListItemIcon, ListItemText, ToggleButton, ToggleButtonGroup
 } from '@mui/material';
-import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import { CheckCircle as CheckCircleIcon, Block as BlockIcon } from '@mui/icons-material';
 
 const PlanoCard = ({ title, price, description, features, planType, isCurrentPlan, onSubscribe, loading, billingPeriod, isFree = false }) => (
   <Paper
     variant="outlined"
     sx={{
       p: 3,
-      height: '100%',
+      flex: '1 1 300px', // Flexbox: permite crescer, base de 300px
+      minWidth: '280px',
       display: 'flex',
       flexDirection: 'column',
       borderColor: isCurrentPlan ? 'primary.main' : 'divider',
@@ -34,11 +35,14 @@ const PlanoCard = ({ title, price, description, features, planType, isCurrentPla
       <Typography variant="body2" color="text.secondary" sx={{ minHeight: 40 }}>{description}</Typography>
       <List sx={{ my: 2 }}>
         {features.map((feature, index) => (
-          <ListItem key={index} disableGutters>
+          <ListItem key={index} disableGutters sx={{py: 0.5}}>
             <ListItemIcon sx={{ minWidth: 32 }}>
-              <CheckCircleIcon color={isFree ? "disabled" : "success"} fontSize="small" />
+              {feature.included ? 
+                <CheckCircleIcon color="success" fontSize="small" /> : 
+                <BlockIcon color="disabled" fontSize="small" />
+              }
             </ListItemIcon>
-            <ListItemText primary={feature} />
+            <ListItemText primary={feature.text} />
           </ListItem>
         ))}
       </List>
@@ -61,11 +65,20 @@ function Assinatura() {
   const [carregando, setCarregando] = useState(false);
   const [periodo, setPeriodo] = useState('mensal');
 
+  // Informações dos planos atualizadas e corretas
   const planos = {
     free: {
         nome: 'Free',
         descricao: 'O essencial para começar a organizar sua carreira.',
-        features: ['Gestão de Agenda', 'Gestão de Contatos', 'Até 1 Setlist', 'Funcionalidades com anúncios']
+        features: [
+            { text: 'Limite de 1 Setlist, Contato e Equipamento', included: true },
+            { text: 'Apenas importar músicas (sem criação/edição)', included: true },
+            { text: 'Com anúncios', included: true },
+            { text: 'Sem partilha de Setlist', included: false },
+            { text: 'Sem gerador de Contrato', included: false },
+            { text: 'Sem Página Pública (Showcase)', included: false },
+            { text: 'Sem Modo Palco', included: false },
+        ]
     },
     padrao: {
       nome: 'Padrão',
@@ -73,8 +86,16 @@ function Assinatura() {
       precoAnual: 'R$ 99,90',
       priceIdMensal: import.meta.env.VITE_STRIPE_PRICE_ID_PADRAO_MENSAL,
       priceIdAnual: import.meta.env.VITE_STRIPE_PRICE_ID_PADRAO_ANUAL,
-      descricao: 'Mais ferramentas para gerir repertórios e finanças, com menos anúncios.',
-      features: ['Tudo do plano Free', 'Até 5 Setlists, Contatos e Equipamentos', 'Controlo Financeiro Completo', 'Alterar e sugerir músicas']
+      descricao: 'Mais ferramentas para gerir repertórios e finanças, sem anúncios.',
+      features: [
+          { text: 'Limite de 5 Setlists, Contatos e Equipamentos', included: true },
+          { text: 'Criar, editar e sugerir músicas', included: true },
+          { text: 'Partilha de Setlist', included: true },
+          { text: 'Experiência sem anúncios', included: true },
+          { text: 'Sem gerador de Contrato', included: false },
+          { text: 'Sem Página Pública (Showcase)', included: false },
+          { text: 'Sem Modo Palco', included: false },
+      ]
     },
     premium: {
       nome: 'Premium',
@@ -82,8 +103,14 @@ function Assinatura() {
       precoAnual: 'R$ 149,90',
       priceIdMensal: import.meta.env.VITE_STRIPE_PRICE_ID_PREMIUM_MENSAL,
       priceIdAnual: import.meta.env.VITE_STRIPE_PRICE_ID_PREMIUM_ANUAL,
-      descricao: 'A experiência completa do VOXGest, sem interrupções e com recursos avançados.',
-      features: ['Tudo do plano Padrão', 'Recursos Ilimitados', 'Página Showcase (Mural)', 'Modo Palco e Partilha de Setlists', 'Gerador de Contrato']
+      descricao: 'A experiência completa do VOXGest, com recursos ilimitados.',
+      features: [
+          { text: 'Tudo ilimitado (Setlists, Contatos, etc.)', included: true },
+          { text: 'Página Pública (Showcase)', included: true },
+          { text: 'Gerador de Contrato', included: true },
+          { text: 'Modo Palco para Setlists', included: true },
+          { text: 'Acesso a todas as funcionalidades', included: true },
+      ]
     }
   };
 
@@ -117,27 +144,27 @@ function Assinatura() {
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={4} alignItems="stretch" justifyContent="center">
+      {/* Container principal com Flexbox */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'stretch', justifyContent: 'center' }}>
         {Object.keys(planos).map(key => {
             const plano = planos[key];
             return (
-                <Grid item xs={12} md={4} key={key}>
-                    <PlanoCard
-                        title={plano.nome}
-                        price={plano.precoMensal ? (periodo === 'mensal' ? plano.precoMensal : plano.precoAnual) : 'Grátis'}
-                        description={plano.descricao}
-                        features={plano.features}
-                        planType={key}
-                        isCurrentPlan={usuario?.plano === key}
-                        onSubscribe={handleSubscribe}
-                        loading={carregando}
-                        billingPeriod={periodo}
-                        isFree={key === 'free'}
-                    />
-                </Grid>
+                <PlanoCard
+                    key={key}
+                    title={plano.nome}
+                    price={plano.precoMensal ? (periodo === 'mensal' ? plano.precoMensal : plano.precoAnual) : 'Grátis'}
+                    description={plano.descricao}
+                    features={plano.features}
+                    planType={key}
+                    isCurrentPlan={usuario?.plano === key}
+                    onSubscribe={handleSubscribe}
+                    loading={carregando}
+                    billingPeriod={periodo}
+                    isFree={key === 'free'}
+                />
             )
         })}
-      </Grid>
+      </Box>
     </Box>
   );
 }

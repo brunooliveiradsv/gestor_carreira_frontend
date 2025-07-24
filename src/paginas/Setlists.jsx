@@ -94,7 +94,7 @@ function Setlists() {
 
   const handleAbrirDialogoPartilha = (setlist) => {
     if (usuario.plano === 'free') {
-      abrirDialogoDeUpgrade('A partilha de setlists está disponível nos planos Padrão e Premium.');
+      abrirDialogoDeUpgrade('A partilha de setlists está disponível no plano Padrão.');
       return;
     }
     setSetlistSelecionado(setlist);
@@ -212,14 +212,14 @@ function Setlists() {
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
-                  <Tooltip title="Partilhar Setlist (Planos Padrão e Premium)">
+                  <Tooltip title="Partilhar Setlist (Disponível no Plano Padrão)">
                     <span>
                       <IconButton onClick={() => handleAbrirDialogoPartilha(setlist)}>
                         <ShareIcon color={usuario.plano === 'free' ? 'disabled' : 'inherit'} />
                       </IconButton>
                     </span>
                   </Tooltip>
-                  <Tooltip title="Modo Palco (Plano Premium)">
+                  <Tooltip title="Modo Palco (Disponível no Plano Premium)">
                     <span>
                       <IconButton onClick={() => handleModoPalcoClick(setlist.id)}>
                         <MusicVideoIcon color={usuario.plano === 'premium' ? 'secondary' : 'disabled'} />
