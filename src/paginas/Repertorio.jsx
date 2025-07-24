@@ -5,7 +5,7 @@ import { useNotificacao } from "../contextos/NotificationContext.jsx";
 import {
   Box, Button, Typography, CircularProgress, Paper, Grid, TextField,
   InputAdornment, Chip, IconButton, Tooltip, Dialog, Card,
-  CardContent, CardActions, List, ListItem, ListItemText, InputAdornment
+  CardContent, CardActions, List, ListItem, ListItemText
 } from "@mui/material";
 import {
   AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon,
