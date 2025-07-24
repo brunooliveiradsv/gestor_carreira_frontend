@@ -6,7 +6,7 @@ import {
   Box, Typography, Paper, Grid, Button, CircularProgress, Chip, List, ListItem,
   ListItemIcon, ListItemText, ToggleButton, ToggleButtonGroup
 } from '@mui/material';
-import { CheckCircle as CheckCircleIcon, Block as BlockIcon } from '@mui/icons-material';
+import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 
 const PlanoCard = ({ title, price, description, features, planType, isCurrentPlan, onSubscribe, loading, billingPeriod, isFree = false }) => (
   <Paper
@@ -94,8 +94,8 @@ function Assinatura() {
   const handleSubscribe = async (planoEscolhido) => {
     setCarregando(true);
     try {
-      const priceId = periodo === 'mensal' 
-        ? planos[planoEscolhido].priceIdMensal 
+      const priceId = periodo === 'mensal'
+        ? planos[planoEscolhido].priceIdMensal
         : planos[planoEscolhido].priceIdAnual;
 
       const resposta = await apiClient.post('/api/assinatura/criar-sessao-checkout', { planoId: priceId });

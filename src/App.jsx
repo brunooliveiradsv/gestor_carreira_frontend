@@ -29,17 +29,17 @@ import PaginaSetlistPublico from "./paginas/PaginaSetlistPublico.jsx";
 function App() {
   return (
     <Routes>
-      {/* Rotas Públicas (sem alterações) */}
+      {/* Rotas Públicas */}
       <Route path="/login" element={<Autenticacao />} />
       <Route path="/cadastro" element={<Autenticacao />} />
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/showcase/:url_unica" element={<ShowCase />} />
       <Route path="/setlist/:uuid" element={<PaginaSetlistPublico />} />
       
-      {/* Rota de Tela Cheia (sem alterações) */}
+      {/* Rota de Tela Cheia */}
       <Route path="/setlists/palco/:id" element={<RotaProtegida><ProtegerPorPlano planoMinimo="premium"><ModoPalco /></ProtegerPorPlano></RotaProtegida>} />
 
-      {/* --- ROTAS COM O LAYOUT PRINCIPAL (COM ALTERAÇÕES) --- */}
+      {/* ROTAS COM O LAYOUT PRINCIPAL */}
       <Route element={<RotaProtegida><LayoutPrincipal /></RotaProtegida>}>
         
         {/* Funcionalidades do Plano FREE (e superiores) */}
@@ -64,7 +64,7 @@ function App() {
             <Route path="/mural" element={<Mural />} />
         </Route>
 
-        {/* Funcionalidades de ADMIN (só dependem da role, não do plano) */}
+        {/* Funcionalidades de ADMIN */}
         <Route path="/admin" element={<AdminPainel />} />
         <Route path="/admin/usuarios" element={<AdminUsuarios />} />
         <Route path="/admin/musicas" element={<AdminMusicas />} />
