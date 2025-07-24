@@ -100,7 +100,7 @@ function Agenda() {
   // --- 6. LÓGICA ATUALIZADA ---
   const handleAbrirDialogoContrato = (compromisso) => {
     if (usuario?.plano !== 'premium') {
-      abrirDialogoDeUpgrade('O Gerador de Contratos é uma funcionalidade exclusiva do plano Premium.');
+      abrirDialogoDeUpgrade('Gerar contratos é uma funcionalidade exclusiva do plano Premium.');
       return;
     }
     setCompromissoSelecionado(compromisso);
@@ -262,7 +262,7 @@ function Agenda() {
                 </CardContent>
                 <CardActions sx={{ justifyContent: "flex-end", borderTop: `1px solid ${theme.palette.divider}` }}>
                   {/* --- 7. BOTÃO ATUALIZADO --- */}
-                  <Tooltip title="Gerar Contrato (Plano Premium)">
+                  <Tooltip title="Gerar Contrato (Funcionalidade Premium)">
                     <span>
                       <IconButton onClick={() => handleAbrirDialogoContrato(c)} disabled={c.status !== 'Agendado'}>
                         <AssignmentIcon color={usuario?.plano === 'premium' ? 'inherit' : 'disabled'} />
