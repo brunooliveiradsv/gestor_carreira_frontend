@@ -24,7 +24,7 @@ import Mural from "./paginas/Mural.jsx";
 import Assinatura from "./paginas/Assinatura.jsx";
 import ModoPalco from "./paginas/ModoPalco.jsx";
 import PaginaSetlistPublico from "./paginas/PaginaSetlistPublico.jsx";
-import ProtegerPorPlano from "./componentes/ProtegerPorPlano.jsx"; // 1. Importar o novo componente
+import ProtegerPorPlano from "./componentes/ProtegerPorPlano.jsx";
 
 function App() {
   return (
