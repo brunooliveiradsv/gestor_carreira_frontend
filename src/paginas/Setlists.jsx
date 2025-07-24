@@ -31,6 +31,10 @@ function Setlists() {
   const [linkPublico, setLinkPublico] = useState('');
   const [copiado, setCopiado] = useState(false);
 
+  // --- Novos estados para o diálogo de exclusão ---
+  const [dialogoExcluirAberto, setDialogoExcluirAberto] = useState(false);
+  const [setlistParaExcluir, setSetlistParaExcluir] = useState(null);
+
   const buscarSetlists = useCallback(async () => {
     try {
       const resposta = await apiClient.get('/api/setlists');
@@ -108,6 +112,30 @@ function Setlists() {
       setCopiado(true);
   };
 
+  // --- Novas funções para a exclusão ---
+  const handleAbrirDialogoExcluir = (setlist) => {
+    setSetlistParaExcluir(setlist);
+    setDialogoExcluirAberto(true);
+  };
+
+  const handleFecharDialogoExcluir = () => {
+    setSetlistParaExcluir(null);
+    setDialogoExcluirAberto(false);
+  };
+
+  const handleConfirmarExclusao = async () => {
+    if (!setlistParaExcluir) return;
+    try {
+      await apiClient.delete(`/api/setlists/${setlistParaExcluir.id}`);
+      mostrarNotificacao('Setlist excluído com sucesso!', 'success');
+      handleFecharDialogoExcluir();
+      // Atualiza a lista removendo o setlist excluído
+      setSetlists(prev => prev.filter(s => s.id !== setlistParaExcluir.id));
+    } catch (error) {
+      mostrarNotificacao('Erro ao excluir o setlist.', 'error');
+    }
+  };
+
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
@@ -166,7 +194,8 @@ function Setlists() {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Excluir">
-                    <IconButton color="error">
+                    {/* ADICIONADA A CHAMADA PARA ABRIR O DIÁLOGO DE EXCLUSÃO */}
+                    <IconButton color="error" onClick={() => handleAbrirDialogoExcluir(setlist)}>
                       <DeleteIcon />
                     </IconButton>
                   </Tooltip>
@@ -222,6 +251,28 @@ function Setlists() {
             </DialogActions>
         </Dialog>
         
+        {/* --- Diálogo de Confirmação de Exclusão --- */}
+        <Dialog
+            open={dialogoExcluirAberto}
+            onClose={handleFecharDialogoExcluir}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+        >
+            <DialogTitle id="alert-dialog-title">{"Confirmar Exclusão"}</DialogTitle>
+            <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                    Tem certeza que deseja excluir o setlist "{setlistParaExcluir?.nome}"?
+                    Esta ação não poderá ser desfeita.
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleFecharDialogoExcluir}>Cancelar</Button>
+                <Button onClick={handleConfirmarExclusao} color="error" variant="contained" autoFocus>
+                    Excluir
+                </Button>
+            </DialogActions>
+        </Dialog>
+
         <Snackbar open={copiado} autoHideDuration={2000} onClose={() => setCopiado(false)}>
             <Alert onClose={() => setCopiado(false)} severity="success" sx={{ width: '100%' }}>
                 Link copiado para a área de transferência!
