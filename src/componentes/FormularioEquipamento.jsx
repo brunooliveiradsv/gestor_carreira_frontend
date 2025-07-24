@@ -53,7 +53,7 @@ function FormularioEquipamento({ id, onSave, onCancel }) {
       }
       onSave();
     } catch (erro) {
-      mostrarNotificacao('Falha ao salvar o equipamento.', 'error');
+      mostrarNotificacao(erro.response?.data?.mensagem || 'Falha ao salvar o equipamento.', 'error');
     } finally {
       setCarregando(false);
     }

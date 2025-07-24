@@ -39,7 +39,7 @@ function FormularioContato({ id, onSave, onCancel }) {
       }
       onSave();
     } catch (erro) {
-      mostrarNotificacao('Falha ao salvar o contato.', 'error');
+      mostrarNotificacao(erro.response?.data?.mensagem || 'Falha ao salvar o contato.', 'error');
     } finally {
       setCarregando(false);
     }
