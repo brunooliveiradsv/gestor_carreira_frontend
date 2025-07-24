@@ -52,11 +52,14 @@ function Setlists() {
     buscarSetlists();
   }, [buscarSetlists]);
 
-  const handleEditar = (id) => {
-    navigate(`/setlists/editar/${id}`);
-  };
-  
+  const limiteSetlists = (usuario.plano === 'free' && setlists.length >= 1) || (usuario.plano === 'padrao' && setlists.length >= 5);
+  const mensagemLimite = `Você atingiu o limite de ${usuario.plano === 'free' ? 1 : 5} setlists do seu plano. Faça um upgrade para criar mais.`;
+
   const handleAbrirCriarDialogo = () => {
+      if (limiteSetlists) {
+          abrirDialogoDeUpgrade(mensagemLimite);
+          return;
+      }
       setNovoNomeSetlist('');
       setDialogoCriarAberto(true);
   };
@@ -83,6 +86,10 @@ function Setlists() {
               mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao criar o setlist.', 'error');
           }
       }
+  };
+
+  const handleEditar = (id) => {
+    navigate(`/setlists/editar/${id}`);
   };
 
   const handleAbrirDialogoPartilha = (setlist) => {
@@ -152,9 +159,6 @@ function Setlists() {
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
-  
-  const limiteSetlists = (usuario.plano === 'free' && setlists.length >= 1) || (usuario.plano === 'padrao' && setlists.length >= 5);
-  const tooltipCriar = limiteSetlists ? `Você atingiu o limite de ${usuario.plano === 'free' ? 1 : 5} setlists do seu plano. Faça um upgrade para criar mais.` : 'Criar um novo setlist';
 
   return (
     <Box>
@@ -163,12 +167,14 @@ function Setlists() {
           <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
           <Typography color="text.secondary">Crie e organize as sequências de músicas para os seus shows.</Typography>
         </Box>
-        <Tooltip title={tooltipCriar}>
-          <span>
-            <Button variant="contained" startIcon={limiteSetlists ? <LockIcon /> : <AddCircleOutlineIcon />} onClick={handleAbrirCriarDialogo}>
-              Novo Setlist
-            </Button>
-          </span>
+        <Tooltip title={limiteSetlists ? mensagemLimite : 'Criar um novo setlist'}>
+          <Button
+            variant="contained"
+            startIcon={limiteSetlists ? <LockIcon /> : <AddCircleOutlineIcon />}
+            onClick={handleAbrirCriarDialogo}
+          >
+            Novo Setlist
+          </Button>
         </Tooltip>
       </Box>
 
