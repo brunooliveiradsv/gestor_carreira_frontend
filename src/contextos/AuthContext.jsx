@@ -41,16 +41,12 @@ export const AuthProvider = ({ children }) => {
             setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Login bem-sucedido!', 'success');
 
-            // --- LÓGICA DE REDIRECIONAMENTO ATUALIZADA ---
             const user = data.usuario;
-            // Se o plano for 'padrao' ou 'premium', vai para o dashboard.
             if (user.plano === 'padrao' || user.plano === 'premium') {
                 navigate('/');
             } else {
-                // Se for 'free' ou outro status, vai para a página de assinatura para incentivar o upgrade.
                 navigate('/assinatura');
             }
-            // --- FIM DA ALTERAÇÃO ---
             
             return true;
         } catch (error) {
@@ -67,11 +63,7 @@ export const AuthProvider = ({ children }) => {
             
             setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Cadastro realizado com sucesso!', 'success');
-
-            // --- LÓGICA DE REDIRECIONAMENTO ATUALIZADA ---
-            // Após o registo, o utilizador é 'free', então redirecionamos para a página de assinatura
             navigate('/assinatura'); 
-            // --- FIM DA ALTERAÇÃO ---
             
             return true;
         } catch (error) {
@@ -84,7 +76,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         delete apiClient.defaults.headers.common['Authorization'];
         setUsuario(null);
-        // Redireciona para a página de login ao sair para uma melhor experiência
         navigate('/login');
     };
 

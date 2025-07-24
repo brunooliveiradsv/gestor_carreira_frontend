@@ -1,4 +1,3 @@
-// src/App.jsx
 import { Routes, Route } from "react-router-dom";
 import Autenticacao from "./paginas/Autenticacao.jsx";
 import Dashboard from "./paginas/Dashboard.jsx";
@@ -7,7 +6,6 @@ import Financeiro from "./paginas/Financeiro.jsx";
 import Conquistas from "./paginas/Conquistas.jsx";
 import RotaProtegida from "./componentes/RotaProtegida.jsx";
 import LayoutPrincipal from "./componentes/LayoutPrincipal.jsx";
-import ProtegerPorPlano from "./componentes/ProtegerPorPlano.jsx";
 import Contatos from "./paginas/Contatos.jsx";
 import Configuracoes from "./paginas/Configuracoes.jsx";
 import Repertorio from "./paginas/Repertorio.jsx";
@@ -25,6 +23,7 @@ import Mural from "./paginas/Mural.jsx";
 import Assinatura from "./paginas/Assinatura.jsx";
 import ModoPalco from "./paginas/ModoPalco.jsx";
 import PaginaSetlistPublico from "./paginas/PaginaSetlistPublico.jsx";
+import ProtegerPorPlano from "./componentes/ProtegerPorPlano.jsx";
 
 function App() {
   return (
@@ -35,9 +34,18 @@ function App() {
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/showcase/:url_unica" element={<ShowCase />} />
       <Route path="/setlist/:uuid" element={<PaginaSetlistPublico />} />
-      
+
       {/* Rota de Tela Cheia */}
-      <Route path="/setlists/palco/:id" element={<RotaProtegida><ProtegerPorPlano planoMinimo="premium"><ModoPalco /></ProtegerPorPlano></RotaProtegida>} />
+      <Route
+        path="/setlists/palco/:id"
+        element={
+          <RotaProtegida>
+            <ProtegerPorPlano planoMinimo="premium">
+              <ModoPalco />
+            </ProtegerPorPlano>
+          </RotaProtegida>
+        }
+      />
 
       {/* ROTAS COM O LAYOUT PRINCIPAL */}
       <Route element={<RotaProtegida><LayoutPrincipal /></RotaProtegida>}>

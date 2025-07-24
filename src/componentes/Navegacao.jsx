@@ -132,11 +132,15 @@ function Navegacao() {
   const navLinks = [
     { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
-    { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
-    { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
+    // Apenas mostra o link do Financeiro se o plano for 'padrao' ou superior
+    ...((usuario?.plano === 'padrao' || usuario?.plano === 'premium') ? [{ to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> }] : []),
+    // Apenas mostra o link do Repertório se o plano for 'padrao' ou superior
+    ...((usuario?.plano === 'padrao' || usuario?.plano === 'premium') ? [{ to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> }] : []),
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
-    { to: "/mural", text: "Painel Showcase", icon: <MuralIcon /> },
-    { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
+    // Apenas mostra o link do Mural se o plano for 'premium'
+    ...(usuario?.plano === 'premium' ? [{ to: "/mural", text: "Painel Showcase", icon: <MuralIcon /> }] : []),
+    // Apenas mostra o link de Equipamentos se o plano for 'padrao' ou superior
+    ...((usuario?.plano === 'padrao' || usuario?.plano === 'premium') ? [{ to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> }] : []),
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];

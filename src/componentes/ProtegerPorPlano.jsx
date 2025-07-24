@@ -1,15 +1,20 @@
 import React, { useContext } from 'react';
-import { Navigate, Outlet } from 'react-router-dom'; // 1. Importar o Outlet
+import { Navigate, Outlet } from 'react-router-dom';
 import { AuthContext } from '../contextos/AuthContext';
 import { Box, CircularProgress } from '@mui/material';
 
+// Define a hierarquia dos planos. Quanto maior o número, maior o nível.
 const HIERARQUIA_PLANOS = {
   free: 0,
   padrao: 1,
   premium: 2,
 };
 
-// 2. Adicionar 'children' como um dos parâmetros da função
+/**
+ * Protege rotas filhas, permitindo o acesso apenas a utilizadores
+ * com um nível de plano igual ou superior ao mínimo exigido.
+ * @param {{ children: React.ReactNode, planoMinimo: 'free' | 'padrao' | 'premium' }} props
+ */
 function ProtegerPorPlano({ children, planoMinimo = 'free' }) {
   const { usuario, carregando } = useContext(AuthContext);
 
@@ -26,7 +31,6 @@ function ProtegerPorPlano({ children, planoMinimo = 'free' }) {
   const temAcesso = usuario?.status_assinatura === 'ativa' && nivelUtilizador >= nivelExigido;
 
   if (temAcesso) {
-    // 3. LÓGICA CORRIGIDA:
     // Se 'children' existir (como no caso do ModoPalco), renderiza-o.
     // Caso contrário, renderiza o <Outlet /> para as rotas aninhadas (Dashboard, etc.).
     return children ? children : <Outlet />;
