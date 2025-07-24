@@ -20,6 +20,7 @@ import {
 
 import FormularioCompromisso from "../componentes/FormularioCompromisso.jsx";
 import FormularioContrato from '../componentes/FormularioContrato';
+import Anuncio from '../componentes/Anuncio'; // 1. Importar o componente de anúncio
 
 function Agenda() {
   const { mostrarNotificacao } = useNotificacao();
@@ -169,6 +170,8 @@ function Agenda() {
 
   return (
     <Box>
+       <Anuncio />
+
       <Box
         sx={{
           display: "flex",

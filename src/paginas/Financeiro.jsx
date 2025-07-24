@@ -16,6 +16,7 @@ import {
   AddCircleOutline as AddCircleOutlineIcon,
   Lock as LockIcon
 } from '@mui/icons-material';
+import Anuncio from '../componentes/Anuncio'; // Importar o componente de anúncio
 
 // Componente para os cartões de resumo
 const SummaryCard = memo(({ title, value, icon, avatarBgColor }) => (
@@ -126,6 +127,7 @@ function Financeiro() {
 
   return (
     <Box>
+      <Anuncio /> {/* 1. Adicionar o componente de anúncio */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" fontWeight="bold">Painel Financeiro</Typography>
         <Typography color="text.secondary">Controle as suas receitas, despesas e veja o seu saldo.</Typography>

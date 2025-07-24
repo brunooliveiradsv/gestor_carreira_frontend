@@ -16,6 +16,7 @@ import {
 
 import FormularioMusica from "../componentes/FormularioMusica.jsx";
 import FormularioSugestao from "../componentes/FormularioSugestao.jsx";
+import Anuncio from "../componentes/Anuncio.jsx";
 
 // O componente SeletorDeMusica agora recebe o 'usuario' e a função de upgrade
 const SeletorDeMusica = ({ onSave, onCancel, usuario, abrirDialogoDeUpgrade }) => {
@@ -191,6 +192,7 @@ function Repertorio() {
 
   return (
     <Box>
+      <Anuncio /> {/* 1. Adicionar o componente de anúncio */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
         <Box>
             <Typography variant="h4" component="h1" fontWeight="bold">Meu Repertório</Typography>

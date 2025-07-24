@@ -13,11 +13,7 @@ function LayoutPrincipal() {
     }}>
       <CssBaseline />
       <Navegacao />
-
-      {/* 2. Adicionar o componente Anuncio aqui */}
-      {/* Ele irá gerir a sua própria visibilidade e aparecerá por cima de tudo */}
-      <Anuncio />
-
+      
       <Box
         component="main"
         sx={{
