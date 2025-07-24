@@ -33,7 +33,7 @@ function ProtegerPorPlano({ planoMinimo = 'free' }) {
   const temAcesso = usuario?.status_assinatura === 'ativa' && nivelUtilizador >= nivelExigido;
 
   if (temAcesso) {
-    return <Outlet />; // Renderiza as rotas filhas
+    return children; // Renderiza as rotas filhas
   }
 
   // Se não tiver acesso, redireciona para a página de assinatura
