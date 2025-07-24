@@ -3,6 +3,7 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
 import { useNotificacao } from './NotificationContext';
+import { API_ENDPOINTS } from '../constants';
 
 export const AuthContext = createContext();
 
@@ -17,7 +18,7 @@ export const AuthProvider = ({ children }) => {
         if (token) {
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             try {
-                const { data } = await apiClient.get(API.ENDPOINTS.PERFIL);
+                const { data } = await apiClient.get(API_ENDPOINTS.PERFIL);
                 setUsuario(data);
             } catch (error) {
                 console.error("Token inválido ou expirado, limpando...");
@@ -35,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, senha) => {
         try {
-            const { data } = await apiClient.post(API.ENDPOINTS.LOGIN, { email, senha });
+            const { data } = await apiClient.post(API_ENDPOINTS.LOGIN, { email, senha });
             localStorage.setItem('token', data.token);
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             
@@ -65,7 +66,7 @@ export const AuthProvider = ({ children }) => {
     
     const registrar = async (nome, email, senha) => {
         try {
-            const { data } = await apiClient.post(API.ENDPOINTS.REGISTRAR, { nome, email, senha });
+            const { data } = await apiClient.post(API_ENDPOINTS.REGISTRAR, { nome, email, senha });
             localStorage.setItem('token', data.token);
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             
