@@ -6,8 +6,7 @@ import { useNotificacao } from "../contextos/NotificationContext";
 import { AuthContext } from "../contextos/AuthContext";
 import {
   Box, Button, Typography, CircularProgress, Paper, TextField,
-  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
-  Grid, Avatar, IconButton, Tooltip, Chip
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Avatar, IconButton, Tooltip, Chip, InputAdornment, Lock as LockIcon
 } from "@mui/material";
 import {
     PhotoCamera,
