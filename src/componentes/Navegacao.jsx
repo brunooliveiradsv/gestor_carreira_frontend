@@ -1,4 +1,3 @@
-// src/componentes/Navegacao.jsx
 import React, { useContext, useState, useEffect, useCallback } from "react";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext.jsx";
@@ -7,7 +6,7 @@ import {
   AppBar, Toolbar, Typography, Box, IconButton, Badge, Menu,
   MenuItem, Tooltip, Divider, ListItemIcon, ListItemText, Dialog,
   DialogActions, DialogContent, DialogContentText, DialogTitle,
-  useTheme, Drawer, List, ListItem, ListItemButton, Avatar, Button
+  useTheme, Drawer, List, ListItem, ListItemButton, Avatar, Button, Chip
 } from "@mui/material";
 import {
   Notifications as NotificationsIcon, Close as CloseIcon, MilitaryTech as MilitaryTechIcon,
@@ -20,8 +19,10 @@ import {
   Announcement as MuralIcon,
   WorkspacePremium as WorkspacePremiumIcon,
   DoneAll as DoneAllIcon,
-  DeleteSweep as DeleteSweepIcon
+  DeleteSweep as DeleteSweepIcon,
+  Lock as LockIcon
 } from "@mui/icons-material";
+import { useUpgradeDialog } from "../contextos/UpgradeDialogContext.jsx";
 
 const iconMapNotificacao = {
   SHOWS: MusicNoteIcon,
@@ -33,6 +34,7 @@ function Navegacao() {
   const { usuario, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const theme = useTheme();
+  const { abrirDialogoDeUpgrade } = useUpgradeDialog();
 
   const [notificacoes, setNotificacoes] = useState([]);
   const [anchorElNotificacoes, setAnchorElNotificacoes] = useState(null);
@@ -129,13 +131,30 @@ function Navegacao() {
     return <Icone fontSize="small" />;
   };
 
+<<<<<<< HEAD
 const navLinks = [
+=======
+  const handleMuralClick = () => {
+    if (usuario?.plano !== 'premium') {
+        abrirDialogoDeUpgrade('O Painel Showcase é uma funcionalidade exclusiva do plano Premium.');
+    } else {
+        navigate('/mural');
+    }
+    if(mobileOpen) handleDrawerToggle();
+  }
+
+  const navLinks = [
+>>>>>>> be47d43345afeab106166a0b220773678cc453bc
     { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
-    { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
-    { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
+    { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon />, planoMinimo: 'padrao' },
+    { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon />, planoMinimo: 'padrao' },
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
+<<<<<<< HEAD
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
+=======
+    { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon />, planoMinimo: 'padrao' },
+>>>>>>> be47d43345afeab106166a0b220773678cc453bc
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
@@ -146,6 +165,8 @@ const navLinks = [
         ? usuario.foto_url
         : `${apiClient.defaults.baseURL}${usuario.foto_url}`;
   }
+  
+  const nivelUtilizador = {free: 0, padrao: 1, premium: 2}[usuario?.plano];
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -165,18 +186,30 @@ const navLinks = [
       </Box>
       <Divider />
       <List sx={{ p: 1, overflowY: 'auto', flexGrow: 1 }}>
-        {navLinks.map((link) => (
-          <ListItem key={link.text} disablePadding sx={{ my: 0.5 }}>
-            {/* Adicionando onClick={handleDrawerToggle} aqui */}
-            <ListItemButton component={RouterLink} to={link.to} onClick={handleDrawerToggle} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
-              <ListItemIcon>{link.icon}</ListItemIcon>
-              <ListItemText primary={link.text} />
+        {navLinks.map((link) => {
+            const nivelExigido = {free: 0, padrao: 1, premium: 2}[link.planoMinimo || 'free'];
+            if (nivelUtilizador < nivelExigido) return null;
+
+            return (
+                <ListItem key={link.text} disablePadding sx={{ my: 0.5 }}>
+                    <ListItemButton component={RouterLink} to={link.to} onClick={handleDrawerToggle} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
+                        <ListItemIcon>{link.icon}</ListItemIcon>
+                        <ListItemText primary={link.text} />
+                    </ListItemButton>
+                </ListItem>
+            );
+        })}
+
+        <ListItem disablePadding sx={{ my: 0.5 }}>
+            <ListItemButton onClick={handleMuralClick} sx={{ borderRadius: theme.shape.borderRadius }}>
+                <ListItemIcon>{usuario.plano === 'premium' ? <MuralIcon /> : <LockIcon />}</ListItemIcon>
+                <ListItemText primary="Painel Showcase" />
+                {usuario.plano !== 'premium' && <Chip label="Premium" color="primary" size="small" />}
             </ListItemButton>
-          </ListItem>
-        ))}
+        </ListItem>
+
         {usuario?.role === "admin" && (
           <ListItem disablePadding sx={{ my: 0.5 }}>
-            {/* Adicionando onClick={handleDrawerToggle} aqui */}
             <ListItemButton component={RouterLink} to="/admin" onClick={handleDrawerToggle} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
               <ListItemIcon><AdminPanelSettingsIcon /></ListItemIcon>
               <ListItemText primary="Painel Admin" />
@@ -189,7 +222,6 @@ const navLinks = [
       <Box sx={{ display: { xs: 'none', md: 'block' } }}>
         <List sx={{ p: 1, flexShrink: 0 }}>
           <ListItem disablePadding>
-            {/* Adicionando onClick={handleDrawerToggle} aqui para garantir que mesmo em telas maiores o drawer feche se for o caso */}
             <ListItemButton component={RouterLink} to="/configuracoes" onClick={handleDrawerToggle} sx={{ borderRadius: theme.shape.borderRadius }}>
               <ListItemIcon><SettingsIcon /></ListItemIcon>
               <ListItemText primary="Configurações" />

@@ -6,7 +6,7 @@ import {
   Box, Typography, Paper, Grid, Button, CircularProgress, Chip, List, ListItem,
   ListItemIcon, ListItemText, ToggleButton, ToggleButtonGroup
 } from '@mui/material';
-import { CheckCircle as CheckCircleIcon, Block as BlockIcon } from '@mui/icons-material';
+import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 
 const PlanoCard = ({ title, price, description, features, planType, isCurrentPlan, onSubscribe, loading, billingPeriod, isFree = false }) => (
   <Paper
@@ -65,7 +65,7 @@ function Assinatura() {
     free: {
         nome: 'Free',
         descricao: 'O essencial para começar a organizar sua carreira.',
-        features: ['Gestão de Agenda', 'Gestão de Contatos', 'Até 2 Setlists', 'Funcionalidades com anúncios']
+        features: ['Gestão de Agenda', 'Gestão de Contatos', 'Até 1 Setlist', 'Funcionalidades com anúncios']
     },
     padrao: {
       nome: 'Padrão',
@@ -74,7 +74,7 @@ function Assinatura() {
       priceIdMensal: import.meta.env.VITE_STRIPE_PRICE_ID_PADRAO_MENSAL,
       priceIdAnual: import.meta.env.VITE_STRIPE_PRICE_ID_PADRAO_ANUAL,
       descricao: 'Mais ferramentas para gerir repertórios e finanças, com menos anúncios.',
-      features: ['Tudo do plano Free', 'Setlists Ilimitados', 'Controlo Financeiro Completo', 'Módulo de Equipamentos']
+      features: ['Tudo do plano Free', 'Até 5 Setlists, Contatos e Equipamentos', 'Controlo Financeiro Completo', 'Alterar e sugerir músicas']
     },
     premium: {
       nome: 'Premium',
@@ -83,7 +83,7 @@ function Assinatura() {
       priceIdMensal: import.meta.env.VITE_STRIPE_PRICE_ID_PREMIUM_MENSAL,
       priceIdAnual: import.meta.env.VITE_STRIPE_PRICE_ID_PREMIUM_ANUAL,
       descricao: 'A experiência completa do VOXGest, sem interrupções e com recursos avançados.',
-      features: ['Tudo do plano Padrão', 'Experiência sem Anúncios', 'Página Showcase (Mural)', 'Modo Palco para Setlists']
+      features: ['Tudo do plano Padrão', 'Recursos Ilimitados', 'Página Showcase (Mural)', 'Modo Palco e Partilha de Setlists', 'Gerador de Contrato']
     }
   };
 

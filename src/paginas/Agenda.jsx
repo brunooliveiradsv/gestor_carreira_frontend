@@ -1,42 +1,21 @@
-// src/paginas/Agenda.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react"; // 1. Adicionar useContext
 import { useLocation, useNavigate } from "react-router-dom";
 import apiClient from "../apiClient.js";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
+import { AuthContext } from "../contextos/AuthContext.jsx"; // 2. Importar AuthContext
+import { useUpgradeDialog } from "../contextos/UpgradeDialogContext.jsx"; // 3. Importar o hook do diálogo
 import useApi from "../hooks/useApi";
 
 import {
-  Box,
-  Button,
-  Typography,
-  CircularProgress,
-  Card,
-  CardContent,
-  CardActions,
-  Chip,
-  IconButton,
-  Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Tooltip,
-  useTheme,
-  DialogActions,
+  Box, Button, Typography, CircularProgress, Card, CardContent, CardActions,
+  Chip, IconButton, Paper, Dialog, DialogTitle, DialogContent, Tooltip,
+  useTheme, DialogActions, DialogContentText
 } from "@mui/material";
 import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Info as InfoIcon,
-  AddCircleOutline as AddCircleOutlineIcon,
-  Event as EventIcon,
-  LocationOn as LocationOnIcon,
-  MusicNote as MusicNoteIcon,
-  Mic as MicIcon,
-  Groups as GroupsIcon,
-  Handshake as HandshakeIcon,
-  AttachMoney as AttachMoneyIcon,
-  Assignment as AssignmentIcon,
-  PlaylistPlay as PlaylistPlayIcon // Ícone para o setlist
+  Edit as EditIcon, Delete as DeleteIcon, Info as InfoIcon,
+  AddCircleOutline as AddCircleOutlineIcon, Event as EventIcon, LocationOn as LocationOnIcon,
+  MusicNote as MusicNoteIcon, Mic as MicIcon, Groups as GroupsIcon,
+  Handshake as HandshakeIcon, Assignment as AssignmentIcon, PlaylistPlay as PlaylistPlayIcon
 } from "@mui/icons-material";
 
 import FormularioCompromisso from "../componentes/FormularioCompromisso.jsx";
@@ -47,6 +26,8 @@ function Agenda() {
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const { usuario } = useContext(AuthContext); // 4. Obter o utilizador
+  const { abrirDialogoDeUpgrade } = useUpgradeDialog(); // 5. Obter a função do diálogo
 
   const {
     data: compromissos,
@@ -116,7 +97,12 @@ function Agenda() {
     setDialogoDetalhesAberto(false);
   };
 
+  // --- 6. LÓGICA ATUALIZADA ---
   const handleAbrirDialogoContrato = (compromisso) => {
+    if (usuario?.plano !== 'premium') {
+      abrirDialogoDeUpgrade('Gerar contratos é uma funcionalidade exclusiva do plano Premium.');
+      return;
+    }
     setCompromissoSelecionado(compromisso);
     setDialogoContratoAberto(true);
   };
@@ -153,31 +139,25 @@ function Agenda() {
     }
   };
 
+  // ... (funções getStatusColor e getTipoIcon permanecem iguais)
   const getStatusColor = (status) => {
     switch (status) {
-      case "Realizado":
-        return "success";
-      case "Cancelado":
-        return "error";
-      default:
-        return "info";
+      case "Realizado": return "success";
+      case "Cancelado": return "error";
+      default: return "info";
     }
   };
 
   const getTipoIcon = (tipo) => {
     switch (tipo) {
-      case "Show":
-        return <MusicNoteIcon fontSize="small" />;
-      case "Gravação":
-        return <MicIcon fontSize="small" />;
-      case "Ensaio":
-        return <GroupsIcon fontSize="small" />;
-      case "Reunião":
-        return <HandshakeIcon fontSize="small" />;
-      default:
-        return <EventIcon fontSize="small" />;
+      case "Show": return <MusicNoteIcon fontSize="small" />;
+      case "Gravação": return <MicIcon fontSize="small" />;
+      case "Ensaio": return <GroupsIcon fontSize="small" />;
+      case "Reunião": return <HandshakeIcon fontSize="small" />;
+      default: return <EventIcon fontSize="small" />;
     }
   };
+
 
   if (carregando) {
     return (
@@ -279,13 +259,13 @@ function Agenda() {
                       {c.local || "Local não informado"}
                     </Typography>
                   </Box>
-                  {/* --- BLOCO DO CACHÊ REMOVIDO DAQUI --- */}
                 </CardContent>
                 <CardActions sx={{ justifyContent: "flex-end", borderTop: `1px solid ${theme.palette.divider}` }}>
-                  <Tooltip title="Gerar Contrato">
+                  {/* --- 7. BOTÃO ATUALIZADO --- */}
+                  <Tooltip title="Gerar Contrato (Funcionalidade Premium)">
                     <span>
                       <IconButton onClick={() => handleAbrirDialogoContrato(c)} disabled={c.status !== 'Agendado'}>
-                        <AssignmentIcon />
+                        <AssignmentIcon color={usuario?.plano === 'premium' ? 'inherit' : 'disabled'} />
                       </IconButton>
                     </span>
                   </Tooltip>

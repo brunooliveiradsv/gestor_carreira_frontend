@@ -53,7 +53,12 @@ function FormularioEquipamento({ id, onSave, onCancel }) {
       }
       onSave();
     } catch (erro) {
-      mostrarNotificacao('Falha ao salvar o equipamento.', 'error');
+      if (erro.response?.data?.upgradeNecessario) {
+          abrirDialogoDeUpgrade(erro.response.data.mensagem);
+          onCancel(); // Fecha o formulário
+      } else {
+          mostrarNotificacao(erro.response?.data?.mensagem || 'Falha ao salvar o equipamento.', 'error');
+      }
     } finally {
       setCarregando(false);
     }

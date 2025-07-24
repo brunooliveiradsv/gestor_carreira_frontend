@@ -1,4 +1,3 @@
-// src/componentes/ProtegerPorPlano.jsx
 import React, { useContext } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { AuthContext } from '../contextos/AuthContext';
@@ -14,9 +13,9 @@ const HIERARQUIA_PLANOS = {
 /**
  * Protege rotas filhas, permitindo o acesso apenas a utilizadores
  * com um nível de plano igual ou superior ao mínimo exigido.
- * @param {{ planoMinimo: 'free' | 'padrao' | 'premium' }} props
+ * @param {{ children: React.ReactNode, planoMinimo: 'free' | 'padrao' | 'premium' }} props
  */
-function ProtegerPorPlano({ planoMinimo = 'free' }) {
+function ProtegerPorPlano({ children, planoMinimo = 'free' }) {
   const { usuario, carregando } = useContext(AuthContext);
 
   if (carregando) {
@@ -29,15 +28,14 @@ function ProtegerPorPlano({ planoMinimo = 'free' }) {
 
   const nivelUtilizador = HIERARQUIA_PLANOS[usuario?.plano] ?? -1;
   const nivelExigido = HIERARQUIA_PLANOS[planoMinimo];
-
-  // Permite o acesso se o utilizador tiver um plano ativo com nível suficiente
   const temAcesso = usuario?.status_assinatura === 'ativa' && nivelUtilizador >= nivelExigido;
 
   if (temAcesso) {
-    return <Outlet />; // Renderiza as rotas filhas (ex: <Dashboard, <Financeiro , etc.)
+    // Se 'children' existir (como no caso do ModoPalco), renderiza-o.
+    // Caso contrário, renderiza o <Outlet /> para as rotas aninhadas (Dashboard, etc.).
+    return children ? children : <Outlet />;
   }
 
-  // Se não tiver acesso, redireciona para a página de assinatura
   return <Navigate to="/assinatura" replace />;
 }
 

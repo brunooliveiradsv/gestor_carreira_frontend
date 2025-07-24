@@ -27,7 +27,7 @@ import usePlacesAutocomplete, {
   getLatLng,
 } from 'use-places-autocomplete';
 
-import { API_ENDPOINTS } from '../constants';
+import { TIPOS_COMPROMISSO } from '../constants';
 
 // O componente PlacesAutocomplete não precisa de alterações
 function PlacesAutocomplete({ initialValue, onSelectPlace }) {

@@ -6,13 +6,13 @@ import { useNotificacao } from "../contextos/NotificationContext";
 import { AuthContext } from "../contextos/AuthContext";
 import {
   Box, Button, Typography, CircularProgress, Paper, TextField,
-  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
-  Grid, Avatar, IconButton, Tooltip, Chip
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Avatar, IconButton, Tooltip, Chip, InputAdornment
 } from "@mui/material";
 import {
     PhotoCamera,
     WorkspacePremium as WorkspacePremiumIcon,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Lock as LockIcon
 } from "@mui/icons-material";
 
 const FormCard = ({ title, children }) => (
@@ -53,8 +53,19 @@ function Configuracoes() {
     return texto.charAt(0).toUpperCase() + texto.slice(1);
   };
 
+  const isPremium = usuario?.plano === 'premium';
+
+  // --- 5. NOVA FUNÇÃO PARA LIDAR COM CLiques em funcionalidades bloqueadas ---
+  const handlePremiumFeatureClick = () => {
+    if (!isPremium) {
+      abrirDialogoDeUpgrade('A personalização do nome é uma funcionalidade exclusiva do plano Premium.');
+    }
+  };
+
+
   const handleSalvarNome = async (e) => {
     e.preventDefault();
+    if (!isPremium) return; // Segurança extra
     setCarregando(prev => ({ ...prev, nome: true }));
     try {
       const { data } = await apiClient.put('/api/usuarios/perfil/nome', { nome });
@@ -221,16 +232,34 @@ function Configuracoes() {
               </FormCard>
           </Box>
 
-          <Box sx={{ flex: '1 1 280px' }}>
-              <FormCard title="Alterar Nome">
-                  <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
-                      <TextField id="nome" name="nome" label="Nome Artístico" value={nome} onChange={(e) => setNome(e.target.value)} fullWidth />
-                      <Button type="submit" variant="contained" disabled={carregando.nome} sx={{ alignSelf: "flex-end", mt: 2 }}>
-                          {carregando.nome ? <CircularProgress size={24} /> : "Salvar Nome"}
-                      </Button>
-                  </Box>
-              </FormCard>
-          </Box>
+<Box sx={{ flex: '1 1 280px' }}>
+                <FormCard title="Alterar Nome">
+                    <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
+                        <TextField
+                            id="nome"
+                            name="nome"
+                            label="Nome Artístico"
+                            value={nome}
+                            onChange={(e) => setNome(e.target.value)}
+                            fullWidth
+                            disabled={!isPremium}
+                            onClick={handlePremiumFeatureClick}
+                            InputProps={{
+                                endAdornment: !isPremium && (
+                                <Tooltip title="Funcionalidade Premium">
+                                    <InputAdornment position="end">
+                                        <LockIcon color="disabled" />
+                                    </InputAdornment>
+                                </Tooltip>
+                                ),
+                            }}
+                        />
+                        <Button type="submit" variant="contained" disabled={carregando.nome || !isPremium} sx={{ alignSelf: "flex-end", mt: 2 }}>
+                            {carregando.nome ? <CircularProgress size={24} /> : "Salvar Nome"}
+                        </Button>
+                    </Box>
+                </FormCard>
+            </Box>
 
           <Box sx={{ flex: '1 1 280px' }}>
               <FormCard title="Alterar E-mail">
