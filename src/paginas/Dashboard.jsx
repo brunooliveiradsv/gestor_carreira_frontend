@@ -91,8 +91,6 @@ function Dashboard() {
         Aqui está um resumo da sua carreira hoje.
       </Typography>
 
-      <Anuncio />
-
       {erro && <Alert severity="warning" sx={{ mb: 4 }}>{erro}</Alert>}
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
