@@ -27,6 +27,8 @@ import usePlacesAutocomplete, {
   getLatLng,
 } from 'use-places-autocomplete';
 
+import { API_ENDPOINTS } from '../constants';
+
 // O componente PlacesAutocomplete não precisa de alterações
 function PlacesAutocomplete({ initialValue, onSelectPlace }) {
   const {
@@ -249,10 +251,9 @@ function FormularioCompromisso({ id, onSave, onCancel }) {
         <FormControl fullWidth>
           <InputLabel>Tipo</InputLabel>
           <Select name="tipo" label="Tipo" value={dadosForm.tipo} onChange={handleChange}>
-            <MenuItem value="Show">Show</MenuItem>
-            <MenuItem value="Ensaio">Ensaio</MenuItem>
-            <MenuItem value="Gravação">Gravação</MenuItem>
-            <MenuItem value="Reunião">Reunião</MenuItem>
+            {TIPOS_COMPROMISSO.map((tipo) => (
+    <MenuItem key={tipo} value={tipo}>{tipo}</MenuItem>
+  ))}
           </Select>
         </FormControl>
 
