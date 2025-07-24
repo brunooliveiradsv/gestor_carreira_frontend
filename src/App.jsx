@@ -25,56 +25,54 @@ import Assinatura from "./paginas/Assinatura.jsx";
 import VerificarAssinatura from "./componentes/VerificarAssinatura.jsx";
 import ModoPalco from "./paginas/ModoPalco.jsx";
 import PaginaSetlistPublico from "./paginas/PaginaSetlistPublico.jsx";
+import ProtegerPorPlano from "./componentes/ProtegerPorPlano.jsx"; // 1. Importar o novo componente
 
 function App() {
   return (
     <Routes>
-      {/* Rotas Públicas */}
+      {/* Rotas Públicas (sem alterações) */}
       <Route path="/login" element={<Autenticacao />} />
       <Route path="/cadastro" element={<Autenticacao />} />
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/showcase/:url_unica" element={<ShowCase />} />
-       <Route path="/setlist/:uuid" element={<PaginaSetlistPublico />} />
+      <Route path="/setlist/:uuid" element={<PaginaSetlistPublico />} />
+      
+      {/* Rota de Tela Cheia (sem alterações) */}
+      <Route path="/setlists/palco/:id" element={<RotaProtegida><ProtegerPorPlano planoMinimo="premium"><ModoPalco /></ProtegerPorPlano></RotaProtegida>} />
 
-      {/* --- ROTA DE TELA CHEIA (SEM LAYOUT) --- */}
-      {/* Esta rota é protegida, mas renderiza APENAS o ModoPalco, sem o menu lateral */}
-      <Route
-        path="/setlists/palco/:id"
-        element={
-          <RotaProtegida>
-            <ModoPalco />
-          </RotaProtegida>
-        }
-      />
+      {/* --- ROTAS COM O LAYOUT PRINCIPAL (COM ALTERAÇÕES) --- */}
+      <Route element={<RotaProtegida><LayoutPrincipal /></RotaProtegida>}>
+        
+        {/* Funcionalidades do Plano FREE (e superiores) */}
+        <Route element={<ProtegerPorPlano planoMinimo="free" />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/agenda" element={<Agenda />} />
+          <Route path="/contatos" element={<Contatos />} />
+          <Route path="/conquistas" element={<Conquistas />} />
+        </Route>
 
-      {/* --- ROTAS COM O LAYOUT PRINCIPAL --- */}
-      {/* Todas as outras páginas que devem ter o menu lateral e o cabeçalho ficam aqui dentro */}
-      <Route
-        element={
-          <RotaProtegida>
-            <LayoutPrincipal />
-          </RotaProtegida>
-        }
-      >
-        <Route element={<VerificarAssinatura />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/agenda" element={<Agenda />} />
-            <Route path="/financeiro" element={<Financeiro />} />
-            <Route path="/repertorio" element={<Repertorio />} />
-            <Route path="/setlists" element={<Setlists />} />
-            <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
-            <Route path="/mural" element={<Mural />} />
-            <Route path="/equipamentos" element={<Equipamentos />} />
-            <Route path="/contatos" element={<Contatos />} />
-            <Route path="/conquistas" element={<Conquistas />} />
-            <Route path="/admin" element={<AdminPainel />} />
-            <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-            <Route path="/admin/musicas" element={<AdminMusicas />} />
-            <Route path="/admin/sugestoes" element={<AdminSugestoes />} />
-            <Route path="/admin/logs" element={<AdminLogs />} />
+        {/* Funcionalidades do Plano PADRÃO (e superiores) */}
+        <Route element={<ProtegerPorPlano planoMinimo="padrao" />}>
+          <Route path="/financeiro" element={<Financeiro />} />
+          <Route path="/equipamentos" element={<Equipamentos />} />
+          <Route path="/repertorio" element={<Repertorio />} />
+          <Route path="/setlists" element={<Setlists />} />
+          <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
         </Route>
         
-        {/* Rotas que não precisam de assinatura ativa, mas precisam de login */}
+        {/* Funcionalidades do Plano PREMIUM */}
+        <Route element={<ProtegerPorPlano planoMinimo="premium" />}>
+            <Route path="/mural" element={<Mural />} />
+        </Route>
+
+        {/* Funcionalidades de ADMIN (só dependem da role, não do plano) */}
+        <Route path="/admin" element={<AdminPainel />} />
+        <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+        <Route path="/admin/musicas" element={<AdminMusicas />} />
+        <Route path="/admin/sugestoes" element={<AdminSugestoes />} />
+        <Route path="/admin/logs" element={<AdminLogs />} />
+
+        {/* Rotas que não precisam de verificação de plano */}
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/assinatura" element={<Assinatura />} />
       </Route>
