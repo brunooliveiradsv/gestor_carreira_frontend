@@ -13,7 +13,7 @@ const HIERARQUIA_PLANOS = {
 /**
  * Protege rotas filhas, permitindo o acesso apenas a utilizadores
  * com um nível de plano igual ou superior ao mínimo exigido.
- * @param {{ planoMinimo: 'free' | 'padrao' | 'premium' }} props
+ * @param {{ children: React.ReactNode, planoMinimo: 'free' | 'padrao' | 'premium' }} props
  */
 function ProtegerPorPlano({ children, planoMinimo = 'free' }) {
   const { usuario, carregando } = useContext(AuthContext);
