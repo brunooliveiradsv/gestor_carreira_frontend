@@ -74,7 +74,7 @@ function Setlists() {
           handleFecharCriarDialogo();
           navigate(`/setlists/editar/${resposta.data.id}`);
       } catch (error) {
-          mostrarNotificacao('Erro ao criar o setlist.', 'error');
+          mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao criar o setlist.', 'error');
       }
   };
 
