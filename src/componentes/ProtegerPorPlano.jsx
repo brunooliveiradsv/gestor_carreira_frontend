@@ -15,7 +15,7 @@ const HIERARQUIA_PLANOS = {
  * com um nível de plano igual ou superior ao mínimo exigido.
  * @param {{ planoMinimo: 'free' | 'padrao' | 'premium' }} props
  */
-function ProtegerPorPlano({ planoMinimo = 'free' }) {
+function ProtegerPorPlano({ children, planoMinimo = 'free' }) {
   const { usuario, carregando } = useContext(AuthContext);
 
   if (carregando) {
