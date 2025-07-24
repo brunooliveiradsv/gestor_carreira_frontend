@@ -13,7 +13,7 @@ import Equipamentos from "./paginas/Equipamentos.jsx";
 import RecuperarSenha from "./paginas/RecuperarSenha.jsx";
 import Setlists from "./paginas/Setlists.jsx";
 import EditorDeSetlist from "./paginas/EditorDeSetlist.jsx";
-import ShowCase from "./paginas/ShowCase.jsx"; 
+import ShowCase from "./paginas/ShowCase.jsx";
 import AdminPainel from "./paginas/AdminPainel.jsx";
 import AdminUsuarios from "./paginas/AdminUsuarios.jsx";
 import AdminMusicas from "./paginas/AdminMusicas.jsx";
@@ -49,13 +49,17 @@ function App() {
 
       {/* ROTAS COM O LAYOUT PRINCIPAL */}
       <Route element={<RotaProtegida><LayoutPrincipal /></RotaProtegida>}>
-        
+
+        {/* --- ALTERAÇÃO AQUI --- */}
         {/* Funcionalidades do Plano FREE (e superiores) */}
         <Route element={<ProtegerPorPlano planoMinimo="free" />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/contatos" element={<Contatos />} />
           <Route path="/conquistas" element={<Conquistas />} />
+          {/* As rotas de Setlists foram movidas para aqui */}
+          <Route path="/setlists" element={<Setlists />} />
+          <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
         </Route>
 
         {/* Funcionalidades do Plano PADRÃO (e superiores) */}
@@ -63,9 +67,8 @@ function App() {
           <Route path="/financeiro" element={<Financeiro />} />
           <Route path="/equipamentos" element={<Equipamentos />} />
           <Route path="/repertorio" element={<Repertorio />} />
-          <Route path="/setlists" element={<Setlists />} />
-          <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
         </Route>
+        {/* --- FIM DA ALTERAÇÃO --- */}
         
         {/* Funcionalidades do Plano PREMIUM */}
         <Route element={<ProtegerPorPlano planoMinimo="premium" />}>
