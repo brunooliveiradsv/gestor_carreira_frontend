@@ -39,7 +39,12 @@ function FormularioContato({ id, onSave, onCancel }) {
       }
       onSave();
     } catch (erro) {
-      mostrarNotificacao(erro.response?.data?.mensagem || 'Falha ao salvar o contato.', 'error');
+       if (erro.response?.data?.upgradeNecessario) {
+          abrirDialogoDeUpgrade(erro.response.data.mensagem);
+          onCancel(); // Fecha o formulário para o utilizador ver o diálogo
+      } else {
+          mostrarNotificacao(erro.response?.data?.mensagem || 'Falha ao salvar o contato.', 'error');
+      }
     } finally {
       setCarregando(false);
     }
