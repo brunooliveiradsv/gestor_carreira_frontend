@@ -1,8 +1,9 @@
-// src/paginas/Setlists.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react'; // 1. Adicionar useContext
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
+import { AuthContext } from '../contextos/AuthContext'; // 2. Importar o AuthContext
+import { useUpgradeDialog } from '../contextos/UpgradeDialogContext'; // 3. Importar o hook do diálogo
 import {
    Box, Typography, Button, CircularProgress, Paper,
   Card, CardContent, CardActions, IconButton, Tooltip, Dialog, DialogTitle, 
@@ -23,6 +24,8 @@ function Setlists() {
   const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
   const navigate = useNavigate();
+  const { usuario } = useContext(AuthContext); // 4. Obter o utilizador
+  const { abrirDialogoDeUpgrade } = useUpgradeDialog(); // 5. Obter a função do diálogo
 
   const [dialogoCriarAberto, setDialogoCriarAberto] = useState(false);
   const [novoNomeSetlist, setNovoNomeSetlist] = useState('');
@@ -30,8 +33,6 @@ function Setlists() {
   const [setlistSelecionado, setSetlistSelecionado] = useState(null);
   const [linkPublico, setLinkPublico] = useState('');
   const [copiado, setCopiado] = useState(false);
-
-  // --- Novos estados para o diálogo de exclusão ---
   const [dialogoExcluirAberto, setDialogoExcluirAberto] = useState(false);
   const [setlistParaExcluir, setSetlistParaExcluir] = useState(null);
 
@@ -64,7 +65,7 @@ function Setlists() {
   };
 
   const handleCriarNovoSetlist = async () => {
-      if (!novoNomeSetlist) {
+      if (!novoNomeSetlist.trim()) {
           mostrarNotificacao('O nome do setlist é obrigatório.', 'warning');
           return;
       }
@@ -74,10 +75,11 @@ function Setlists() {
           handleFecharCriarDialogo();
           navigate(`/setlists/editar/${resposta.data.id}`);
       } catch (error) {
-           if (error.response?.data?.upgradeNecessario) {
+          if (error.response?.data?.upgradeNecessario) {
               abrirDialogoDeUpgrade(error.response.data.mensagem);
+              handleFecharCriarDialogo();
           } else {
-              mostrarNotificacao('Erro ao criar o setlist.', 'error');
+              mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao criar o setlist.', 'error');
           }
       }
   };
@@ -107,7 +109,11 @@ function Setlists() {
         setLinkPublico('');
       }
     } catch (error) {
-      mostrarNotificacao("Erro ao alterar o estado de partilha.", "error");
+      if (error.response?.data?.upgradeNecessario) {
+        abrirDialogoDeUpgrade(error.response.data.mensagem);
+      } else {
+        mostrarNotificacao("Erro ao alterar o estado de partilha.", "error");
+      }
     }
   };
   
@@ -116,7 +122,6 @@ function Setlists() {
       setCopiado(true);
   };
 
-  // --- Novas funções para a exclusão ---
   const handleAbrirDialogoExcluir = (setlist) => {
     setSetlistParaExcluir(setlist);
     setDialogoExcluirAberto(true);
@@ -133,7 +138,6 @@ function Setlists() {
       await apiClient.delete(`/api/setlists/${setlistParaExcluir.id}`);
       mostrarNotificacao('Setlist excluído com sucesso!', 'success');
       handleFecharDialogoExcluir();
-      // Atualiza a lista removendo o setlist excluído
       setSetlists(prev => prev.filter(s => s.id !== setlistParaExcluir.id));
     } catch (error) {
       mostrarNotificacao('Erro ao excluir o setlist.', 'error');
@@ -143,6 +147,9 @@ function Setlists() {
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
+  
+  const limiteSetlists = (usuario.plano === 'free' && setlists.length >= 1) || (usuario.plano === 'padrao' && setlists.length >= 5);
+  const tooltipCriar = limiteSetlists ? `Você atingiu o limite de ${usuario.plano === 'free' ? 1 : 5} setlists do seu plano. Faça um upgrade para criar mais.` : 'Criar um novo setlist';
 
   return (
     <Box>
@@ -151,9 +158,13 @@ function Setlists() {
           <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
           <Typography color="text.secondary">Crie e organize as sequências de músicas para os seus shows.</Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirCriarDialogo}>
-          Novo Setlist
-        </Button>
+        <Tooltip title={tooltipCriar}>
+          <span>
+            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirCriarDialogo} disabled={limiteSetlists}>
+              Novo Setlist
+            </Button>
+          </span>
+        </Tooltip>
       </Box>
 
       {setlists.length === 0 ? (
@@ -182,15 +193,19 @@ function Setlists() {
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
-                  <Tooltip title="Partilhar Setlist">
-                    <IconButton color={setlist.publico_uuid ? "primary" : "default"} onClick={() => handleAbrirDialogoPartilha(setlist)}>
-                      <ShareIcon />
-                    </IconButton>
+                  <Tooltip title="Partilhar Setlist (Planos Padrão e Premium)">
+                    <span>
+                      <IconButton color={setlist.publico_uuid ? "primary" : "default"} onClick={() => handleAbrirDialogoPartilha(setlist)} disabled={usuario.plano === 'free'}>
+                        <ShareIcon />
+                      </IconButton>
+                    </span>
                   </Tooltip>
-                  <Tooltip title="Modo Palco">
-                    <IconButton color="secondary" onClick={() => navigate(`/setlists/palco/${setlist.id}`)}>
-                      <MusicVideoIcon />
-                    </IconButton>
+                  <Tooltip title="Modo Palco (Plano Premium)">
+                    <span>
+                      <IconButton color="secondary" onClick={() => navigate(`/setlists/palco/${setlist.id}`)} disabled={usuario.plano !== 'premium'}>
+                        <MusicVideoIcon />
+                      </IconButton>
+                    </span>
                   </Tooltip>
                   <Tooltip title="Editar Músicas e Detalhes">
                     <IconButton onClick={() => handleEditar(setlist.id)}>
@@ -198,7 +213,6 @@ function Setlists() {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Excluir">
-                    {/* ADICIONADA A CHAMADA PARA ABRIR O DIÁLOGO DE EXCLUSÃO */}
                     <IconButton color="error" onClick={() => handleAbrirDialogoExcluir(setlist)}>
                       <DeleteIcon />
                     </IconButton>
@@ -222,6 +236,7 @@ function Setlists() {
             variant="outlined"
             value={novoNomeSetlist}
             onChange={(e) => setNovoNomeSetlist(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleCriarNovoSetlist()}
           />
         </DialogContent>
         <DialogActions>
@@ -255,16 +270,13 @@ function Setlists() {
             </DialogActions>
         </Dialog>
         
-        {/* --- Diálogo de Confirmação de Exclusão --- */}
         <Dialog
             open={dialogoExcluirAberto}
             onClose={handleFecharDialogoExcluir}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
         >
-            <DialogTitle id="alert-dialog-title">{"Confirmar Exclusão"}</DialogTitle>
+            <DialogTitle>{"Confirmar Exclusão"}</DialogTitle>
             <DialogContent>
-                <DialogContentText id="alert-dialog-description">
+                <DialogContentText>
                     Tem certeza que deseja excluir o setlist "{setlistParaExcluir?.nome}"?
                     Esta ação não poderá ser desfeita.
                 </DialogContentText>
