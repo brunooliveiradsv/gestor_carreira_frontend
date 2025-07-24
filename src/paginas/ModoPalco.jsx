@@ -72,7 +72,7 @@ const formatarCifra = (textoCifra, theme, fontSize, transposicao) => {
         let linhaProcessada = linha;
         if (isLinhaDeAcordes && transposicao !== 0) {
             // Regex para encontrar CADA acorde individualmente na linha
-            const regexAcordeIndividual = /[A-G][#b]?(?:m|maj|min|dim|aug|add|sus)?[0-9b#]*(?:\/[A-G][#b]?)?/g;
+            const regexAcordeIndividual = /[A-G][#b]?(?:m|maj|min|dim|aug|add|sus)?[0-9b#()\[\]]*(?:\/[A-G][#b]?)?/g;
             linhaProcessada = linha.replace(regexAcordeIndividual, (acordeEncontrado) => {
                 // Apenas transpõe se for um acorde válido (ignora espaços vazios)
                 if (acordeEncontrado.trim() === '') return acordeEncontrado;
