@@ -7,6 +7,7 @@ import Financeiro from "./paginas/Financeiro.jsx";
 import Conquistas from "./paginas/Conquistas.jsx";
 import RotaProtegida from "./componentes/RotaProtegida.jsx";
 import LayoutPrincipal from "./componentes/LayoutPrincipal.jsx";
+import ProtegerPorPlano from "./componentes/ProtegerPorPlano.jsx";
 import Contatos from "./paginas/Contatos.jsx";
 import Configuracoes from "./paginas/Configuracoes.jsx";
 import Repertorio from "./paginas/Repertorio.jsx";
@@ -24,7 +25,6 @@ import Mural from "./paginas/Mural.jsx";
 import Assinatura from "./paginas/Assinatura.jsx";
 import ModoPalco from "./paginas/ModoPalco.jsx";
 import PaginaSetlistPublico from "./paginas/PaginaSetlistPublico.jsx";
-import ProtegerPorPlano from "./componentes/ProtegerPorPlano.jsx";
 
 function App() {
   return (
