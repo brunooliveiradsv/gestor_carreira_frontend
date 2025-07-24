@@ -6,12 +6,13 @@ import { useNotificacao } from "../contextos/NotificationContext";
 import { AuthContext } from "../contextos/AuthContext";
 import {
   Box, Button, Typography, CircularProgress, Paper, TextField,
-  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Avatar, IconButton, Tooltip, Chip, InputAdornment, Lock as LockIcon
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Avatar, IconButton, Tooltip, Chip, InputAdornment
 } from "@mui/material";
 import {
     PhotoCamera,
     WorkspacePremium as WorkspacePremiumIcon,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Lock as LockIcon
 } from "@mui/icons-material";
 
 const FormCard = ({ title, children }) => (
