@@ -84,7 +84,7 @@ function FormularioMusicaMestre({ musica, onSave, onCancel }) {
         />
         <TextField name="tom" label="Tom" value={dados.tom || ''} onChange={handleChange} />
         <TextField name="bpm" label="BPM" value={dados.bpm || ''} onChange={handleChange} />
-        <TextField name="notas_adicionais" label="Anotações / Cifra" value={dados.notas_adicionais || ''} onChange={handleChange} multiline rows={4} />
+        <TextField name="notas_adicionais" label="Anotações / Cifra" value={dados.notas_adicionais || ''} onChange={handleChange} multiline rows={10} />
         <FormControlLabel
           control={<Switch name="is_publica" checked={dados.is_publica} onChange={handleChange} />}
           label="Pública (visível para todos os usuários)"
