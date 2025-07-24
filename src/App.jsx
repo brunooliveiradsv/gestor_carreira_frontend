@@ -47,17 +47,13 @@ function App() {
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/contatos" element={<Contatos />} />
           <Route path="/conquistas" element={<Conquistas />} />
-        </Route>
-
-        {/* Funcionalidades do Plano PADRÃO (e superiores) */}
-        <Route element={<ProtegerPorPlano planoMinimo="padrao" />}>
           <Route path="/financeiro" element={<Financeiro />} />
           <Route path="/equipamentos" element={<Equipamentos />} />
           <Route path="/repertorio" element={<Repertorio />} />
           <Route path="/setlists" element={<Setlists />} />
           <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
         </Route>
-        
+
         {/* Funcionalidades do Plano PREMIUM */}
         <Route element={<ProtegerPorPlano planoMinimo="premium" />}>
             <Route path="/mural" element={<Mural />} />
