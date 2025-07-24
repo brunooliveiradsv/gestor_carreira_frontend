@@ -156,10 +156,18 @@ function Setlists() {
     }
   };
 
+  const handleModoPalcoClick = (setlistId) => {
+    if (usuario.plano !== 'premium') {
+      abrirDialogoDeUpgrade('O Modo Palco é uma funcionalidade exclusiva do plano Premium.');
+      return;
+    }
+    navigate(`/setlists/palco/${setlistId}`);
+  };
+
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
-
+  
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
@@ -186,7 +194,7 @@ function Setlists() {
       ) : (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'flex-start' }}> 
           {setlists.map((setlist) => (
-            <Box key={setlist.id} sx={{ flex: '1 1 300px', maxWidth: '100%', '@media (min-width:600px)': { maxWidth: 'calc(50% - 16px)' }, '@media (min-width:960px)': { maxWidth: 'calc(33.33% - 16px)' } }}> 
+            <Box key={setlist.id} sx={{ flex: '1 1 300px', maxWidth: '100%', '@media (min-width:600px)': { maxWidth: 'calc(50% - 12px)' }, '@media (min-width:960px)': { maxWidth: 'calc(33.33% - 16px)' } }}> 
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -206,15 +214,15 @@ function Setlists() {
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
                   <Tooltip title="Partilhar Setlist (Planos Padrão e Premium)">
                     <span>
-                      <IconButton color={setlist.publico_uuid ? "primary" : "default"} onClick={() => handleAbrirDialogoPartilha(setlist)}>
-                        <ShareIcon />
+                      <IconButton onClick={() => handleAbrirDialogoPartilha(setlist)}>
+                        <ShareIcon color={usuario.plano === 'free' ? 'disabled' : 'inherit'} />
                       </IconButton>
                     </span>
                   </Tooltip>
                   <Tooltip title="Modo Palco (Plano Premium)">
                     <span>
-                      <IconButton color="secondary" onClick={() => navigate(`/setlists/palco/${setlist.id}`)}>
-                        <MusicVideoIcon />
+                      <IconButton onClick={() => handleModoPalcoClick(setlist.id)}>
+                        <MusicVideoIcon color={usuario.plano === 'premium' ? 'secondary' : 'disabled'} />
                       </IconButton>
                     </span>
                   </Tooltip>
@@ -235,6 +243,7 @@ function Setlists() {
         </Box>
       )}
 
+      {/* ... (O resto dos Diálogos e Snackbar permanecem iguais) ... */}
       <Dialog open={dialogoCriarAberto} onClose={handleFecharCriarDialogo} fullWidth maxWidth="sm">
         <DialogTitle>Criar Novo Setlist</DialogTitle>
         <DialogContent>

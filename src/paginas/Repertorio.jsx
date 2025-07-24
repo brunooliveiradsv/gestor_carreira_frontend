@@ -1,29 +1,31 @@
-import React, { useState, useEffect, useCallback, useContext } from "react"; // Adicionado useContext
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import apiClient from '../apiClient';
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
-import { AuthContext } from "../contextos/AuthContext"; // Importar AuthContext
+import { AuthContext } from "../contextos/AuthContext";
+import { useUpgradeDialog } from '../contextos/UpgradeDialogContext';
 import {
-  Box, Button, Typography, CircularProgress, Paper, Grid, TextField,
+  Box, Button, Typography, CircularProgress, Paper, TextField,
   InputAdornment, Chip, IconButton, Tooltip, Dialog, Card,
   CardContent, CardActions, List, ListItem, ListItemText
 } from "@mui/material";
 import {
   AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Edit as EditIcon,
   Delete as DeleteIcon, MusicNote as MusicNoteIcon, PlaylistAddCheck as SuggestionIcon,
-  ImportExport as ImportExportIcon,
-  Sync as SyncIcon
+  Sync as SyncIcon, Lock as LockIcon
 } from "@mui/icons-material";
 
 import FormularioMusica from "../componentes/FormularioMusica.jsx";
 import FormularioSugestao from "../componentes/FormularioSugestao.jsx";
 
-// O componente SeletorDeMusica agora recebe o 'usuario' como prop
-const SeletorDeMusica = ({ onSave, onCancel, usuario }) => {
+// O componente SeletorDeMusica agora recebe o 'usuario' e a função de upgrade
+const SeletorDeMusica = ({ onSave, onCancel, usuario, abrirDialogoDeUpgrade }) => {
     const [modo, setModo] = useState('buscar');
     const [termoBusca, setTermoBusca] = useState('');
     const [resultados, setResultados] = useState([]);
     const [buscando, setBuscando] = useState(false);
     const { mostrarNotificacao } = useNotificacao();
+
+    const isFreePlan = usuario.plano === 'free';
 
     const handleBusca = async () => {
         if (!termoBusca.trim()) return;
@@ -42,22 +44,33 @@ const SeletorDeMusica = ({ onSave, onCancel, usuario }) => {
         try {
             await apiClient.post('/api/musicas/importar', { master_id: masterId });
             mostrarNotificacao('Música importada para o seu repertório com sucesso!', 'success');
-            onSave(); // Fecha o dialog e atualiza a lista
+            onSave();
         } catch (error) {
             mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao importar música.', 'error');
         }
     };
 
+    const handleCriarManualClick = () => {
+        if (isFreePlan) {
+            abrirDialogoDeUpgrade('A criação manual de músicas está disponível a partir do plano Padrão.');
+        } else {
+            setModo('manual');
+        }
+    };
 
     return (
         <Box sx={{p: {xs: 2, md: 3}}}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                 <Button color={modo === 'buscar' ? 'primary' : 'inherit'} onClick={() => setModo('buscar')}>Buscar no Banco de Dados</Button>
-                {/* --- LÓGICA DE BLOQUEIO AQUI --- */}
-                {/* O botão "Criar Manualmente" só aparece se o plano não for 'free' */}
-                {usuario.plano !== 'free' && (
-                    <Button color={modo === 'manual' ? 'primary' : 'inherit'} onClick={() => setModo('manual')}>Criar Manualmente</Button>
-                )}
+                <Tooltip title={isFreePlan ? "Disponível no Plano Padrão ou superior" : ""}>
+                    <Button 
+                        color={modo === 'manual' ? 'primary' : 'inherit'} 
+                        onClick={handleCriarManualClick}
+                        startIcon={isFreePlan ? <LockIcon fontSize="small" /> : null}
+                    >
+                        Criar Manualmente
+                    </Button>
+                </Tooltip>
             </Box>
 
             {modo === 'buscar' ? (
@@ -96,7 +109,8 @@ function Repertorio() {
   const [musicas, setMusicas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
-  const { usuario } = useContext(AuthContext); // Obter o utilizador do contexto
+  const { usuario } = useContext(AuthContext);
+  const { abrirDialogoDeUpgrade } = useUpgradeDialog();
 
   const [dialogoFormularioAberto, setDialogoFormularioAberto] = useState(false);
   const [musicaEmEdicaoId, setMusicaEmEdicaoId] = useState(null);
@@ -105,6 +119,8 @@ function Repertorio() {
   const [musicaParaSugerir, setMusicaParaSugerir] = useState(null);
   
   const [filtros, setFiltros] = useState({ termoBusca: '', tom: '', bpm: '' });
+
+  const isFreePlan = usuario?.plano === 'free';
 
   const buscarMusicas = useCallback(async () => {
     try {
@@ -147,8 +163,20 @@ function Repertorio() {
   };
   
   const handleAbrirSugestao = (musica) => {
+    if (isFreePlan) {
+        abrirDialogoDeUpgrade('A sugestão de melhorias está disponível a partir do plano Padrão.');
+        return;
+    }
     setMusicaParaSugerir(musica);
     setDialogoSugestaoAberto(true);
+  };
+
+  const handleEditarClick = (musicaId) => {
+      if (isFreePlan) {
+          abrirDialogoDeUpgrade('A edição de músicas está disponível a partir do plano Padrão.');
+          return;
+      }
+      handleAbrirFormulario(musicaId);
   };
 
   const handleSincronizar = async (id) => {
@@ -195,18 +223,20 @@ function Repertorio() {
                                     </Tooltip>
                                 )}
                                 <Box sx={{ flexGrow: 1 }} />
-                                {usuario.plano !== 'free' && (
-                                    <>
-                                        {musica.master_id && (
-                                            <Tooltip title="Sugerir Melhoria para a música no banco de dados">
-                                                <IconButton onClick={() => handleAbrirSugestao(musica)}>
-                                                    <SuggestionIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        )}
-                                        <Tooltip title="Editar"><IconButton onClick={() => handleAbrirFormulario(musica.id)}><EditIcon /></IconButton></Tooltip>
-                                    </>
-                                )}
+                                <Tooltip title={isFreePlan ? "Disponível no Plano Padrão" : "Sugerir Melhoria"}>
+                                    <span>
+                                        <IconButton onClick={() => handleAbrirSugestao(musica)}>
+                                            <SuggestionIcon color={isFreePlan ? 'disabled' : 'inherit'} />
+                                        </IconButton>
+                                    </span>
+                                </Tooltip>
+                                <Tooltip title={isFreePlan ? "Disponível no Plano Padrão" : "Editar"}>
+                                    <span>
+                                        <IconButton onClick={() => handleEditarClick(musica.id)}>
+                                            <EditIcon color={isFreePlan ? 'disabled' : 'inherit'} />
+                                        </IconButton>
+                                    </span>
+                                </Tooltip>
                                 <Tooltip title="Apagar"><IconButton onClick={() => handleApagar(musica.id)} color="error"><DeleteIcon /></IconButton></Tooltip>
                             </CardActions>
                         </Card>
@@ -226,8 +256,7 @@ function Repertorio() {
         {musicaEmEdicaoId ? (
             <FormularioMusica id={musicaEmEdicaoId} onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} />
         ) : (
-            // Passa o objeto 'usuario' como prop para o seletor
-            <SeletorDeMusica onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} usuario={usuario} />
+            <SeletorDeMusica onSave={handleSucessoFormulario} onCancel={handleFecharFormulario} usuario={usuario} abrirDialogoDeUpgrade={abrirDialogoDeUpgrade} />
         )}
       </Dialog>
       
