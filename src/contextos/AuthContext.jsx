@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
         if (token) {
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             try {
-                const { data } = await apiClient.get('/api/usuarios/perfil');
+                const { data } = await apiClient.get(API.ENDPOINTS.PERFIL);
                 setUsuario(data);
             } catch (error) {
                 console.error("Token inválido ou expirado, limpando...");
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, senha) => {
         try {
-            const { data } = await apiClient.post('/api/usuarios/login', { email, senha });
+            const { data } = await apiClient.post(API.ENDPOINTS.LOGIN, { email, senha });
             localStorage.setItem('token', data.token);
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
     
     const registrar = async (nome, email, senha) => {
         try {
-            const { data } = await apiClient.post('/api/usuarios/registrar', { nome, email, senha });
+            const { data } = await apiClient.post(API.ENDPOINTS.REGISTRAR, { nome, email, senha });
             localStorage.setItem('token', data.token);
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             
