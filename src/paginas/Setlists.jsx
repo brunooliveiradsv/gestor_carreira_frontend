@@ -74,7 +74,11 @@ function Setlists() {
           handleFecharCriarDialogo();
           navigate(`/setlists/editar/${resposta.data.id}`);
       } catch (error) {
-          mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao criar o setlist.', 'error');
+           if (error.response?.data?.upgradeNecessario) {
+              abrirDialogoDeUpgrade(error.response.data.mensagem);
+          } else {
+              mostrarNotificacao('Erro ao criar o setlist.', 'error');
+          }
       }
   };
 
