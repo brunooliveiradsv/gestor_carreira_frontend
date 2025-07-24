@@ -193,14 +193,14 @@ function Setlists() {
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
-                  <Tooltip title="Partilhar Setlist (Planos Padrão e Premium)">
+                  <Tooltip title="Partilhar Setlist (Funcionalidade Padrão)">
                     <span>
                       <IconButton color={setlist.publico_uuid ? "primary" : "default"} onClick={() => handleAbrirDialogoPartilha(setlist)} disabled={usuario.plano === 'free'}>
                         <ShareIcon />
                       </IconButton>
                     </span>
                   </Tooltip>
-                  <Tooltip title="Modo Palco (Plano Premium)">
+                  <Tooltip title="Modo Palco (Funcionalidade Premium)">
                     <span>
                       <IconButton color="secondary" onClick={() => navigate(`/setlists/palco/${setlist.id}`)} disabled={usuario.plano !== 'premium'}>
                         <MusicVideoIcon />

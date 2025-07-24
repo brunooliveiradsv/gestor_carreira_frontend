@@ -1,5 +1,3 @@
-// src/paginas/AdminUsuarios.jsx
-
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../contextos/AuthContext.jsx";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
@@ -11,16 +9,15 @@ import {
   Tooltip, Chip, Button, Dialog, DialogActions, DialogContent,
   DialogContentText, DialogTitle, TextField, InputAdornment, useTheme,
   useMediaQuery, Card, CardContent, CardActions, Avatar,
-  // --- Ícones novos ou atualizados ---
   List, ListItem, ListItemButton, ListItemIcon, ListItemText
 } from "@mui/material";
 import {
   Delete as DeleteIcon, SupervisorAccount as SupervisorAccountIcon,
   CleaningServices as CleaningServicesIcon, AdminPanelSettings as AdminPanelSettingsIcon,
   AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Person as PersonIcon,
-  WorkspacePremium as WorkspacePremiumIcon, // Ícone para assinatura
-  CheckCircle as CheckCircleIcon, // Ícone para conceder
-  RemoveCircle as RemoveCircleIcon // Ícone para remover
+  WorkspacePremium as WorkspacePremiumIcon,
+  CheckCircle as CheckCircleIcon,
+  RemoveCircle as RemoveCircleIcon
 } from "@mui/icons-material";
 
 import FormularioUsuario from "../componentes/FormularioUsuario.jsx";
@@ -34,8 +31,6 @@ function AdminUsuarios() {
   const [termoBusca, setTermoBusca] = useState("");
   const [dialogoConfirmacaoAberto, setDialogoConfirmacaoAberto] = useState(false);
   const [acaoPendente, setAcaoPendente] = useState(null);
-
-  // --- NOVOS ESTADOS PARA O DIÁLOGO DE GESTÃO DE ASSINATURA ---
   const [dialogoAssinaturaAberto, setDialogoAssinaturaAberto] = useState(false);
   const [usuarioParaGerir, setUsuarioParaGerir] = useState(null);
 
@@ -89,7 +84,6 @@ function AdminUsuarios() {
     }
   };
 
-  // --- ALTERAÇÃO AQUI ---
   const handleGerirAssinatura = async (acao, plano = null) => {
     try {
         await apiClient.put(`/api/admin/usuarios/${usuarioParaGerir.id}/assinatura`, { acao, plano });
@@ -102,13 +96,11 @@ function AdminUsuarios() {
         mostrarNotificacao(mensagemSucesso, "success");
         buscarUsuarios();
     } catch (error) {
-        // Melhorando a mensagem de erro
         mostrarNotificacao(error.response?.data?.mensagem || 'Falha ao gerir assinatura. Por favor, tente novamente.', 'error');
     } finally {
         handleFecharDialogoAssinatura();
     }
   };
-  // --- FIM DA ALTERAÇÃO ---
 
   const abrirDialogoConfirmacao = (tipo, dados) => { setAcaoPendente({ tipo, dados }); setDialogoConfirmacaoAberto(true); };
   const handleFecharDialogoConfirmacao = () => { setDialogoConfirmacaoAberto(false); setAcaoPendente(null); };
@@ -260,12 +252,18 @@ function AdminUsuarios() {
             </DialogActions>
         </Dialog>
 
-        {/* --- NOVO DIÁLOGO DE GESTÃO DE ASSINATURA --- */}
+        {/* --- DIÁLOGO DE GESTÃO DE ASSINATURA ATUALIZADO --- */}
         <Dialog open={dialogoAssinaturaAberto} onClose={handleFecharDialogoAssinatura} fullWidth maxWidth="xs">
             <DialogTitle>Gerir Assinatura</DialogTitle>
             <DialogContent>
                 <Typography>Selecione uma ação para **{usuarioParaGerir?.nome}**:</Typography>
                 <List>
+                    <ListItem disablePadding>
+                        <ListItemButton onClick={() => handleGerirAssinatura('conceder', 'free')}>
+                            <ListItemIcon><CheckCircleIcon /></ListItemIcon>
+                            <ListItemText primary="Conceder Plano Free" />
+                        </ListItemButton>
+                    </ListItem>
                     <ListItem disablePadding>
                         <ListItemButton onClick={() => handleGerirAssinatura('conceder', 'padrao')}>
                             <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
@@ -274,14 +272,15 @@ function AdminUsuarios() {
                     </ListItem>
                     <ListItem disablePadding>
                         <ListItemButton onClick={() => handleGerirAssinatura('conceder', 'premium')}>
-                            <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
+                            <ListItemIcon><CheckCircleIcon color="primary" /></ListItemIcon>
                             <ListItemText primary="Conceder Plano Premium" />
                         </ListItemButton>
                     </ListItem>
+                    <Divider sx={{ my: 1 }} />
                     <ListItem disablePadding>
                         <ListItemButton onClick={() => handleGerirAssinatura('remover')}>
                             <ListItemIcon><RemoveCircleIcon color="error" /></ListItemIcon>
-                            <ListItemText primary="Remover Assinatura" />
+                            <ListItemText primary="Remover Assinatura (Voltar para Free)" />
                         </ListItemButton>
                     </ListItem>
                 </List>
