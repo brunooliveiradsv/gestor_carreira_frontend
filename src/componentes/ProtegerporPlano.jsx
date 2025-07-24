@@ -34,7 +34,7 @@ function ProtegerPorPlano({ planoMinimo = 'free' }) {
   const temAcesso = usuario?.status_assinatura === 'ativa' && nivelUtilizador >= nivelExigido;
 
   if (temAcesso) {
-    return <Outlet />; // Renderiza as rotas filhas (ex: <Dashboard />, <Financeiro />, etc.)
+    return <Outlet />; // Renderiza as rotas filhas (ex: <Dashboard, <Financeiro , etc.)
   }
 
   // Se não tiver acesso, redireciona para a página de assinatura
