@@ -22,7 +22,6 @@ import AdminSugestoes from "./paginas/AdminSugestoes.jsx";
 import AdminLogs from "./paginas/AdminLogs.jsx";
 import Mural from "./paginas/Mural.jsx";
 import Assinatura from "./paginas/Assinatura.jsx";
-import VerificarAssinatura from "./componentes/VerificarAssinatura.jsx";
 import ModoPalco from "./paginas/ModoPalco.jsx";
 import PaginaSetlistPublico from "./paginas/PaginaSetlistPublico.jsx";
 import ProtegerPorPlano from "./componentes/ProtegerPorPlano.jsx"; // 1. Importar o novo componente
