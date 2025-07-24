@@ -129,13 +129,12 @@ function Navegacao() {
     return <Icone fontSize="small" />;
   };
 
-  const navLinks = [
+const navLinks = [
     { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
-    { to: "/mural", text: "Painel Showcase", icon: <MuralIcon /> },
     { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
