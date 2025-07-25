@@ -7,6 +7,7 @@ import {
   ListItemIcon, ListItemText, Button, Divider
 } from '@mui/material';
 import { MusicNote as MusicNoteIcon } from '@mui/icons-material';
+import Anuncio from '../componentes/Anuncio'; // Importar o componente de anúncio
 
 function PaginaSetlistPublico() {
   const { uuid } = useParams();
@@ -70,6 +71,7 @@ function PaginaSetlistPublico() {
             </Button>
         </Box>
       </Container>
+      <Anuncio /> {/* 1. Adicionar o componente de anúncio */}
     </Box>
   );
 }

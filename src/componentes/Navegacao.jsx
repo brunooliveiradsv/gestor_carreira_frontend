@@ -143,10 +143,10 @@ function Navegacao() {
   const navLinks = [
     { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
-    { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon />, planoMinimo: 'padrao' },
-    { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon />, planoMinimo: 'padrao' },
+    { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
+    { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },
     { to: "/setlists", text: "Setlists", icon: <PlaylistAddCheckIcon /> },
-    { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon />, planoMinimo: 'padrao' },
+    { to: "/equipamentos", text: "Equipamentos", icon: <PianoIcon /> },
     { to: "/contatos", text: "Contatos", icon: <ContactsIcon /> },
     { to: "/conquistas", text: "Conquistas", icon: <EmojiEventsIcon /> },
   ];
@@ -158,8 +158,6 @@ function Navegacao() {
         : `${apiClient.defaults.baseURL}${usuario.foto_url}`;
   }
   
-  const nivelUtilizador = {free: 0, padrao: 1, premium: 2}[usuario?.plano];
-
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -178,19 +176,14 @@ function Navegacao() {
       </Box>
       <Divider />
       <List sx={{ p: 1, overflowY: 'auto', flexGrow: 1 }}>
-        {navLinks.map((link) => {
-            const nivelExigido = {free: 0, padrao: 1, premium: 2}[link.planoMinimo || 'free'];
-            if (nivelUtilizador < nivelExigido) return null;
-
-            return (
-                <ListItem key={link.text} disablePadding sx={{ my: 0.5 }}>
-                    <ListItemButton component={RouterLink} to={link.to} onClick={handleDrawerToggle} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
-                        <ListItemIcon>{link.icon}</ListItemIcon>
-                        <ListItemText primary={link.text} />
-                    </ListItemButton>
-                </ListItem>
-            );
-        })}
+        {navLinks.map((link) => (
+            <ListItem key={link.text} disablePadding sx={{ my: 0.5 }}>
+                <ListItemButton component={RouterLink} to={link.to} onClick={handleDrawerToggle} sx={{ borderRadius: theme.shape.borderRadius, '&.active': { backgroundColor: theme.palette.action.selected, color: theme.palette.primary.main, '& .MuiListItemIcon-root': { color: theme.palette.primary.main } } }}>
+                    <ListItemIcon>{link.icon}</ListItemIcon>
+                    <ListItemText primary={link.text} />
+                </ListItemButton>
+            </ListItem>
+        ))}
 
         <ListItem disablePadding sx={{ my: 0.5 }}>
             <ListItemButton onClick={handleMuralClick} sx={{ borderRadius: theme.shape.borderRadius }}>

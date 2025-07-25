@@ -34,55 +34,39 @@ function App() {
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/showcase/:url_unica" element={<ShowCase />} />
       <Route path="/setlist/:uuid" element={<PaginaSetlistPublico />} />
-
-      {/* Rota de Tela Cheia */}
-      <Route
-        path="/setlists/palco/:id"
-        element={
-          <RotaProtegida>
-            <ProtegerPorPlano planoMinimo="premium">
-              <ModoPalco />
-            </ProtegerPorPlano>
-          </RotaProtegida>
-        }
-      />
+      
+      {/* Rota de Tela Cheia (sem alterações) */}
+      <Route path="/setlists/palco/:id" element={<RotaProtegida><ProtegerPorPlano planoMinimo="premium"><ModoPalco /></ProtegerPorPlano></RotaProtegida>} />
 
       {/* ROTAS COM O LAYOUT PRINCIPAL */}
       <Route element={<RotaProtegida><LayoutPrincipal /></RotaProtegida>}>
-
-        {/* --- ALTERAÇÃO AQUI --- */}
+        
         {/* Funcionalidades do Plano FREE (e superiores) */}
         <Route element={<ProtegerPorPlano planoMinimo="free" />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/contatos" element={<Contatos />} />
           <Route path="/conquistas" element={<Conquistas />} />
-          {/* As rotas de Setlists foram movidas para aqui */}
+          <Route path="/financeiro" element={<Financeiro />} />
+          <Route path="/equipamentos" element={<Equipamentos />} />
+          <Route path="/repertorio" element={<Repertorio />} />
           <Route path="/setlists" element={<Setlists />} />
           <Route path="/setlists/editar/:id" element={<EditorDeSetlist />} />
         </Route>
 
-        {/* Funcionalidades do Plano PADRÃO (e superiores) */}
-        <Route element={<ProtegerPorPlano planoMinimo="padrao" />}>
-          <Route path="/financeiro" element={<Financeiro />} />
-          <Route path="/equipamentos" element={<Equipamentos />} />
-          <Route path="/repertorio" element={<Repertorio />} />
-        </Route>
-        {/* --- FIM DA ALTERAÇÃO --- */}
-        
         {/* Funcionalidades do Plano PREMIUM */}
         <Route element={<ProtegerPorPlano planoMinimo="premium" />}>
             <Route path="/mural" element={<Mural />} />
         </Route>
 
-        {/* Funcionalidades de ADMIN */}
+        {/* Funcionalidades de ADMIN (só dependem da role, não do plano) */}
         <Route path="/admin" element={<AdminPainel />} />
         <Route path="/admin/usuarios" element={<AdminUsuarios />} />
         <Route path="/admin/musicas" element={<AdminMusicas />} />
         <Route path="/admin/sugestoes" element={<AdminSugestoes />} />
         <Route path="/admin/logs" element={<AdminLogs />} />
 
-        {/* Rotas que não precisam de verificação de plano */}
+        {/* Rotas que não precisam de verificação */}
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/assinatura" element={<Assinatura />} />
       </Route>

@@ -1,12 +1,13 @@
-// src/paginas/Configuracoes.jsx
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from '../apiClient';
 import { useNotificacao } from "../contextos/NotificationContext";
 import { AuthContext } from "../contextos/AuthContext";
+import { useUpgradeDialog } from "../contextos/UpgradeDialogContext";
 import {
   Box, Button, Typography, CircularProgress, Paper, TextField,
-  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Avatar, IconButton, Tooltip, Chip, InputAdornment
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+  Grid, Avatar, IconButton, Tooltip, Chip, InputAdornment
 } from "@mui/material";
 import {
     PhotoCamera,
@@ -25,6 +26,7 @@ const FormCard = ({ title, children }) => (
 function Configuracoes() {
   const { usuario, setUsuario, logout } = useContext(AuthContext);
   const { mostrarNotificacao } = useNotificacao();
+  const { abrirDialogoDeUpgrade } = useUpgradeDialog();
   const navigate = useNavigate();
 
   const [nome, setNome] = useState("");
@@ -40,6 +42,7 @@ function Configuracoes() {
   const [urlImagem, setUrlImagem] = useState("");
   const fileInputRef = useRef();
 
+
   useEffect(() => {
     if (usuario) {
       setNome(usuario.nome || "");
@@ -48,24 +51,17 @@ function Configuracoes() {
     }
   }, [usuario]);
 
-  const capitalizar = (texto) => {
-    if (!texto) return '';
-    return texto.charAt(0).toUpperCase() + texto.slice(1);
-  };
-
   const isPremium = usuario?.plano === 'premium';
 
-  // --- 5. NOVA FUNÇÃO PARA LIDAR COM CLiques em funcionalidades bloqueadas ---
   const handlePremiumFeatureClick = () => {
     if (!isPremium) {
       abrirDialogoDeUpgrade('A personalização do nome é uma funcionalidade exclusiva do plano Premium.');
     }
   };
 
-
   const handleSalvarNome = async (e) => {
     e.preventDefault();
-    if (!isPremium) return; // Segurança extra
+    if (!isPremium) return;
     setCarregando(prev => ({ ...prev, nome: true }));
     try {
       const { data } = await apiClient.put('/api/usuarios/perfil/nome', { nome });
@@ -78,6 +74,11 @@ function Configuracoes() {
     }
   };
 
+  const capitalizar = (texto) => {
+    if (!texto) return '';
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  };
+  
   const handleSalvarEmail = async (e) => {
     e.preventDefault();
     setCarregando(prev => ({ ...prev, email: true }));
@@ -154,7 +155,15 @@ function Configuracoes() {
   
   const fecharDialogoSenha = () => setDialogoSenhaAberto(false);
 
+  // --- LÓGICA DE GESTÃO DE ASSINATURA ATUALIZADA ---
   const handleGerirAssinatura = async () => {
+    // Se for free ou inativo, apenas navega para a página de planos
+    if (usuario.plano === 'free' || usuario.status_assinatura === 'inativa' || usuario.status_assinatura === 'cancelada') {
+        navigate('/assinatura');
+        return;
+    }
+
+    // Se for um utilizador pago (padrão/premium) ou em teste, vai para o portal do Stripe
     setCarregando(prev => ({ ...prev, portal: true }));
     try {
         const resposta = await apiClient.post('/api/assinatura/criar-sessao-portal');
@@ -190,49 +199,52 @@ function Configuracoes() {
   
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" fontWeight="bold">Configurações</Typography>
-        <Typography color="text.secondary">Gerencie as suas informações de acesso e assinatura.</Typography>
-      </Box>
+        <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" component="h1" fontWeight="bold">Configurações</Typography>
+            <Typography color="text.secondary">Gerencie as suas informações de acesso e assinatura.</Typography>
+        </Box>
+        
+        <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4}}>
+            <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                <Typography>Seu plano atual:</Typography>
+                <Chip icon={<WorkspacePremiumIcon />} label={capitalizar(usuario.plano) || 'Nenhum'} color={usuario.status_assinatura === 'ativa' || usuario.status_assinatura === 'teste' ? 'primary' : 'default'} variant="outlined" />
+                {usuario.status_assinatura === 'teste' && (<Chip label={`Em teste até ${new Date(usuario.teste_termina_em).toLocaleDateString('pt-BR')}`} color="secondary" size="small"/>)}
+                <Button 
+                    variant="contained" 
+                    onClick={handleGerirAssinatura} 
+                    sx={{ ml: 'auto' }} 
+                    disabled={carregando.portal}
+                >
+                    {carregando.portal ? <CircularProgress size={24} color="inherit" /> : (usuario.plano === 'free' ? 'Fazer Upgrade' : 'Gerir Assinatura')}
+                </Button>
+            </Box>
+        </Paper>
       
-      <Paper sx={{ p: { xs: 2, md: 3 }, mb: 4}}>
-          <Typography variant="h6" component="h2" gutterBottom>Assinatura</Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-              <Typography>Seu plano atual:</Typography>
-              <Chip icon={<WorkspacePremiumIcon />} label={capitalizar(usuario.plano) || 'Nenhum'} color={usuario.status_assinatura === 'ativa' || usuario.status_assinatura === 'teste' ? 'primary' : 'default'} variant="outlined" />
-              {usuario.status_assinatura === 'teste' && (<Chip label={`Em teste até ${new Date(usuario.teste_termina_em).toLocaleDateString('pt-BR')}`} color="secondary" size="small"/>)}
-              {usuario.status_assinatura === 'inativa' || usuario.status_assinatura === 'cancelada' ? (
-                  <Button variant="contained" onClick={() => navigate('/assinatura')} sx={{ ml: 'auto' }}>Ver Planos</Button>
-              ) : (
-                  <Button variant="contained" onClick={handleGerirAssinatura} sx={{ ml: 'auto' }} disabled={carregando.portal}>{carregando.portal ? <CircularProgress size={24} color="inherit" /> : 'Gerir Assinatura'}</Button>
-              )}
-          </Box>
-      </Paper>
-      
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          <Box sx={{ flex: '1 1 280px' }}>
-              <FormCard title="Foto de Perfil">
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
-                      <Avatar src={previewFoto} sx={{ width: 120, height: 120, mb: 2, fontSize: '3rem' }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            <Box sx={{ flex: '1 1 280px' }}>
+                <FormCard title="Foto de Perfil">
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
+                        <Avatar src={previewFoto} sx={{ width: 120, height: 120, mb: 2, fontSize: '3rem' }}>
                         {usuario?.nome?.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleFileChange} />
-                      
-                      <Box sx={{display: 'flex', gap: 1, alignItems: 'center'}}>
+                        </Avatar>
+                        <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleFileChange} />
+                        
+                        <Box sx={{display: 'flex', gap: 1, alignItems: 'center'}}>
                         <Button variant="outlined" startIcon={<PhotoCamera />} onClick={() => fileInputRef.current.click()}>Enviar Ficheiro</Button>
                         <Tooltip title="Usar URL da Imagem">
                             <IconButton onClick={handleAbrirDialogoUrl}><LinkIcon /></IconButton>
                         </Tooltip>
-                      </Box>
+                        </Box>
 
-                      <Button variant="contained" sx={{mt: 2}} disabled={!novaFoto || carregando.foto} onClick={handleSalvarFoto}>
-                          {carregando.foto ? <CircularProgress size={24} /> : 'Salvar Foto'}
-                      </Button>
-                  </Box>
-              </FormCard>
-          </Box>
+                        <Button variant="contained" sx={{mt: 2}} disabled={!novaFoto || carregando.foto} onClick={handleSalvarFoto}>
+                            {carregando.foto ? <CircularProgress size={24} /> : 'Salvar Foto'}
+                        </Button>
+                    </Box>
+                </FormCard>
+            </Box>
 
-<Box sx={{ flex: '1 1 280px' }}>
+            <Box sx={{ flex: '1 1 280px' }}>
                 <FormCard title="Alterar Nome">
                     <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                         <TextField
@@ -261,7 +273,7 @@ function Configuracoes() {
                 </FormCard>
             </Box>
 
-          <Box sx={{ flex: '1 1 280px' }}>
+            <Box sx={{ flex: '1 1 280px' }}>
               <FormCard title="Alterar E-mail">
                   <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
                       <TextField id="email" name="email" label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
@@ -270,23 +282,23 @@ function Configuracoes() {
                       </Button>
                   </Box>
               </FormCard>
-          </Box>
+            </Box>
 
-          <Box sx={{ flex: '1 1 280px' }}>
-              <FormCard title="Alterar Senha">
-                  <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                          <TextField id="senha_atual" name="senha_atual" label="Senha Atual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} fullWidth />
-                          <TextField id="nova_senha" name="nova_senha" label="Nova Senha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} fullWidth />
-                          <TextField id="confirmar_nova_senha" name="confirmar_nova_senha" label="Confirmar Nova Senha" type="password" value={confirmarNovaSenha} onChange={(e) => setConfirmarNovaSenha(e.target.value)} fullWidth />
-                      </Box>
-                      <Button type="submit" variant="contained" disabled={carregando.senha} sx={{ alignSelf: "flex-end", mt: 2 }}>
-                          {carregando.senha ? <CircularProgress size={24} /> : "Alterar Senha"}
-                      </Button>
-                  </Box>
-              </FormCard>
-          </Box>
-      </Box>
+            <Box sx={{ flex: '1 1 280px' }}>
+                <FormCard title="Alterar Senha">
+                    <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            <TextField id="senha_atual" name="senha_atual" label="Senha Atual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} fullWidth />
+                            <TextField id="nova_senha" name="nova_senha" label="Nova Senha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} fullWidth />
+                            <TextField id="confirmar_nova_senha" name="confirmar_nova_senha" label="Confirmar Nova Senha" type="password" value={confirmarNovaSenha} onChange={(e) => setConfirmarNovaSenha(e.target.value)} fullWidth />
+                        </Box>
+                        <Button type="submit" variant="contained" disabled={carregando.senha} sx={{ alignSelf: "flex-end", mt: 2 }}>
+                            {carregando.senha ? <CircularProgress size={24} /> : "Alterar Senha"}
+                        </Button>
+                    </Box>
+                </FormCard>
+            </Box>
+        </Box>
       
       <Dialog open={dialogoSenhaAberto} onClose={fecharDialogoSenha}>
         <DialogTitle>Confirmar Alteração de Senha</DialogTitle>

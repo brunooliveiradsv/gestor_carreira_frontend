@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react'; // 1. Adicionar useContext
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
-import { AuthContext } from '../contextos/AuthContext'; // 2. Importar o AuthContext
-import { useUpgradeDialog } from '../contextos/UpgradeDialogContext'; // 3. Importar o hook do diálogo
+import { AuthContext } from '../contextos/AuthContext';
+import { useUpgradeDialog } from '../contextos/UpgradeDialogContext';
 import {
    Box, Typography, Button, CircularProgress, Paper,
   Card, CardContent, CardActions, IconButton, Tooltip, Dialog, DialogTitle, 
@@ -16,7 +16,8 @@ import {
   Delete as DeleteIcon,
   PlaylistPlay as PlaylistPlayIcon,
   MusicVideo as MusicVideoIcon,
-  Share as ShareIcon
+  Share as ShareIcon,
+  Lock as LockIcon
 } from '@mui/icons-material';
 
 function Setlists() {
@@ -24,8 +25,8 @@ function Setlists() {
   const [carregando, setCarregando] = useState(true);
   const { mostrarNotificacao } = useNotificacao();
   const navigate = useNavigate();
-  const { usuario } = useContext(AuthContext); // 4. Obter o utilizador
-  const { abrirDialogoDeUpgrade } = useUpgradeDialog(); // 5. Obter a função do diálogo
+  const { usuario } = useContext(AuthContext);
+  const { abrirDialogoDeUpgrade } = useUpgradeDialog();
 
   const [dialogoCriarAberto, setDialogoCriarAberto] = useState(false);
   const [novoNomeSetlist, setNovoNomeSetlist] = useState('');
@@ -51,11 +52,14 @@ function Setlists() {
     buscarSetlists();
   }, [buscarSetlists]);
 
-  const handleEditar = (id) => {
-    navigate(`/setlists/editar/${id}`);
-  };
-  
+  const limiteSetlists = (usuario.plano === 'free' && setlists.length >= 1) || (usuario.plano === 'padrao' && setlists.length >= 5);
+  const mensagemLimite = `Você atingiu o limite de ${usuario.plano === 'free' ? 1 : 5} setlists do seu plano. Faça um upgrade para criar mais.`;
+
   const handleAbrirCriarDialogo = () => {
+      if (limiteSetlists) {
+          abrirDialogoDeUpgrade(mensagemLimite);
+          return;
+      }
       setNovoNomeSetlist('');
       setDialogoCriarAberto(true);
   };
@@ -84,7 +88,15 @@ function Setlists() {
       }
   };
 
+  const handleEditar = (id) => {
+    navigate(`/setlists/editar/${id}`);
+  };
+
   const handleAbrirDialogoPartilha = (setlist) => {
+    if (usuario.plano === 'free') {
+      abrirDialogoDeUpgrade('A partilha de setlists está disponível no plano Padrão.');
+      return;
+    }
     setSetlistSelecionado(setlist);
     if (setlist.publico_uuid) {
       setLinkPublico(`${window.location.origin}/setlist/${setlist.publico_uuid}`);
@@ -144,13 +156,18 @@ function Setlists() {
     }
   };
 
+  const handleModoPalcoClick = (setlistId) => {
+    if (usuario.plano !== 'premium') {
+      abrirDialogoDeUpgrade('O Modo Palco é uma funcionalidade exclusiva do plano Premium.');
+      return;
+    }
+    navigate(`/setlists/palco/${setlistId}`);
+  };
+
   if (carregando) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   }
   
-  const limiteSetlists = (usuario.plano === 'free' && setlists.length >= 1) || (usuario.plano === 'padrao' && setlists.length >= 5);
-  const tooltipCriar = limiteSetlists ? `Você atingiu o limite de ${usuario.plano === 'free' ? 1 : 5} setlists do seu plano. Faça um upgrade para criar mais.` : 'Criar um novo setlist';
-
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
@@ -158,16 +175,18 @@ function Setlists() {
           <Typography variant="h4" component="h1" fontWeight="bold">Meus Setlists</Typography>
           <Typography color="text.secondary">Crie e organize as sequências de músicas para os seus shows.</Typography>
         </Box>
-        <Tooltip title={tooltipCriar}>
-          <span>
-            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAbrirCriarDialogo} disabled={limiteSetlists}>
-              Novo Setlist
-            </Button>
-          </span>
+        <Tooltip title={limiteSetlists ? mensagemLimite : 'Criar um novo setlist'}>
+          <Button
+            variant="contained"
+            startIcon={limiteSetlists ? <LockIcon /> : <AddCircleOutlineIcon />}
+            onClick={handleAbrirCriarDialogo}
+          >
+            Novo Setlist
+          </Button>
         </Tooltip>
       </Box>
 
-      {setlists.length === 0 ? (
+      {setlists.length === 0 && !carregando ? (
         <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6">Nenhum setlist criado.</Typography>
           <Typography color="text.secondary">Clique em "Novo Setlist" para criar o seu primeiro.</Typography>
@@ -175,7 +194,7 @@ function Setlists() {
       ) : (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'flex-start' }}> 
           {setlists.map((setlist) => (
-            <Box key={setlist.id} sx={{ flex: '1 1 300px', maxWidth: '100%', '@media (min-width:600px)': { maxWidth: 'calc(50% - 16px)' }, '@media (min-width:960px)': { maxWidth: 'calc(33.33% - 16px)' } }}> 
+            <Box key={setlist.id} sx={{ flex: '1 1 300px', maxWidth: '100%', '@media (min-width:600px)': { maxWidth: 'calc(50% - 12px)' }, '@media (min-width:960px)': { maxWidth: 'calc(33.33% - 16px)' } }}> 
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -193,17 +212,17 @@ function Setlists() {
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
-                  <Tooltip title="Partilhar Setlist (Funcionalidade Padrão)">
+                  <Tooltip title="Partilhar Setlist (Disponível no Plano Padrão)">
                     <span>
-                      <IconButton color={setlist.publico_uuid ? "primary" : "default"} onClick={() => handleAbrirDialogoPartilha(setlist)} disabled={usuario.plano === 'free'}>
-                        <ShareIcon />
+                      <IconButton onClick={() => handleAbrirDialogoPartilha(setlist)}>
+                        <ShareIcon color={usuario.plano === 'free' ? 'disabled' : 'inherit'} />
                       </IconButton>
                     </span>
                   </Tooltip>
-                  <Tooltip title="Modo Palco (Funcionalidade Premium)">
+                  <Tooltip title="Modo Palco (Disponível no Plano Premium)">
                     <span>
-                      <IconButton color="secondary" onClick={() => navigate(`/setlists/palco/${setlist.id}`)} disabled={usuario.plano !== 'premium'}>
-                        <MusicVideoIcon />
+                      <IconButton onClick={() => handleModoPalcoClick(setlist.id)}>
+                        <MusicVideoIcon color={usuario.plano === 'premium' ? 'secondary' : 'disabled'} />
                       </IconButton>
                     </span>
                   </Tooltip>
@@ -224,6 +243,7 @@ function Setlists() {
         </Box>
       )}
 
+      {/* ... (O resto dos Diálogos e Snackbar permanecem iguais) ... */}
       <Dialog open={dialogoCriarAberto} onClose={handleFecharCriarDialogo} fullWidth maxWidth="sm">
         <DialogTitle>Criar Novo Setlist</DialogTitle>
         <DialogContent>

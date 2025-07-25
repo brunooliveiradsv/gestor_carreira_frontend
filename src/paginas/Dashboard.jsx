@@ -18,7 +18,7 @@ import {
   MusicNote as MusicNoteIcon,
   TheaterComedy as TheaterComedyIcon
 } from '@mui/icons-material';
-import Anuncio from '../componentes/Anuncio';
+import Anuncio from '../componentes/Anuncio'; // 1. IMPORTAR O ANÚNCIO
 import GraficoBalanco from '../componentes/GraficoBalanco';
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
@@ -84,14 +84,13 @@ function Dashboard() {
 
   return (
     <Box>
+       <Anuncio />
       <Typography variant="h4" component="h1" fontWeight="bold" sx={{ mb: 1 }}>
         Bem-vindo, {usuario?.nome}!
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 4 }}>
         Aqui está um resumo da sua carreira hoje.
       </Typography>
-
-      <Anuncio />
 
       {erro && <Alert severity="warning" sx={{ mb: 4 }}>{erro}</Alert>}
 
