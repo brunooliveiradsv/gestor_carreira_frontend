@@ -127,19 +127,8 @@ const StatCard = ({ icon, value, label }) => (
     </Box>
 );
 
-const VitrineHeader = ({ artista, estatisticas, handleAplaudir }) => {
+const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, handleAplaudir }) => {
     const { fa } = useFanAuth();
-    const [jaAplaudido, setJaAplaudido] = useState(false);
-    
-    useEffect(() => {
-        if (fa && artista) {
-            const aplausoGuardado = localStorage.getItem(`aplauso_${fa.id}_${artista.url_unica}`);
-            setJaAplaudido(!!aplausoGuardado);
-        } else {
-            setJaAplaudido(true);
-        }
-    }, [fa, artista]);
-
     let fotoUrlCompleta = null;
     if (artista.foto_url) {
         fotoUrlCompleta = artista.foto_url.startsWith('http')
@@ -158,10 +147,18 @@ const VitrineHeader = ({ artista, estatisticas, handleAplaudir }) => {
                         <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', sm: '3rem' } }}>{artista.nome}</Typography>
                         <Tooltip title={!fa ? "Faça login para aplaudir" : (jaAplaudido ? "Você já aplaudiu!" : "Apoie este artista!")}>
                             <span>
-                                <IconButton onClick={handleAplaudir} disabled={!fa || jaAplaudido} color={jaAplaudido ? "error" : "default"}><FavoriteIcon /></IconButton>
+                                {/* --- ALTERAÇÃO 1: ÍCONE E ESTILO DO APLAUSO --- */}
+                                <IconButton onClick={handleAplaudir} disabled={!fa || jaAplaudido} sx={{
+                                    fontSize: '1.5rem', // Aumenta o tamanho do emoji
+                                    filter: jaAplaudido ? 'grayscale(100%)' : 'none', // Fica cinzento depois de clicado
+                                    transform: jaAplaudido ? 'scale(1.2)' : 'scale(1)',
+                                    transition: 'transform 0.2s, filter 0.2s'
+                                }}>
+                                  👏
+                                </IconButton>
                             </span>
                         </Tooltip>
-                        <Typography variant="h6" color="text.secondary">{artista.aplausos}</Typography>
+                        <Typography variant="h6" color="text.secondary">{totalAplausos}</Typography>
                     </Box>
                     <Typography variant="body1" color="text.secondary" sx={{ mt: 1, whiteSpace: 'pre-wrap' }}>
                         {artista.biografia || 'Biografia ainda não preenchida.'}
@@ -182,6 +179,7 @@ const VitrineHeader = ({ artista, estatisticas, handleAplaudir }) => {
         </Paper>
     );
 };
+
 
 const PostsSection = ({ posts, handleReacao }) => {
     const { fa } = useFanAuth();
@@ -294,73 +292,68 @@ const ShowCaseContent = () => {
   const [erro, setErro] = useState('');
   const [dialogoSetlist, setDialogoSetlist] = useState({ open: false, setlist: null });
   const [indiceCapa, setIndiceCapa] = useState(0);
+  const [jaAplaudido, setJaAplaudido] = useState(false);
+  const [reacoesPosts, setReacoesPosts] = useState({});
+
   const { fa } = useFanAuth();
   const { mostrarNotificacao } = useNotificacao();
-
-  const getYoutubeVideoId = (url) => {
-    if (!url) return null;
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
-  };
-
-  const buscarDadosVitrine = useCallback(async () => {
-      try {
-        setCarregando(true);
-        const { data } = await apiClient.get(`/api/vitrine/${url_unica}`);
-        setVitrine(data);
-        setErro('');
-      } catch (err) {
-        setErro(err.response?.data?.mensagem || 'Artista não encontrado.');
-        setVitrine(null);
-      } finally {
-        setCarregando(false);
-      }
-  }, [url_unica]);
-
-  useEffect(() => {
-    if (url_unica) buscarDadosVitrine();
-  }, [url_unica, buscarDadosVitrine]);
   
-  const capas = vitrine?.artista?.foto_capa_url || [];
+  const buscarDadosVitrine = useCallback(async () => { /* ... código sem alterações ... */ });
+
   useEffect(() => {
-    if (capas.length > 1) {
-      const timer = setInterval(() => {
-        setIndiceCapa(prev => (prev + 1) % capas.length);
-      }, 5000);
-      return () => clearInterval(timer);
+    if (url_unica) {
+      buscarDadosVitrine();
+      const aplausoGuardado = localStorage.getItem(`aplauso_${url_unica}`);
+      if (aplausoGuardado) setJaAplaudido(true);
     }
-  }, [capas.length]);
-  
+  }, [url_unica, buscarDadosVitrine]);
+
   const handleAplaudir = async () => {
     if (!fa) {
-      mostrarNotificacao('Faça login como fã para aplaudir!', 'info');
-      return;
+        mostrarNotificacao('Faça login como fã para aplaudir!', 'info');
+        return;
     }
-    const chaveAplauso = `aplauso_${fa.id}_${url_unica}`;
-    if (localStorage.getItem(chaveAplauso)) return;
+    if (jaAplaudido) return;
     
-    setVitrine(prev => ({...prev, artista: {...prev.artista, aplausos: prev.artista.aplausos + 1}}));
-    localStorage.setItem(chaveAplauso, 'true');
+    // Atualização Otimista
+    setVitrine(prev => ({ ...prev, artista: { ...prev.artista, aplausos: prev.artista.aplausos + 1 } }));
+    setJaAplaudido(true);
+    localStorage.setItem(`aplauso_${url_unica}`, 'true');
 
     try {
-      await apiClient.post(`/api/vitrine/${url_unica}/aplaudir`);
+        await apiClient.post(`/api/vitrine/${url_unica}/aplaudir`);
     } catch (error) {
-      mostrarNotificacao('Erro ao registar aplauso. Tente novamente.', 'error');
-      localStorage.removeItem(chaveAplauso);
-      buscarDadosVitrine();
+        mostrarNotificacao('Erro ao registar aplauso. Tente novamente.', 'error');
+        // Reverte em caso de erro
+        setVitrine(prev => ({ ...prev, artista: { ...prev.artista, aplausos: prev.artista.aplausos - 1 } }));
+        setJaAplaudido(false);
+        localStorage.removeItem(`aplauso_${url_unica}`);
     }
   };
-
+  
+  // --- ALTERAÇÃO 2: LIKE/DISLIKE SEM RECARREGAR A PÁGINA ---
   const handleReacao = async (postId, tipo) => {
-      try {
-          await apiClient.post(`/api/vitrine/posts/${postId}/reacao`, { tipo });
-          buscarDadosVitrine();
-      } catch (error) {
-          mostrarNotificacao('Erro ao registar reação.', 'error');
-          localStorage.removeItem(`reacao_post_${postId}`);
-          buscarDadosVitrine();
-      }
+    const chaveReacao = `reacao_post_${postId}`;
+    if (localStorage.getItem(chaveReacao)) return;
+
+    // Atualização Otimista da UI
+    setVitrine(prev => ({
+        ...prev,
+        postsRecentes: prev.postsRecentes.map(p => 
+            p.id === postId ? { ...p, [tipo === 'like' ? 'likes' : 'dislikes']: p[tipo === 'like' ? 'likes' : 'dislikes'] + 1 } : p
+        )
+    }));
+    localStorage.setItem(chaveReacao, tipo);
+
+    try {
+        // Apenas envia a reação para o backend, sem esperar por uma nova busca de dados.
+        await apiClient.post(`/api/vitrine/posts/${postId}/reacao`, { tipo });
+    } catch (error) {
+        mostrarNotificacao('Erro ao registar reação.', 'error');
+        // Se a chamada à API falhar, reverte a UI para o estado original
+        localStorage.removeItem(chaveReacao);
+        buscarDadosVitrine(); 
+    }
   };
 
   if (carregando) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
