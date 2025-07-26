@@ -8,27 +8,20 @@ import YouTube from 'react-youtube';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { FanAuthProvider, useFanAuth } from '../contextos/FanAuthContext';
 import { useNotificacao } from '../contextos/NotificationContext';
-import useApi from '../hooks/useApi'; // Usaremos para buscar ranking e top músicas
+import useApi from '../hooks/useApi';
 
 // Imports do Material-UI
 import {
   Box, Typography, CircularProgress, Container, Paper, Avatar,
   Divider, List, ListItem, ListItemIcon, ListItemText, Button, Chip, IconButton, Tooltip, Link, Dialog
 } from '@mui/material';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
-import PersonIcon from '@mui/icons-material/Person';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
-import MicIcon from '@mui/icons-material/Mic';
-import StarIcon from '@mui/icons-material/Star';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import Instagram from '@mui/icons-material/Instagram';
-import YouTubeIcon from '@mui/icons-material/YouTube';
-import AnnouncementIcon from '@mui/icons-material/Announcement';
-import LinkIcon from '@mui/icons-material/Link';
-import ThumbUp from '@mui/icons-material/ThumbUp';
-import ThumbDown from '@mui/icons-material/ThumbDown';
+import {
+  CalendarMonth as CalendarMonthIcon, MusicNote as MusicNoteIcon, Person as PersonIcon,
+  EmojiEvents as EmojiEventsIcon, LibraryMusic as LibraryMusicIcon, Mic as MicIcon,
+  Favorite as FavoriteIcon, Instagram, YouTube as YouTubeIcon, Announcement as AnnouncementIcon,
+  Link as LinkIcon, ThumbUp, ThumbDown, PlaylistPlay as PlaylistPlayIcon,
+  MilitaryTech as RankingIcon
+} from '@mui/icons-material';
 
 import EnqueteShowcase from '../componentes/EnqueteShowcase';
 
@@ -62,10 +55,9 @@ const LoginParaFas = () => {
     );
 };
 
-const SetlistDialog = ({ open, onClose, setlist, artistaId }) => {
+const SetlistDialog = ({ open, onClose, setlist }) => {
     const { fa } = useFanAuth();
     const { mostrarNotificacao } = useNotificacao();
-    // Este estado guardaria quais músicas o fã já curtiu
     const [musicasCurtidas, setMusicasCurtidas] = useState(new Set());
 
     const handleLikeMusica = async (musicaId) => {
@@ -75,31 +67,19 @@ const SetlistDialog = ({ open, onClose, setlist, artistaId }) => {
         }
         
         const jaCurtiu = musicasCurtidas.has(musicaId);
-        
-        // Atualização Otimista da UI
         setMusicasCurtidas(prev => {
             const novoSet = new Set(prev);
-            if (jaCurtiu) {
-                novoSet.delete(musicaId);
-            } else {
-                novoSet.add(musicaId);
-            }
+            jaCurtiu ? novoSet.delete(musicaId) : novoSet.add(musicaId);
             return novoSet;
         });
 
         try {
-            // A API do backend deve lidar com a lógica de adicionar/remover o like
             await apiClient.post(`/api/vitrine/musicas/${musicaId}/like`);
         } catch (error) {
-            mostrarNotificacao('Erro ao registar o seu gosto. Tente novamente.', 'error');
-            // Reverte a UI em caso de erro
+            mostrarNotificacao('Erro ao registar o seu gosto.', 'error');
             setMusicasCurtidas(prev => {
                 const novoSet = new Set(prev);
-                if (jaCurtiu) {
-                    novoSet.add(musicaId);
-                } else {
-                    novoSet.delete(musicaId);
-                }
+                jaCurtiu ? novoSet.add(musicaId) : novoSet.delete(musicaId);
                 return novoSet;
             });
         }
@@ -191,6 +171,64 @@ const VitrineHeader = ({ artista, estatisticas, handleAplaudir }) => {
                     <StatCard icon={<EmojiEventsIcon color="primary" />} value={estatisticas?.conquistas} label="Conquistas"/>
                 </Box>
             </Box>
+        </Paper>
+    );
+};
+
+const PostsSection = ({ posts, handleReacao }) => {
+    const { fa } = useFanAuth();
+    const { mostrarNotificacao } = useNotificacao();
+    const [reacoes, setReacoes] = useState({});
+
+    useEffect(() => {
+        const reacoesGuardadas = {};
+        posts.forEach(post => {
+            const reacao = localStorage.getItem(`reacao_post_${post.id}`);
+            if (reacao) reacoesGuardadas[post.id] = reacao;
+        });
+        setReacoes(reacoesGuardadas);
+    }, [posts]);
+
+    const onReacaoClick = (postId, tipo) => {
+        if (!fa) {
+            mostrarNotificacao('Faça login como fã para reagir!', 'info');
+            return;
+        }
+        handleReacao(postId, tipo);
+        setReacoes(prev => ({...prev, [postId]: tipo}));
+    };
+
+    return (
+        <Paper sx={{ p: 3 }}>
+            <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Últimas Atualizações</Typography>
+            <List>{posts.map(post => {
+                const reacaoDoUtilizador = reacoes[post.id];
+                const dataPost = post.created_at ? new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) : null;
+
+                return (
+                    <ListItem key={post.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 2, '&:not(:last-child)': { borderBottom: '1px solid', borderColor: 'divider' } }} disablePadding>
+                        <Box sx={{ display: 'flex', width: '100%' }}>
+                            <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}><AnnouncementIcon color="primary" /></ListItemIcon>
+                            <ListItemText primary={post.content} />
+                        </Box>
+                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, pl: '40px' }}>
+                             {post.link ? (
+                                <Link href={post.link} target="_blank" rel="noopener noreferrer" sx={{display: 'flex', alignItems: 'center', fontSize: '0.875rem'}}>
+                                    <LinkIcon fontSize="small" sx={{mr: 0.5}}/> Ver mais
+                                </Link>
+                            ) : (
+                                <Typography variant="caption" color="text.secondary">{dataPost || ''}</Typography>
+                            )}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Tooltip title="Gostei"><span><IconButton size="small" onClick={() => onReacaoClick(post.id, 'like')} disabled={!!reacaoDoUtilizador}><ThumbUp fontSize="small" color={reacaoDoUtilizador === 'like' ? 'primary' : 'inherit'} /></IconButton></span></Tooltip>
+                                <Typography variant="body2">{post.likes}</Typography>
+                                <Tooltip title="Não gostei"><span><IconButton size="small" onClick={() => onReacaoClick(post.id, 'dislike')} disabled={!!reacaoDoUtilizador}><ThumbDown fontSize="small" color={reacaoDoUtilizador === 'dislike' ? 'error' : 'inherit'} /></IconButton></span></Tooltip>
+                                <Typography variant="body2">{post.dislikes}</Typography>
+                            </Box>
+                        </Box>
+                    </ListItem>
+                );
+            })}</List>
         </Paper>
     );
 };
