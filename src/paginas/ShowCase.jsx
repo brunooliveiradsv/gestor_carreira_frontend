@@ -15,13 +15,20 @@ import {
   Box, Typography, CircularProgress, Container, Paper, Avatar,
   Divider, List, ListItem, ListItemIcon, ListItemText, Button, Chip, IconButton, Tooltip, Link, Dialog
 } from '@mui/material';
-import {
-  CalendarMonth as CalendarMonthIcon, MusicNote as MusicNoteIcon, Person as PersonIcon,
-  EmojiEvents as EmojiEventsIcon, LibraryMusic as LibraryMusicIcon, Mic as MicIcon,
-  Favorite as FavoriteIcon, Instagram, YouTube as YouTubeIcon, Announcement as AnnouncementIcon,
-  Link as LinkIcon, ThumbUp, ThumbDown, PlaylistPlay as PlaylistPlayIcon,
-  MilitaryTech as RankingIcon
-} from '@mui-icons-material';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import PersonIcon from '@mui/icons-material/Person';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
+import MicIcon from '@mui/icons-material/Mic';
+import StarIcon from '@mui/icons-material/Star';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import Instagram from '@mui/icons-material/Instagram';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import AnnouncementIcon from '@mui/icons-material/Announcement';
+import LinkIcon from '@mui/icons-material/Link';
+import ThumbUp from '@mui/icons-material/ThumbUp';
+import ThumbDown from '@mui/icons-material/ThumbDown';
 
 import EnqueteShowcase from '../componentes/EnqueteShowcase';
 
