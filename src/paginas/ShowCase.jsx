@@ -3,10 +3,14 @@ import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import apiClient from '../apiClient';
 import YouTube from 'react-youtube';
+
+// Imports para autenticação de fãs
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { FanAuthProvider, useFanAuth } from '../contextos/FanAuthContext';
 import { useNotificacao } from '../contextos/NotificationContext';
+import useApi from '../hooks/useApi'; // Usaremos para buscar ranking e top músicas
 
+// Imports do Material-UI
 import {
   Box, Typography, CircularProgress, Container, Paper, Avatar,
   Divider, List, ListItem, ListItemIcon, ListItemText, Button, Chip, IconButton, Tooltip, Link, Dialog
@@ -15,8 +19,9 @@ import {
   CalendarMonth as CalendarMonthIcon, MusicNote as MusicNoteIcon, Person as PersonIcon,
   EmojiEvents as EmojiEventsIcon, LibraryMusic as LibraryMusicIcon, Mic as MicIcon,
   Favorite as FavoriteIcon, Instagram, YouTube as YouTubeIcon, Announcement as AnnouncementIcon,
-  Link as LinkIcon, ThumbUp, ThumbDown, PlaylistPlay as PlaylistPlayIcon
-} from '@mui/icons-material';
+  Link as LinkIcon, ThumbUp, ThumbDown, PlaylistPlay as PlaylistPlayIcon,
+  MilitaryTech as RankingIcon
+} from '@mui-icons-material';
 
 import EnqueteShowcase from '../componentes/EnqueteShowcase';
 
@@ -50,19 +55,49 @@ const LoginParaFas = () => {
     );
 };
 
-const SetlistDialog = ({ open, onClose, setlist }) => {
+const SetlistDialog = ({ open, onClose, setlist, artistaId }) => {
     const { fa } = useFanAuth();
-    // No futuro, aqui entraria a lógica para saber quais músicas o fã já curtiu
-    
-    const handleLikeMusica = (musicaId) => {
+    const { mostrarNotificacao } = useNotificacao();
+    // Este estado guardaria quais músicas o fã já curtiu
+    const [musicasCurtidas, setMusicasCurtidas] = useState(new Set());
+
+    const handleLikeMusica = async (musicaId) => {
         if (!fa) {
-            alert('Faça login para curtir músicas!');
+            mostrarNotificacao('Faça login como fã para curtir músicas!', 'info');
             return;
         }
-        console.log(`Fã ${fa.id} curtiu a música ${musicaId}`);
-        // Aqui viria a chamada à API: apiClient.post(`/api/vitrine/musicas/${musicaId}/like`);
-    };
+        
+        const jaCurtiu = musicasCurtidas.has(musicaId);
+        
+        // Atualização Otimista da UI
+        setMusicasCurtidas(prev => {
+            const novoSet = new Set(prev);
+            if (jaCurtiu) {
+                novoSet.delete(musicaId);
+            } else {
+                novoSet.add(musicaId);
+            }
+            return novoSet;
+        });
 
+        try {
+            // A API do backend deve lidar com a lógica de adicionar/remover o like
+            await apiClient.post(`/api/vitrine/musicas/${musicaId}/like`);
+        } catch (error) {
+            mostrarNotificacao('Erro ao registar o seu gosto. Tente novamente.', 'error');
+            // Reverte a UI em caso de erro
+            setMusicasCurtidas(prev => {
+                const novoSet = new Set(prev);
+                if (jaCurtiu) {
+                    novoSet.add(musicaId);
+                } else {
+                    novoSet.delete(musicaId);
+                }
+                return novoSet;
+            });
+        }
+    };
+    
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
             <Box sx={{ p: 2 }}>
@@ -74,7 +109,7 @@ const SetlistDialog = ({ open, onClose, setlist }) => {
                             <Tooltip title="Curtir música">
                                 <span>
                                     <IconButton size="small" onClick={() => handleLikeMusica(musica.id)} disabled={!fa}>
-                                        <FavoriteIcon fontSize="small" />
+                                        <FavoriteIcon fontSize="small" color={musicasCurtidas.has(musica.id) ? 'error' : 'action'} />
                                     </IconButton>
                                 </span>
                             </Tooltip>
@@ -99,16 +134,14 @@ const StatCard = ({ icon, value, label }) => (
 
 const VitrineHeader = ({ artista, estatisticas, handleAplaudir }) => {
     const { fa } = useFanAuth();
-    // A lógica de aplauso agora verifica o estado do fã logado
     const [jaAplaudido, setJaAplaudido] = useState(false);
     
-    // Simula a verificação se o fã já aplaudiu este artista
     useEffect(() => {
         if (fa && artista) {
             const aplausoGuardado = localStorage.getItem(`aplauso_${fa.id}_${artista.url_unica}`);
             setJaAplaudido(!!aplausoGuardado);
         } else {
-            setJaAplaudido(true); // Desativa o botão se não estiver logado
+            setJaAplaudido(true);
         }
     }, [fa, artista]);
 
@@ -155,6 +188,52 @@ const VitrineHeader = ({ artista, estatisticas, handleAplaudir }) => {
     );
 };
 
+const RankingFas = ({ url_unica }) => {
+    const { data: ranking, carregando } = useApi(`/api/vitrine/${url_unica}/ranking`);
+    
+    return (
+        <Paper sx={{ p: 3 }}>
+            <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Ranking de Fãs</Typography>
+            {carregando ? <CircularProgress size={24} /> : (
+                <List dense>
+                    {(ranking || []).map((fa, index) => (
+                        <ListItem key={fa.fa_id}>
+                            <ListItemIcon>
+                                <Avatar src={fa.fa.foto_url} sx={{ width: 24, height: 24, mr: 1 }} />
+                            </ListItemIcon>
+                            <ListItemText primary={`${index + 1}. ${fa.fa.nome}`} />
+                            <Chip label={`${fa.total_pontos} pts`} color="primary" size="small" />
+                        </ListItem>
+                    ))}
+                </List>
+            )}
+        </Paper>
+    );
+};
+
+const MusicasMaisCurtidas = ({ url_unica }) => {
+    const { data: musicas, carregando } = useApi(`/api/vitrine/${url_unica}/musicas-curtidas`);
+
+    return (
+        <Paper sx={{ p: 3 }}>
+            <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Músicas Favoritas dos Fãs</Typography>
+            {carregando ? <CircularProgress size={24} /> : (
+                <List dense>
+                    {(musicas || []).map((musica) => (
+                        <ListItem key={musica.musica_id}>
+                            <ListItemIcon><MusicNoteIcon color="secondary" /></ListItemIcon>
+                            <ListItemText primary={musica.musica.nome} secondary={musica.musica.artista} />
+                            <Chip icon={<FavoriteIcon />} label={musica.total_likes} size="small" variant="outlined" />
+                        </ListItem>
+                    ))}
+                </List>
+            )}
+        </Paper>
+    );
+};
+
+
+// --- COMPONENTE PRINCIPAL QUE GERE O CONTEÚDO DA PÁGINA ---
 
 const ShowCaseContent = () => {
   const { url_unica } = useParams();
@@ -209,7 +288,6 @@ const ShowCaseContent = () => {
     const chaveAplauso = `aplauso_${fa.id}_${url_unica}`;
     if (localStorage.getItem(chaveAplauso)) return;
     
-    // Atualização otimista
     setVitrine(prev => ({...prev, artista: {...prev.artista, aplausos: prev.artista.aplausos + 1}}));
     localStorage.setItem(chaveAplauso, 'true');
 
@@ -217,7 +295,6 @@ const ShowCaseContent = () => {
       await apiClient.post(`/api/vitrine/${url_unica}/aplaudir`);
     } catch (error) {
       mostrarNotificacao('Erro ao registar aplauso. Tente novamente.', 'error');
-      // Reverte a UI em caso de erro
       localStorage.removeItem(chaveAplauso);
       buscarDadosVitrine();
     }
@@ -253,6 +330,7 @@ const ShowCaseContent = () => {
       
       <Container maxWidth="lg" sx={{ pb: 5 }}>
         <VitrineHeader artista={artista} estatisticas={vitrine.estatisticas} handleAplaudir={handleAplaudir} />
+        
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4 }}>
           <Box sx={{ flex: '2 1 60%', display: 'flex', flexDirection: 'column', gap: 4, order: { xs: 2, lg: 1 } }}>
             {videoDestaqueId && (
@@ -260,15 +338,11 @@ const ShowCaseContent = () => {
                 <YouTube videoId={videoDestaqueId} opts={{ height: '100%', width: '100%' }} style={{ width: '100%', height: '100%' }} />
               </Paper>
             )}
-            {/* O componente de Posts precisa ser adaptado para a nova lógica de reações com login de fã */}
-            {postsRecentes && postsRecentes.length > 0 && (
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Últimas Atualizações</Typography>
-                {/* A lógica de PostsSection iria aqui */}
-              </Paper>
-            )}
+            <MusicasMaisCurtidas url_unica={url_unica} />
+            {enqueteAtiva && (<EnqueteShowcase enquete={enqueteAtiva} />)}
           </Box>
           <Box sx={{ flex: '1 1 30%', display: 'flex', flexDirection: 'column', gap: 4, order: { xs: 1, lg: 2 } }}>
+            <RankingFas url_unica={url_unica} />
             <Paper sx={{ p: 3 }}>
               <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Próximos Shows</Typography>
               {proximosShows && proximosShows.length > 0 ? (
@@ -295,7 +369,6 @@ const ShowCaseContent = () => {
                 </List>
               ) : ( <Typography color="text.secondary">Nenhum show agendado no momento.</Typography> )}
             </Paper>
-            {enqueteAtiva && (<EnqueteShowcase enquete={enqueteAtiva} />)}
             {contatoPublico && (
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Contato</Typography>
@@ -310,12 +383,17 @@ const ShowCaseContent = () => {
           </Box>
         </Box>
       </Container>
-      <SetlistDialog open={dialogoSetlist.open} onClose={() => setDialogoSetlist({ open: false, setlist: null })} setlist={dialogoSetlist.setlist} />
+      <SetlistDialog 
+        open={dialogoSetlist.open} 
+        onClose={() => setDialogoSetlist({ open: false, setlist: null })}
+        setlist={dialogoSetlist.setlist}
+        artistaId={artista.id}
+      />
     </Box>
   );
 };
 
-
+// A exportação principal que envolve tudo com os Providers necessários
 function ShowCase() {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
