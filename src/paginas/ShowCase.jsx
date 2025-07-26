@@ -15,13 +15,21 @@ import {
   Box, Typography, CircularProgress, Container, Paper, Avatar,
   Divider, List, ListItem, ListItemIcon, ListItemText, Button, Chip, IconButton, Tooltip, Link, Dialog
 } from '@mui/material';
-import {
-  CalendarMonth as CalendarMonthIcon, MusicNote as MusicNoteIcon, Person as PersonIcon,
-  EmojiEvents as EmojiEventsIcon, LibraryMusic as LibraryMusicIcon, Mic as MicIcon,
-  Favorite as FavoriteIcon, Instagram, YouTube as YouTubeIcon, Announcement as AnnouncementIcon,
-  Link as LinkIcon, ThumbUp, ThumbDown, PlaylistPlay as PlaylistPlayIcon,
-  MilitaryTech as RankingIcon
-} from '@mui/icons-material';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import PersonIcon from '@mui/icons-material/Person';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
+import MicIcon from '@mui/icons-material/Mic';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import Instagram from '@mui/icons-material/Instagram';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import AnnouncementIcon from '@mui/icons-material/Announcement';
+import LinkIcon from '@mui/icons-material/Link';
+import ThumbUp from '@mui/icons-material/ThumbUp';
+import ThumbDown from '@mui/icons-material/ThumbDown';
+import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 
 import EnqueteShowcase from '../componentes/EnqueteShowcase';
 
@@ -182,10 +190,12 @@ const PostsSection = ({ posts, handleReacao }) => {
 
     useEffect(() => {
         const reacoesGuardadas = {};
-        posts.forEach(post => {
-            const reacao = localStorage.getItem(`reacao_post_${post.id}`);
-            if (reacao) reacoesGuardadas[post.id] = reacao;
-        });
+        if (posts) {
+            posts.forEach(post => {
+                const reacao = localStorage.getItem(`reacao_post_${post.id}`);
+                if (reacao) reacoesGuardadas[post.id] = reacao;
+            });
+        }
         setReacoes(reacoesGuardadas);
     }, [posts]);
 
@@ -277,9 +287,6 @@ const MusicasMaisCurtidas = ({ url_unica }) => {
     );
 };
 
-
-// --- COMPONENTE PRINCIPAL QUE GERE O CONTEÚDO DA PÁGINA ---
-
 const ShowCaseContent = () => {
   const { url_unica } = useParams();
   const [vitrine, setVitrine] = useState(null);
@@ -344,6 +351,18 @@ const ShowCaseContent = () => {
       buscarDadosVitrine();
     }
   };
+  
+  const handleReacao = async (postId, tipo) => {
+      try {
+          await apiClient.post(`/api/vitrine/posts/${postId}/reacao`, { tipo });
+          // Após a API confirmar, busca os dados novamente para ter a contagem oficial
+          buscarDadosVitrine();
+      } catch (error) {
+          mostrarNotificacao('Erro ao registar reação.', 'error');
+          localStorage.removeItem(`reacao_post_${postId}`);
+          buscarDadosVitrine();
+      }
+  };
 
   if (carregando) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
   if (erro) return (
@@ -383,7 +402,13 @@ const ShowCaseContent = () => {
                 <YouTube videoId={videoDestaqueId} opts={{ height: '100%', width: '100%' }} style={{ width: '100%', height: '100%' }} />
               </Paper>
             )}
+            
+            {postsRecentes && postsRecentes.length > 0 && (
+              <PostsSection posts={postsRecentes} handleReacao={handleReacao} />
+            )}
+            
             <MusicasMaisCurtidas url_unica={url_unica} />
+            
             {enqueteAtiva && (<EnqueteShowcase enquete={enqueteAtiva} />)}
           </Box>
           <Box sx={{ flex: '1 1 30%', display: 'flex', flexDirection: 'column', gap: 4, order: { xs: 1, lg: 2 } }}>
@@ -438,14 +463,9 @@ const ShowCaseContent = () => {
   );
 };
 
-// A exportação principal que envolve tudo com os Providers necessários
 function ShowCase() {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
-    if (!clientId) {
-        return <Typography color="error" sx={{ p: 4, textAlign: 'center' }}>A chave de API do Google (Client ID) não está configurada.</Typography>;
-    }
-
+    if (!clientId) { return <Typography color="error" sx={{ p: 4, textAlign: 'center' }}>A chave de API do Google (Client ID) não está configurada.</Typography>; }
     return (
         <GoogleOAuthProvider clientId={clientId}>
             <FanAuthProvider>
