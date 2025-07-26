@@ -351,11 +351,10 @@ const ShowCaseContent = () => {
       buscarDadosVitrine();
     }
   };
-  
+
   const handleReacao = async (postId, tipo) => {
       try {
           await apiClient.post(`/api/vitrine/posts/${postId}/reacao`, { tipo });
-          // Após a API confirmar, busca os dados novamente para ter a contagem oficial
           buscarDadosVitrine();
       } catch (error) {
           mostrarNotificacao('Erro ao registar reação.', 'error');
@@ -406,13 +405,11 @@ const ShowCaseContent = () => {
             {postsRecentes && postsRecentes.length > 0 && (
               <PostsSection posts={postsRecentes} handleReacao={handleReacao} />
             )}
-            
-            <MusicasMaisCurtidas url_unica={url_unica} />
-            
+
             {enqueteAtiva && (<EnqueteShowcase enquete={enqueteAtiva} />)}
           </Box>
+          
           <Box sx={{ flex: '1 1 30%', display: 'flex', flexDirection: 'column', gap: 4, order: { xs: 1, lg: 2 } }}>
-            <RankingFas url_unica={url_unica} />
             <Paper sx={{ p: 3 }}>
               <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Próximos Shows</Typography>
               {proximosShows && proximosShows.length > 0 ? (
@@ -439,6 +436,11 @@ const ShowCaseContent = () => {
                 </List>
               ) : ( <Typography color="text.secondary">Nenhum show agendado no momento.</Typography> )}
             </Paper>
+
+            {/* --- CORREÇÃO DE LAYOUT AQUI --- */}
+            <RankingFas url_unica={url_unica} />
+            <MusicasMaisCurtidas url_unica={url_unica} />
+
             {contatoPublico && (
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">Contato</Typography>
