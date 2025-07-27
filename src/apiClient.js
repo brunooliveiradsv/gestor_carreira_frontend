@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Defina a URL base da sua API. Altere se o seu backend rodar em outra porta.
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// A URL base da API agora depende EXCLUSIVAMENTE da variável de ambiente.
+// Removido o fallback '|| http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL;
 
 const apiClient = axios.create({
   baseURL: API_URL,
