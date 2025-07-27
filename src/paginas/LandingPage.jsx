@@ -1,6 +1,7 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Button, Container, Typography, Grid, Paper, useTheme } from '@mui/material';
+import React, { useContext } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { AuthContext } from '../contextos/AuthContext';
+import { Box, Button, Container, Typography, Paper, useTheme, CircularProgress } from '@mui/material';
 import { 
     CalendarMonth as CalendarMonthIcon, 
     MonetizationOn as MonetizationOnIcon, 
@@ -8,7 +9,7 @@ import {
     Mic as MicIcon
 } from '@mui/icons-material';
 
-// Componente para os cards de funcionalidades
+// Componente para os cards de funcionalidades (sem alterações)
 const FeatureCard = ({ icon, title, description }) => {
     const theme = useTheme();
     return (
@@ -24,7 +25,19 @@ const FeatureCard = ({ icon, title, description }) => {
 
 function LandingPage() {
     const navigate = useNavigate();
-    const theme = useTheme();
+    const { logado, carregando } = useContext(AuthContext);
+
+    if (carregando) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (logado) {
+        return <Navigate to="/dashboard" replace />;
+    }
 
     return (
         <Box sx={{ bgcolor: 'background.default', color: 'text.primary' }}>
@@ -63,42 +76,51 @@ function LandingPage() {
                 </Container>
             </Box>
 
-            {/* Secção de Funcionalidades */}
+            {/* --- INÍCIO DA ALTERAÇÃO --- */}
+            {/* Secção de Funcionalidades com Flexbox */}
             <Container maxWidth="lg" sx={{ py: 8 }}>
                 <Typography variant="h3" textAlign="center" fontWeight="bold" sx={{ mb: 6 }}>
                     Ferramentas Poderosas para a Sua Carreira
                 </Typography>
-                <Grid container spacing={4}>
-                    <Grid item xs={12} sm={6} md={3}>
+                {/* 1. O Grid container foi substituído por um Box com display: 'flex' */}
+                <Box sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap', // Permite que os itens quebrem para a linha de baixo
+                    gap: 4, // Espaçamento entre os cards
+                    justifyContent: 'center' // Centraliza os cards no container
+                }}>
+                    {/* 2. Cada card agora está num Box que controla o seu próprio tamanho */}
+                    <Box sx={{ flex: '1 1 300px', maxWidth: { sm: 'calc(50% - 16px)', md: 'calc(25% - 24px)' } }}>
                         <FeatureCard 
                             icon={<CalendarMonthIcon sx={{ fontSize: 40 }} />}
                             title="Agenda Inteligente"
                             description="Nunca perca um compromisso. Organize shows, ensaios e reuniões com facilidade."
                         />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
+                    </Box>
+                    <Box sx={{ flex: '1 1 300px', maxWidth: { sm: 'calc(50% - 16px)', md: 'calc(25% - 24px)' } }}>
                         <FeatureCard 
                             icon={<MonetizationOnIcon sx={{ fontSize: 40 }} />}
                             title="Controlo Financeiro"
                             description="Registe os seus cachês e despesas. Tenha uma visão clara da saúde financeira da sua carreira."
                         />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
+                    </Box>
+                    <Box sx={{ flex: '1 1 300px', maxWidth: { sm: 'calc(50% - 16px)', md: 'calc(25% - 24px)' } }}>
                         <FeatureCard 
                             icon={<LibraryMusicIcon sx={{ fontSize: 40 }} />}
                             title="Gestão de Repertório"
                             description="Mantenha todas as suas músicas, cifras e setlists organizados e prontos para o palco."
                         />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
+                    </Box>
+                    <Box sx={{ flex: '1 1 300px', maxWidth: { sm: 'calc(50% - 16px)', md: 'calc(25% - 24px)' } }}>
                         <FeatureCard 
                             icon={<MicIcon sx={{ fontSize: 40 }} />}
                             title="Página Showcase"
                             description="Uma página pública para os seus fãs verem as suas novidades, agenda e interagirem consigo."
                         />
-                    </Grid>
-                </Grid>
+                    </Box>
+                </Box>
             </Container>
+            {/* --- FIM DA ALTERAÇÃO --- */}
 
              {/* Secção Final (Call to Action) */}
             <Box sx={{ bgcolor: 'background.paper', py: 8, textAlign: 'center' }}>
