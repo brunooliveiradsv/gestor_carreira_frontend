@@ -138,28 +138,14 @@ function Configuracoes() {
 
   // --- INÍCIO DA ALTERAÇÃO ---
   const handleGerirAssinatura = async () => {
-    setCarregando(prev => ({ ...prev, portal: true }));
-    
-    // Se o utilizador for Free, inicia o checkout para o plano Padrão Mensal
+    // Se o utilizador for Free ou tiver uma assinatura inativa, navega para a página de planos
     if (usuario.plano === 'free' || usuario.status_assinatura === 'inativa' || usuario.status_assinatura === 'cancelada') {
-        try {
-            // ID do plano Padrão Mensal do seu ficheiro .env
-            const priceId = import.meta.env.VITE_STRIPE_PRICE_ID_PADRAO_MENSAL;
-            if (!priceId) {
-                mostrarNotificacao("A configuração de planos não foi encontrada. Contacte o suporte.", "error");
-                setCarregando(prev => ({ ...prev, portal: false }));
-                return;
-            }
-            const resposta = await apiClient.post('/api/assinatura/criar-sessao-checkout', { planoId: priceId });
-            window.location.href = resposta.data.url;
-        } catch (error) {
-            mostrarNotificacao(error.response?.data?.mensagem || "Não foi possível iniciar o pagamento.", "error");
-            setCarregando(prev => ({ ...prev, portal: false }));
-        }
+        navigate('/assinatura');
         return;
     }
 
-    // Se o utilizador já for assinante, abre o portal do Stripe
+    // Se o utilizador já for assinante, abre o portal do Stripe para gestão
+    setCarregando(prev => ({ ...prev, portal: true }));
     try {
         const resposta = await apiClient.post('/api/assinatura/criar-sessao-portal');
         window.location.href = resposta.data.url;
