@@ -21,13 +21,12 @@ function Autenticacao() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   
-  // As funções vêm diretamente do contexto, como pretendido.
   const { login, registrar, logado } = useContext(AuthContext);
   const navigate = useNavigate();
   const theme = useTheme();
 
   if (logado) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const alternarModo = () => {
@@ -47,16 +46,31 @@ function Autenticacao() {
       return;
     }
 
+    // --- CORREÇÃO 2: Normaliza o e-mail ---
+    // Converte para minúsculas e remove espaços no início/fim
+    const emailNormalizado = email.trim().toLowerCase();
+
     setCarregando(true);
     
     let sucesso = false;
     if (modo === 'login') {
-        sucesso = await login(email, senha);
+        // Usa o e-mail normalizado para o login
+        sucesso = await login(emailNormalizado, senha);
     } else {
-        sucesso = await registrar(nome, email, senha);
+        // Usa o e-mail normalizado para o registo
+        sucesso = await registrar(nome, emailNormalizado, senha);
     }
     
     setCarregando(false);
+  };
+  
+  // --- CORREÇÃO 1: Estilo para remover o fundo do preenchimento automático ---
+  const autofillStyle = {
+    '& .MuiInputBase-input:-webkit-autofill': {
+      WebkitBoxShadow: `0 0 0 100px ${theme.palette.background.paper} inset`,
+      WebkitTextFillColor: theme.palette.text.primary,
+      caretColor: theme.palette.text.primary,
+    },
   };
 
   return (
@@ -117,6 +131,7 @@ function Autenticacao() {
               autoFocus
               value={nome}
               onChange={(e) => setNome(e.target.value)}
+              sx={autofillStyle}
             />
           )}
 
@@ -130,6 +145,7 @@ function Autenticacao() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            sx={autofillStyle}
           />
           <TextField
             margin="normal"
@@ -139,8 +155,10 @@ function Autenticacao() {
             label="Senha"
             type={mostrarSenha ? "text" : "password"}
             id="senha"
+            autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
+            sx={autofillStyle}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
