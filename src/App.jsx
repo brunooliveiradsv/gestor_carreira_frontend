@@ -24,11 +24,13 @@ import Assinatura from "./paginas/Assinatura.jsx";
 import ModoPalco from "./paginas/ModoPalco.jsx";
 import PaginaSetlistPublico from "./paginas/PaginaSetlistPublico.jsx";
 import ProtegerPorPlano from "./componentes/ProtegerPorPlano.jsx";
+import LandingPage from "./paginas/LandingPage.jsx";
 
 function App() {
   return (
     <Routes>
       {/* Rotas Públicas */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Autenticacao />} />
       <Route path="/cadastro" element={<Autenticacao />} />
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
@@ -43,7 +45,7 @@ function App() {
         
         {/* Funcionalidades do Plano FREE (e superiores) */}
         <Route element={<ProtegerPorPlano planoMinimo="free" />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/contatos" element={<Contatos />} />
           <Route path="/conquistas" element={<Conquistas />} />
