@@ -41,8 +41,6 @@ export const AuthProvider = ({ children }) => {
             setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Login bem-sucedido!', 'success');
 
-            // --- ESTA É A LINHA CORRIGIDA ---
-            // Redireciona para /dashboard em vez de /
             navigate('/dashboard'); 
             
             return true;
@@ -73,7 +71,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         delete apiClient.defaults.headers.common['Authorization'];
         setUsuario(null);
-        // Ao fazer logout, redireciona para a nova landing page
+        // --- ESTA É A LINHA CORRIGIDA ---
+        // Redireciona para a landing page ("/") em vez de "/login"
         navigate('/');
     };
 
