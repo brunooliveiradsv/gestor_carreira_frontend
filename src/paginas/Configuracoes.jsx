@@ -1,3 +1,4 @@
+// src/paginas/Configuracoes.jsx
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from '../apiClient';
@@ -7,7 +8,7 @@ import { useUpgradeDialog } from "../contextos/UpgradeDialogContext";
 import {
   Box, Button, Typography, CircularProgress, Paper, TextField,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
-  Grid, Avatar, IconButton, Tooltip, Chip, InputAdornment
+  Avatar, IconButton, Tooltip, Chip, InputAdornment
 } from "@mui/material";
 import {
     PhotoCamera,
@@ -16,8 +17,8 @@ import {
     Lock as LockIcon
 } from "@mui/icons-material";
 
-const FormCard = ({ title, children }) => (
-    <Paper sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+const FormCard = ({ title, children, component = "div", ...props }) => (
+    <Paper component={component} {...props} sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Typography variant="h6" component="h2" gutterBottom>{title}</Typography>
         {children}
     </Paper>
@@ -29,24 +30,21 @@ function Configuracoes() {
   const { abrirDialogoDeUpgrade } = useUpgradeDialog();
   const navigate = useNavigate();
 
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [senhaAtual, setSenhaAtual] = useState("");
-  const [novaSenha, setNovaSenha] = useState("");
-  const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
+  // --- ESTADO UNIFICADO PARA DADOS DO PERFIL ---
+  const [dadosPerfil, setDadosPerfil] = useState({ nome: "", email: "" });
+  const [dadosSenha, setDadosSenha] = useState({ senhaAtual: "", novaSenha: "", confirmarNovaSenha: "" });
+  
   const [novaFoto, setNovaFoto] = useState(null);
   const [previewFoto, setPreviewFoto] = useState(null);
-  const [carregando, setCarregando] = useState({ nome: false, email: false, senha: false, foto: false, portal: false });
+  const [carregando, setCarregando] = useState({ perfil: false, senha: false, foto: false, portal: false });
   const [dialogoSenhaAberto, setDialogoSenhaAberto] = useState(false);
   const [dialogoUrlAberto, setDialogoUrlAberto] = useState(false);
   const [urlImagem, setUrlImagem] = useState("");
   const fileInputRef = useRef();
 
-
   useEffect(() => {
     if (usuario) {
-      setNome(usuario.nome || "");
-      setEmail(usuario.email || "");
+      setDadosPerfil({ nome: usuario.nome || "", email: usuario.email || "" });
       setPreviewFoto(usuario.foto_url || null);
     }
   }, [usuario]);
@@ -59,40 +57,26 @@ function Configuracoes() {
     }
   };
 
-  const handleSalvarNome = async (e) => {
-    e.preventDefault();
-    if (!isPremium) return;
-    setCarregando(prev => ({ ...prev, nome: true }));
-    try {
-      const { data } = await apiClient.put('/api/usuarios/perfil/nome', { nome });
-      setUsuario(data);
-      mostrarNotificacao(`Nome atualizado com sucesso!`, "success");
-    } catch (error) {
-      mostrarNotificacao(error.response?.data?.mensagem || `Falha ao atualizar nome.`, "error");
-    } finally {
-      setCarregando(prev => ({ ...prev, nome: false }));
-    }
+  const handleDadosPerfilChange = (e) => {
+    setDadosPerfil(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const capitalizar = (texto) => {
-    if (!texto) return '';
-    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  // --- FUNÇÃO DE SALVAR UNIFICADA ---
+  const handleSalvarPerfil = async (e) => {
+    e.preventDefault();
+    setCarregando(prev => ({ ...prev, perfil: true }));
+    try {
+      // Usa a nova rota PUT /perfil
+      const { data } = await apiClient.put('/api/usuarios/perfil', dadosPerfil);
+      setUsuario(data);
+      mostrarNotificacao(`Perfil atualizado com sucesso!`, "success");
+    } catch (error) {
+      mostrarNotificacao(error.response?.data?.mensagem || `Falha ao atualizar o perfil.`, "error");
+    } finally {
+      setCarregando(prev => ({ ...prev, perfil: false }));
+    }
   };
   
-  const handleSalvarEmail = async (e) => {
-    e.preventDefault();
-    setCarregando(prev => ({ ...prev, email: true }));
-    try {
-      const { data } = await apiClient.put('/api/usuarios/perfil/email', { email });
-      setUsuario(data);
-      mostrarNotificacao(`E-mail atualizado com sucesso!`, "success");
-    } catch (error) {
-      mostrarNotificacao(error.response?.data?.mensagem || `Falha ao atualizar e-mail.`, "error");
-    } finally {
-      setCarregando(prev => ({ ...prev, email: false }));
-    }
-  };
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -135,7 +119,7 @@ function Configuracoes() {
     fecharDialogoSenha();
     setCarregando(prev => ({ ...prev, senha: true }));
     try {
-      await apiClient.put(`/api/usuarios/perfil/senha`, { senhaAtual, novaSenha });
+      await apiClient.put(`/api/usuarios/perfil/senha`, { senhaAtual: dadosSenha.senhaAtual, novaSenha: dadosSenha.novaSenha });
       mostrarNotificacao("Senha atualizada com sucesso! Por favor, faça o login novamente.", "success");
       logout();
     } catch (error) {
@@ -147,23 +131,19 @@ function Configuracoes() {
 
   const abrirDialogoSenha = (e) => {
     e.preventDefault();
-    if (!senhaAtual || !novaSenha || !confirmarNovaSenha) return mostrarNotificacao("Preencha todos os campos de senha.", "warning");
-    if (novaSenha !== confirmarNovaSenha) return mostrarNotificacao("A nova senha e a confirmação não coincidem.", "error");
-    if (novaSenha.length < 8) return mostrarNotificacao("A nova senha deve ter no mínimo 8 caracteres.", "warning");
+    if (!dadosSenha.senhaAtual || !dadosSenha.novaSenha || !dadosSenha.confirmarNovaSenha) return mostrarNotificacao("Preencha todos os campos de senha.", "warning");
+    if (dadosSenha.novaSenha !== dadosSenha.confirmarNovaSenha) return mostrarNotificacao("A nova senha e a confirmação não coincidem.", "error");
+    if (dadosSenha.novaSenha.length < 8) return mostrarNotificacao("A nova senha deve ter no mínimo 8 caracteres.", "warning");
     setDialogoSenhaAberto(true);
   };
   
   const fecharDialogoSenha = () => setDialogoSenhaAberto(false);
 
-  // --- LÓGICA DE GESTÃO DE ASSINATURA ATUALIZADA ---
   const handleGerirAssinatura = async () => {
-    // Se for free ou inativo, apenas navega para a página de planos
     if (usuario.plano === 'free' || usuario.status_assinatura === 'inativa' || usuario.status_assinatura === 'cancelada') {
         navigate('/assinatura');
         return;
     }
-
-    // Se for um utilizador pago (padrão/premium) ou em teste, vai para o portal do Stripe
     setCarregando(prev => ({ ...prev, portal: true }));
     try {
         const resposta = await apiClient.post('/api/assinatura/criar-sessao-portal');
@@ -174,6 +154,11 @@ function Configuracoes() {
     }
   };
 
+  const capitalizar = (texto) => {
+    if (!texto) return '';
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  };
+  
   const handleAbrirDialogoUrl = () => {
     setUrlImagem("");
     setDialogoUrlAberto(true);
@@ -245,14 +230,13 @@ function Configuracoes() {
             </Box>
 
             <Box sx={{ flex: '1 1 280px' }}>
-                <FormCard title="Alterar Nome">
-                    <Box component="form" onSubmit={handleSalvarNome} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
+                <FormCard title="Dados do Perfil" component="form" onSubmit={handleSalvarPerfil} noValidate>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1 }}>
                         <TextField
-                            id="nome"
                             name="nome"
                             label="Nome Artístico"
-                            value={nome}
-                            onChange={(e) => setNome(e.target.value)}
+                            value={dadosPerfil.nome}
+                            onChange={handleDadosPerfilChange}
                             fullWidth
                             disabled={!isPremium}
                             onClick={handlePremiumFeatureClick}
@@ -266,36 +250,24 @@ function Configuracoes() {
                                 ),
                             }}
                         />
-                        <Button type="submit" variant="contained" disabled={carregando.nome || !isPremium} sx={{ alignSelf: "flex-end", mt: 2 }}>
-                            {carregando.nome ? <CircularProgress size={24} /> : "Salvar Nome"}
-                        </Button>
+                        <TextField name="email" label="E-mail" type="email" value={dadosPerfil.email} onChange={handleDadosPerfilChange} fullWidth />
                     </Box>
+                    <Button type="submit" variant="contained" disabled={carregando.perfil} sx={{ alignSelf: "flex-end", mt: 2 }}>
+                        {carregando.perfil ? <CircularProgress size={24} /> : "Salvar Perfil"}
+                    </Button>
                 </FormCard>
             </Box>
 
             <Box sx={{ flex: '1 1 280px' }}>
-              <FormCard title="Alterar E-mail">
-                  <Box component="form" onSubmit={handleSalvarEmail} noValidate sx={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: 'space-between' }}>
-                      <TextField id="email" name="email" label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
-                      <Button type="submit" variant="contained" disabled={carregando.email} sx={{ alignSelf: "flex-end", mt: 2 }}>
-                          {carregando.email ? <CircularProgress size={24} /> : "Salvar E-mail"}
-                      </Button>
-                  </Box>
-              </FormCard>
-            </Box>
-
-            <Box sx={{ flex: '1 1 280px' }}>
-                <FormCard title="Alterar Senha">
-                    <Box component="form" onSubmit={abrirDialogoSenha} noValidate sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, justifyContent: 'space-between' }}>
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                            <TextField id="senha_atual" name="senha_atual" label="Senha Atual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} fullWidth />
-                            <TextField id="nova_senha" name="nova_senha" label="Nova Senha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} fullWidth />
-                            <TextField id="confirmar_nova_senha" name="confirmar_nova_senha" label="Confirmar Nova Senha" type="password" value={confirmarNovaSenha} onChange={(e) => setConfirmarNovaSenha(e.target.value)} fullWidth />
-                        </Box>
-                        <Button type="submit" variant="contained" disabled={carregando.senha} sx={{ alignSelf: "flex-end", mt: 2 }}>
-                            {carregando.senha ? <CircularProgress size={24} /> : "Alterar Senha"}
-                        </Button>
+                <FormCard title="Alterar Senha" component="form" onSubmit={abrirDialogoSenha} noValidate>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1 }}>
+                        <TextField name="senhaAtual" label="Senha Atual" type="password" value={dadosSenha.senhaAtual} onChange={(e) => setDadosSenha(p => ({...p, senhaAtual: e.target.value}))} fullWidth />
+                        <TextField name="novaSenha" label="Nova Senha" type="password" value={dadosSenha.novaSenha} onChange={(e) => setDadosSenha(p => ({...p, novaSenha: e.target.value}))} fullWidth />
+                        <TextField name="confirmarNovaSenha" label="Confirmar Nova Senha" type="password" value={dadosSenha.confirmarNovaSenha} onChange={(e) => setDadosSenha(p => ({...p, confirmarNovaSenha: e.target.value}))} fullWidth />
                     </Box>
+                    <Button type="submit" variant="contained" disabled={carregando.senha} sx={{ alignSelf: "flex-end", mt: 2 }}>
+                        {carregando.senha ? <CircularProgress size={24} /> : "Alterar Senha"}
+                    </Button>
                 </FormCard>
             </Box>
         </Box>
