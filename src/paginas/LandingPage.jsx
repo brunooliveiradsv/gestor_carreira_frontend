@@ -50,7 +50,7 @@ function LandingPage() {
                     justifyContent: 'center',
                     textAlign: 'center',
                     p: 3,
-                    background: `linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.9)), url('/images/background.jpg')`,
+                    background: `linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.9)), url('src/images/background.jpg')`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center'
                 }}
