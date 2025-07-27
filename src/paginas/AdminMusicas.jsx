@@ -1,13 +1,18 @@
 // src/paginas/AdminMusicas.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
 import {
   Box, Typography, Button, CircularProgress, Paper, List, ListItem,
   ListItemText, IconButton, Tooltip, Switch, FormControlLabel, Dialog,
-  DialogTitle, DialogContent, DialogContentText, DialogActions
+  DialogTitle, DialogContent, DialogContentText, DialogActions, TextField, InputAdornment
 } from '@mui/material';
-import { AddCircleOutline as AddCircleOutlineIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { 
+  AddCircleOutline as AddCircleOutlineIcon, 
+  Edit as EditIcon, 
+  Delete as DeleteIcon,
+  Search as SearchIcon // 1. Importar o ícone de pesquisa
+} from '@mui/icons-material';
 
 import FormularioMusicaMestre from '../componentes/FormularioMusicaMestre';
 
@@ -21,6 +26,22 @@ function AdminMusicas() {
 
   const [dialogoApagarAberto, setDialogoApagarAberto] = useState(false);
   const [musicaParaApagar, setMusicaParaApagar] = useState(null);
+
+  // --- INÍCIO DA ALTERAÇÃO ---
+  // 2. Estado para guardar o termo da pesquisa
+  const [termoBusca, setTermoBusca] = useState('');
+  
+  // 3. Filtra as músicas com base no termo de busca
+  const musicasFiltradas = useMemo(() => {
+    if (!termoBusca) {
+      return musicasMestre;
+    }
+    return musicasMestre.filter(musica =>
+      musica.nome.toLowerCase().includes(termoBusca.toLowerCase()) ||
+      musica.artista.toLowerCase().includes(termoBusca.toLowerCase())
+    );
+  }, [musicasMestre, termoBusca]);
+  // --- FIM DA ALTERAÇÃO ---
 
   const buscarMusicasMestre = useCallback(async () => {
     try {
@@ -76,7 +97,8 @@ function AdminMusicas() {
 
   const handleTogglePublica = async (musica) => {
     try {
-      await apiClient.put(`/api/admin/musicas/${musica.id}`, { is_publica: !musica.is_publica });
+      const musicaAtualizada = { ...musica, is_publica: !musica.is_publica };
+      await apiClient.put(`/api/admin/musicas/${musica.id}`, musicaAtualizada);
       mostrarNotificacao('Status da música atualizado!', 'success');
       buscarMusicasMestre();
     } catch (error) {
@@ -100,24 +122,51 @@ function AdminMusicas() {
         </Button>
       </Box>
 
+      {/* --- INÍCIO DA ALTERAÇÃO --- */}
+      {/* 4. Caixa de pesquisa adicionada */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <TextField
+          fullWidth
+          placeholder="Buscar por nome da música ou artista..."
+          value={termoBusca}
+          onChange={(e) => setTermoBusca(e.target.value)}
+          InputProps={{
+              startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>),
+          }}
+        />
+      </Paper>
+      {/* --- FIM DA ALTERAÇÃO --- */}
+
       <Paper>
         <List>
-          {musicasMestre.map((musica) => (
-            <ListItem
-              key={musica.id}
-              secondaryAction={
-                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                  <Tooltip title={musica.is_publica ? "Visível para todos" : "Oculta"}>
-                    <FormControlLabel control={<Switch checked={musica.is_publica} onChange={() => handleTogglePublica(musica)} />} label="Pública" />
-                  </Tooltip>
-                  <Tooltip title="Editar"><IconButton onClick={() => handleAbrirForm(musica)}><EditIcon /></IconButton></Tooltip>
-                  <Tooltip title="Apagar"><IconButton onClick={() => handleAbrirApagarDialogo(musica)} color="error"><DeleteIcon /></IconButton></Tooltip>
-                </Box>
-              }
-            >
-              <ListItemText primary={musica.nome} secondary={musica.artista} />
-            </ListItem>
-          ))}
+          {/* --- INÍCIO DA ALTERAÇÃO --- */}
+          {/* 5. A lista agora usa as músicas filtradas */}
+          {musicasFiltradas.length > 0 ? (
+            musicasFiltradas.map((musica) => (
+              <ListItem
+                key={musica.id}
+                secondaryAction={
+                  <Box sx={{display: 'flex', alignItems: 'center'}}>
+                    <Tooltip title={musica.is_publica ? "Visível para todos" : "Oculta"}>
+                      <FormControlLabel 
+                        control={<Switch checked={musica.is_publica} onChange={() => handleTogglePublica(musica)} />} 
+                        label="Pública" 
+                      />
+                    </Tooltip>
+                    <Tooltip title="Editar"><IconButton onClick={() => handleAbrirForm(musica)}><EditIcon /></IconButton></Tooltip>
+                    <Tooltip title="Apagar"><IconButton onClick={() => handleAbrirApagarDialogo(musica)} color="error"><DeleteIcon /></IconButton></Tooltip>
+                  </Box>
+                }
+              >
+                <ListItemText primary={musica.nome} secondary={musica.artista} />
+              </ListItem>
+            ))
+          ) : (
+            <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
+              Nenhuma música encontrada com os filtros atuais.
+            </Typography>
+          )}
+          {/* --- FIM DA ALTERAÇÃO --- */}
         </List>
       </Paper>
 

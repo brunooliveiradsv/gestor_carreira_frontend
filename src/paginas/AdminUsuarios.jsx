@@ -8,16 +8,12 @@ import {
   TableCell, TableContainer, TableHead, TableRow, IconButton,
   Tooltip, Chip, Button, Dialog, DialogActions, DialogContent,
   DialogContentText, DialogTitle, TextField, InputAdornment, useTheme,
-  useMediaQuery, Card, CardContent, CardActions, Avatar,
-  List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider
+  useMediaQuery, Card, CardContent, CardActions, Avatar
 } from "@mui/material";
 import {
-  Delete as DeleteIcon, SupervisorAccount as SupervisorAccountIcon,
+  Delete as DeleteIcon,
   CleaningServices as CleaningServicesIcon, AdminPanelSettings as AdminPanelSettingsIcon,
-  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Person as PersonIcon,
-  WorkspacePremium as WorkspacePremiumIcon,
-  CheckCircle as CheckCircleIcon,
-  RemoveCircle as RemoveCircleIcon
+  AddCircleOutline as AddCircleOutlineIcon, Search as SearchIcon, Person as PersonIcon
 } from "@mui/icons-material";
 
 import FormularioUsuario from "../componentes/FormularioUsuario.jsx";
@@ -31,8 +27,10 @@ function AdminUsuarios() {
   const [termoBusca, setTermoBusca] = useState("");
   const [dialogoConfirmacaoAberto, setDialogoConfirmacaoAberto] = useState(false);
   const [acaoPendente, setAcaoPendente] = useState(null);
-  const [dialogoAssinaturaAberto, setDialogoAssinaturaAberto] = useState(false);
-  const [usuarioParaGerir, setUsuarioParaGerir] = useState(null);
+  
+  // --- REMOVIDO: Estados relacionados ao diálogo de assinatura ---
+  // const [dialogoAssinaturaAberto, setDialogoAssinaturaAberto] = useState(false);
+  // const [usuarioParaGerir, setUsuarioParaGerir] = useState(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -84,29 +82,15 @@ function AdminUsuarios() {
     }
   };
 
-  const handleGerirAssinatura = async (acao, plano = null) => {
-    try {
-        await apiClient.put(`/api/admin/usuarios/${usuarioParaGerir.id}/assinatura`, { acao, plano });
-        let mensagemSucesso = "";
-        if (acao === "conceder") {
-            mensagemSucesso = `Plano ${capitalizar(plano)} concedido a ${usuarioParaGerir.nome}!`;
-        } else if (acao === "remover") {
-            mensagemSucesso = `Assinatura de ${usuarioParaGerir.nome} removida com sucesso!`;
-        }
-        mostrarNotificacao(mensagemSucesso, "success");
-        buscarUsuarios();
-    } catch (error) {
-        mostrarNotificacao(error.response?.data?.mensagem || 'Falha ao gerir assinatura. Por favor, tente novamente.', 'error');
-    } finally {
-        handleFecharDialogoAssinatura();
-    }
-  };
+  // --- REMOVIDO: Função para gerir assinatura ---
+  // const handleGerirAssinatura = async (acao, plano = null) => { ... };
 
   const abrirDialogoConfirmacao = (tipo, dados) => { setAcaoPendente({ tipo, dados }); setDialogoConfirmacaoAberto(true); };
   const handleFecharDialogoConfirmacao = () => { setDialogoConfirmacaoAberto(false); setAcaoPendente(null); };
 
-  const handleAbrirDialogoAssinatura = (usuario) => { setUsuarioParaGerir(usuario); setDialogoAssinaturaAberto(true); };
-  const handleFecharDialogoAssinatura = () => { setUsuarioParaGerir(null); setDialogoAssinaturaAberto(false); };
+  // --- REMOVIDO: Funções para abrir/fechar diálogo de assinatura ---
+  // const handleAbrirDialogoAssinatura = (usuario) => { ... };
+  // const handleFecharDialogoAssinatura = () => { ... };
 
   const handleSalvarNovoUsuario = async (dadosDoFormulario) => {
     setCarregando(true);
@@ -156,7 +140,7 @@ function AdminUsuarios() {
             </Box>
           </CardContent>
           <CardActions sx={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-            <Tooltip title="Gerir Assinatura"><IconButton onClick={() => handleAbrirDialogoAssinatura(usuario)} color="success"><WorkspacePremiumIcon /></IconButton></Tooltip>
+            {/* --- REMOVIDO: Botão de gerir assinatura --- */}
             <Tooltip title={usuario.role === "admin" ? "Rebaixar" : "Promover"}><IconButton onClick={() => handleAlternarRole(usuario)} disabled={adminLogado.id === usuario.id}><AdminPanelSettingsIcon /></IconButton></Tooltip>
             <Tooltip title="Limpar Dados"><IconButton color="warning" onClick={() => handleLimparDados(usuario)}><CleaningServicesIcon /></IconButton></Tooltip>
             <Tooltip title="Excluir"><IconButton color="error" onClick={() => handleApagarUsuario(usuario)} disabled={adminLogado.id === usuario.id}><DeleteIcon /></IconButton></Tooltip>
@@ -193,9 +177,7 @@ function AdminUsuarios() {
               </TableCell>
               <TableCell><Chip label={capitalizar(usuario.role)} color={usuario.role === "admin" ? "primary" : "default"} size="small" /></TableCell>
               <TableCell align="right">
-                <Tooltip title="Gerir Assinatura">
-                  <IconButton onClick={() => handleAbrirDialogoAssinatura(usuario)} color="success"><WorkspacePremiumIcon /></IconButton>
-                </Tooltip>
+                {/* --- REMOVIDO: Botão de gerir assinatura --- */}
                 <Tooltip title={usuario.role === "admin" ? "Rebaixar para Usuário" : "Promover para Admin"}>
                   <span><IconButton onClick={() => handleAlternarRole(usuario)} disabled={adminLogado.id === usuario.id}><AdminPanelSettingsIcon /></IconButton></span>
                 </Tooltip>
@@ -252,43 +234,7 @@ function AdminUsuarios() {
             </DialogActions>
         </Dialog>
 
-        {/* --- DIÁLOGO DE GESTÃO DE ASSINATURA ATUALIZADO --- */}
-        <Dialog open={dialogoAssinaturaAberto} onClose={handleFecharDialogoAssinatura} fullWidth maxWidth="xs">
-            <DialogTitle>Gerir Assinatura</DialogTitle>
-            <DialogContent>
-                <Typography>Selecione uma ação para **{usuarioParaGerir?.nome}**:</Typography>
-                <List>
-                    <ListItem disablePadding>
-                        <ListItemButton onClick={() => handleGerirAssinatura('conceder', 'free')}>
-                            <ListItemIcon><CheckCircleIcon /></ListItemIcon>
-                            <ListItemText primary="Conceder Plano Free" />
-                        </ListItemButton>
-                    </ListItem>
-                    <ListItem disablePadding>
-                        <ListItemButton onClick={() => handleGerirAssinatura('conceder', 'padrao')}>
-                            <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                            <ListItemText primary="Conceder Plano Padrão" />
-                        </ListItemButton>
-                    </ListItem>
-                    <ListItem disablePadding>
-                        <ListItemButton onClick={() => handleGerirAssinatura('conceder', 'premium')}>
-                            <ListItemIcon><CheckCircleIcon color="primary" /></ListItemIcon>
-                            <ListItemText primary="Conceder Plano Premium" />
-                        </ListItemButton>
-                    </ListItem>
-                    <Divider sx={{ my: 1 }} />
-                    <ListItem disablePadding>
-                        <ListItemButton onClick={() => handleGerirAssinatura('remover')}>
-                            <ListItemIcon><RemoveCircleIcon color="error" /></ListItemIcon>
-                            <ListItemText primary="Remover Assinatura (Voltar para Free)" />
-                        </ListItemButton>
-                    </ListItem>
-                </List>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={handleFecharDialogoAssinatura}>Cancelar</Button>
-            </DialogActions>
-        </Dialog>
+        {/* --- REMOVIDO: Diálogo de gestão de assinatura --- */}
       </>
     }
     </Box>
