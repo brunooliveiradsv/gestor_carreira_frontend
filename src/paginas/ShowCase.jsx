@@ -268,7 +268,7 @@ const ShowCaseContent = () => {
   const [dialogoSetlist, setDialogoSetlist] = useState({ open: false, setlist: null });
   const [indiceCapa, setIndiceCapa] = useState(0);
   const [jaAplaudido, setJaAplaudido] = useState(false);
-  const [musicasCurtidas, setMusicasCurtidas] = useState(new Set()); // Estado para as músicas curtidas
+  const [musicasCurtidas, setMusicasCurtidas] = useState(new Set());
 
   const { fa } = useFanAuth();
   const { mostrarNotificacao } = useNotificacao();
