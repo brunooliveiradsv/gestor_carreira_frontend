@@ -141,7 +141,7 @@ function Navegacao() {
   }
 
   const navLinks = [
-    { to: "/", text: "Dashboard", icon: <DashboardIcon /> },
+    { to: "/dashboard", text: "Dashboard", icon: <DashboardIcon /> },
     { to: "/agenda", text: "Agenda", icon: <CalendarMonthIcon /> },
     { to: "/financeiro", text: "Financeiro", icon: <MonetizationOnIcon /> },
     { to: "/repertorio", text: "Repertório", icon: <LibraryMusicIcon /> },

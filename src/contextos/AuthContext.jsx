@@ -43,12 +43,8 @@ export const AuthProvider = ({ children }) => {
             setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Login bem-sucedido!', 'success');
 
-            const user = data.usuario;
-            if (user.plano === 'padrao' || user.plano === 'premium') {
-                navigate('/');
-            } else {
-                navigate('/assinatura');
-            }
+            // Redireciona para /dashboard em vez de /
+            navigate('/dashboard'); 
             
             return true;
         } catch (error) {
@@ -65,6 +61,7 @@ export const AuthProvider = ({ children }) => {
             
             setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Cadastro realizado com sucesso!', 'success');
+            // Mantém o redirecionamento para a assinatura após o registo
             navigate('/assinatura'); 
             
             return true;
