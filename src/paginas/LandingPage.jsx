@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { AuthContext } from '../contextos/AuthContext';
-import { Box, Button, Container, Typography, Paper, useTheme, CircularProgress } from '@mui/material';
+import { Box, Button, Container, Typography, Grid, Paper, useTheme, CircularProgress } from '@mui/material';
 import { 
     CalendarMonth as CalendarMonthIcon, 
     MonetizationOn as MonetizationOnIcon, 
@@ -50,7 +50,8 @@ function LandingPage() {
                     justifyContent: 'center',
                     textAlign: 'center',
                     p: 3,
-                    background: `linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.9)), url('src/images/background.jpg')`,
+                    // --- AQUI ESTÁ A ALTERAÇÃO DA IMAGEM DE FUNDO ---
+                    background: `linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.9)), url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80')`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center'
                 }}
@@ -76,20 +77,17 @@ function LandingPage() {
                 </Container>
             </Box>
 
-            {/* --- INÍCIO DA ALTERAÇÃO --- */}
-            {/* Secção de Funcionalidades com Flexbox */}
+            {/* Secção de Funcionalidades */}
             <Container maxWidth="lg" sx={{ py: 8 }}>
                 <Typography variant="h3" textAlign="center" fontWeight="bold" sx={{ mb: 6 }}>
                     Ferramentas Poderosas para a Sua Carreira
                 </Typography>
-                {/* 1. O Grid container foi substituído por um Box com display: 'flex' */}
                 <Box sx={{
                     display: 'flex',
-                    flexWrap: 'wrap', // Permite que os itens quebrem para a linha de baixo
-                    gap: 4, // Espaçamento entre os cards
-                    justifyContent: 'center' // Centraliza os cards no container
+                    flexWrap: 'wrap',
+                    gap: 4,
+                    justifyContent: 'center'
                 }}>
-                    {/* 2. Cada card agora está num Box que controla o seu próprio tamanho */}
                     <Box sx={{ flex: '1 1 300px', maxWidth: { sm: 'calc(50% - 16px)', md: 'calc(25% - 24px)' } }}>
                         <FeatureCard 
                             icon={<CalendarMonthIcon sx={{ fontSize: 40 }} />}
@@ -120,7 +118,6 @@ function LandingPage() {
                     </Box>
                 </Box>
             </Container>
-            {/* --- FIM DA ALTERAÇÃO --- */}
 
              {/* Secção Final (Call to Action) */}
             <Box sx={{ bgcolor: 'background.paper', py: 8, textAlign: 'center' }}>
