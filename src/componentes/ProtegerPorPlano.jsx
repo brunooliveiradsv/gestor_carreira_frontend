@@ -2,13 +2,7 @@ import React, { useContext } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { AuthContext } from '../contextos/AuthContext';
 import { Box, CircularProgress } from '@mui/material';
-
-// Define a hierarquia dos planos. Quanto maior o número, maior o nível.
-const HIERARQUIA_PLANOS = {
-  free: 0,
-  padrao: 1,
-  premium: 2,
-};
+import { HIERARQUIA_PLANOS } from '../constants'; // Importar a constante
 
 /**
  * Protege rotas filhas, permitindo o acesso apenas a utilizadores

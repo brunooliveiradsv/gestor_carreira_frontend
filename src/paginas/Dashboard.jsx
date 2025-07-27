@@ -1,5 +1,5 @@
 // src/paginas/Dashboard.jsx
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, memo } from 'react'; // Adicionado memo
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
 import { AuthContext } from '../contextos/AuthContext';
@@ -18,12 +18,13 @@ import {
   MusicNote as MusicNoteIcon,
   TheaterComedy as TheaterComedyIcon
 } from '@mui/icons-material';
-import Anuncio from '../componentes/Anuncio'; // 1. IMPORTAR O ANÚNCIO
+import Anuncio from '../componentes/Anuncio';
 import GraficoBalanco from '../componentes/GraficoBalanco';
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
 
-const StatCard = ({ icon, valor, titulo, subtexto }) => (
+// O componente agora está envolvido com React.memo
+const StatCard = memo(({ icon, valor, titulo, subtexto }) => (
     <Paper variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', height: '100%' }}>
         <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 48, height: 48 }}>
             {icon}
@@ -34,7 +35,9 @@ const StatCard = ({ icon, valor, titulo, subtexto }) => (
             {subtexto && <Typography variant="caption" color="text.secondary">{subtexto}</Typography>}
         </Box>
     </Paper>
-);
+));
+// Adicionado um displayName para facilitar a depuração
+StatCard.displayName = 'StatCard';
 
 function Dashboard() {
   const [resumo, setResumo] = useState(null);
@@ -43,33 +46,36 @@ function Dashboard() {
   const { usuario } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const abrirFormulario = (path) => {
-    navigate(path, { state: { abrirFormulario: true } });
-  };
-
   useEffect(() => {
     async function carregarResumo() {
       try {
-        const [resumoFinanceiro, resumoRepertorio, proximosCompromissos, ultimasConquistas] = await Promise.all([
-          apiClient.get('/api/financeiro/resumo-mensal').catch(() => ({ data: null })),
-          apiClient.get('/api/setlists/estatisticas').catch(() => ({ data: null })),
-          apiClient.get('/api/compromissos/proximos').catch(() => ({ data: [] })),
-          apiClient.get('/api/conquistas/recentes').catch(() => ({ data: [] }))
+        // As chamadas agora tratam o erro individualmente
+        const resultados = await Promise.all([
+          apiClient.get('/api/financeiro/resumo-mensal').then(res => ({ status: 'fulfilled', value: res.data })).catch(error => ({ status: 'rejected', reason: 'financeiro' })),
+          apiClient.get('/api/setlists/estatisticas').then(res => ({ status: 'fulfilled', value: res.data })).catch(error => ({ status: 'rejected', reason: 'repertorio' })),
+          apiClient.get('/api/compromissos/proximos').then(res => ({ status: 'fulfilled', value: res.data })).catch(error => ({ status: 'rejected', reason: 'compromissos' })),
+          apiClient.get('/api/conquistas/recentes').then(res => ({ status: 'fulfilled', value: res.data })).catch(error => ({ status: 'rejected', reason: 'conquistas' }))
         ]);
+
+        const [resumoFinanceiro, resumoRepertorio, proximosCompromissos, ultimasConquistas] = resultados;
+
+        // Monta o objeto de resumo apenas com os dados que foram carregados com sucesso
+        const resumoAgregado = {
+          financeiro: resumoFinanceiro.status === 'fulfilled' ? resumoFinanceiro.value : null,
+          repertorio: resumoRepertorio.status === 'fulfilled' ? resumoRepertorio.value : null,
+          compromissos: proximosCompromissos.status === 'fulfilled' ? proximosCompromissos.value : [],
+          conquistas: ultimasConquistas.status === 'fulfilled' ? ultimasConquistas.value : []
+        };
         
-        if (!resumoFinanceiro.data && !proximosCompromissos.data && !ultimasConquistas.data && !resumoRepertorio.data) {
-          setErro("Não foi possível carregar os dados do dashboard.");
+        // Verifica se todas as chamadas principais falharam
+        if (!resumoAgregado.financeiro && !resumoAgregado.repertorio && !resumoAgregado.compromissos.length) {
+          setErro("Não foi possível carregar os dados principais do dashboard.");
         }
         
-        setResumo({
-          financeiro: resumoFinanceiro.data,
-          repertorio: resumoRepertorio.data,
-          compromissos: proximosCompromissos.data,
-          conquistas: ultimasConquistas.data
-        });
+        setResumo(resumoAgregado);
 
       } catch (error) {
-        console.error("Erro ao carregar dados do dashboard:", error);
+        console.error("Erro inesperado ao carregar dados do dashboard:", error);
         setErro("Ocorreu um erro inesperado ao carregar o dashboard.");
       } finally {
         setCarregando(false);

@@ -58,3 +58,12 @@ export const STATUS_COMPROMISSO = {
     REALIZADO: 'Realizado',
     CANCELADO: 'Cancelado',
 };
+
+/**
+ * Define a hierarquia dos planos. Quanto maior o número, maior o nível.
+ */
+export const HIERARQUIA_PLANOS = {
+  free: 0,
+  padrao: 1,
+  premium: 2,
+};
