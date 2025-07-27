@@ -27,8 +27,6 @@ import LinkIcon from '@mui/icons-material/Link';
 import ThumbUp from '@mui/icons-material/ThumbUp';
 import ThumbDown from '@mui/icons-material/ThumbDown';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
-import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
-
 import EnqueteShowcase from '../componentes/EnqueteShowcase';
 import FeedbackShowcase from '../componentes/FeedbackShowcase';
 
