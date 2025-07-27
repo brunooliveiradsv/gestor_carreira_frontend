@@ -11,7 +11,9 @@ export const AuthProvider = ({ children }) => {
     const { mostrarNotificacao } = useNotificacao();
     const navigate = useNavigate();
 
-    const carregarUsuarioPeloToken = useCallback(async () => {
+    // --- ALTERAÇÃO AQUI ---
+    // A função agora é mais genérica para poder ser chamada de outros locais
+    const recarregarUsuario = useCallback(async () => {
         const token = localStorage.getItem('token');
         if (token) {
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -20,29 +22,23 @@ export const AuthProvider = ({ children }) => {
                 setUsuario(data);
             } catch (error) {
                 console.error("Token inválido ou expirado, limpando...");
-                localStorage.removeItem('token');
-                delete apiClient.defaults.headers.common['Authorization'];
-                setUsuario(null);
+                logout(); // Chama a função de logout para limpar tudo
             }
         }
         setCarregando(false);
     }, []);
 
     useEffect(() => {
-        carregarUsuarioPeloToken();
-    }, [carregarUsuarioPeloToken]);
+        recarregarUsuario();
+    }, [recarregarUsuario]);
 
     const login = async (email, senha) => {
         try {
             const { data } = await apiClient.post('/api/usuarios/login', { email, senha });
             localStorage.setItem('token', data.token);
-            apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-            
-            setUsuario(data.usuario);
+            await recarregarUsuario(); // Usa a função de recarregar
             mostrarNotificacao(data.mensagem || 'Login bem-sucedido!', 'success');
-
             navigate('/dashboard'); 
-            
             return true;
         } catch (error) {
             mostrarNotificacao(error.response?.data?.mensagem || 'Falha no login.', 'error');
@@ -54,12 +50,9 @@ export const AuthProvider = ({ children }) => {
         try {
             const { data } = await apiClient.post('/api/usuarios/registrar', { nome, email, senha });
             localStorage.setItem('token', data.token);
-            apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-            
-            setUsuario(data.usuario);
+            await recarregarUsuario(); // Usa a função de recarregar
             mostrarNotificacao(data.mensagem || 'Cadastro realizado com sucesso!', 'success');
             navigate('/assinatura'); 
-            
             return true;
         } catch (error) {
             mostrarNotificacao(error.response?.data?.mensagem || 'Falha no cadastro.', 'error');
@@ -71,8 +64,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         delete apiClient.defaults.headers.common['Authorization'];
         setUsuario(null);
-        // --- ESTA É A LINHA CORRIGIDA ---
-        // Redireciona para a landing page ("/") em vez de "/login"
         navigate('/');
     };
 
@@ -84,6 +75,7 @@ export const AuthProvider = ({ children }) => {
         login,
         registrar,
         logout,
+        recarregarUsuario, // --- ALTERAÇÃO AQUI --- Exporta a função
     };
 
     return (
