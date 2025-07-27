@@ -45,29 +45,24 @@ function Autenticacao() {
       setErro("A senha deve ter no mínimo 8 caracteres.");
       return;
     }
-
-    // --- CORREÇÃO 2: Normaliza o e-mail ---
-    // Converte para minúsculas e remove espaços no início/fim
+    
     const emailNormalizado = email.trim().toLowerCase();
 
     setCarregando(true);
     
     let sucesso = false;
     if (modo === 'login') {
-        // Usa o e-mail normalizado para o login
         sucesso = await login(emailNormalizado, senha);
     } else {
-        // Usa o e-mail normalizado para o registo
         sucesso = await registrar(nome, emailNormalizado, senha);
     }
     
     setCarregando(false);
   };
   
-  // --- CORREÇÃO 1: Estilo para remover o fundo do preenchimento automático ---
   const autofillStyle = {
     '& .MuiInputBase-input:-webkit-autofill': {
-      WebkitBoxShadow: `0 0 0 100px ${theme.palette.background.paper} inset`,
+      WebkitBoxShadow: `0 0 0 100px ${theme.palette.mode === 'dark' ? 'rgba(30, 30, 30, 0.85)' : theme.palette.background.paper} inset`,
       WebkitTextFillColor: theme.palette.text.primary,
       caretColor: theme.palette.text.primary,
     },
@@ -81,7 +76,12 @@ function Autenticacao() {
         width: "100vw",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: 'background.default'
+        // --- INÍCIO DA ALTERAÇÃO ---
+        // Adicionado o mesmo fundo da Landing Page
+        background: `linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.9)), url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        // --- FIM DA ALTERAÇÃO ---
       }}
     >
       <Paper
@@ -93,8 +93,13 @@ function Autenticacao() {
           alignItems: "center",
           width: "100%",
           maxWidth: 450,
+          borderRadius: 4,
+          // --- INÍCIO DA ALTERAÇÃO ---
+          // Efeito de "vidro fosco" para o formulário
           border: `1px solid ${theme.palette.divider}`,
-          bgcolor: 'background.paper'
+          bgcolor: 'rgba(30, 30, 30, 0.85)', // Fundo semi-transparente
+          backdropFilter: 'blur(10px)',     // Efeito de desfoque
+          // --- FIM DA ALTERAÇÃO ---
         }}
       >
         <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>

@@ -50,16 +50,23 @@ function LandingPage() {
                     justifyContent: 'center',
                     textAlign: 'center',
                     p: 3,
-                    // --- AQUI ESTÁ A ALTERAÇÃO DA IMAGEM DE FUNDO ---
                     background: `linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.9)), url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80')`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center'
                 }}
             >
                 <Container maxWidth="md">
-                    <Typography variant="h1" component="h1" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>
-                        VoxGest
-                    </Typography>
+                    {/* --- INÍCIO DA ALTERAÇÃO DO LOGOTIPO --- */}
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', mb: 2 }}>
+                        <Typography variant="h1" component="h1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                            VOX
+                        </Typography>
+                        <Typography variant="h2" component="span" sx={{ fontWeight: 'normal', color: 'text.primary', ml: 1 }}>
+                            Gest
+                        </Typography>
+                    </Box>
+                    {/* --- FIM DA ALTERAÇÃO DO LOGOTIPO --- */}
+                    
                     <Typography variant="h4" component="p" sx={{ mb: 4, color: 'text.primary' }}>
                         O seu assistente de carreira musical, tudo num só lugar.
                     </Typography>
