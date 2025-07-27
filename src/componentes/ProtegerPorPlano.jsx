@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { AuthContext } from '../contextos/AuthContext';
 import { Box, CircularProgress } from '@mui/material';
-import { HIERARQUIA_PLANOS } from '../constants'; // Importar a constante
+import { HIERARQUIA_PLANOS } from '../constants';
 
 /**
  * Protege rotas filhas, permitindo o acesso apenas a utilizadores
@@ -22,11 +22,14 @@ function ProtegerPorPlano({ children, planoMinimo = 'free' }) {
 
   const nivelUtilizador = HIERARQUIA_PLANOS[usuario?.plano] ?? -1;
   const nivelExigido = HIERARQUIA_PLANOS[planoMinimo];
-  const temAcesso = usuario?.status_assinatura === 'ativa' && nivelUtilizador >= nivelExigido;
+
+  // --- LÓGICA DE ACESSO CORRIGIDA ---
+  // Um utilizador tem acesso se:
+  // 1. O seu nível de plano for suficiente E
+  // 2. O seu plano for 'free' OU a sua assinatura estiver 'ativa'.
+  const temAcesso = nivelUtilizador >= nivelExigido && (usuario?.plano === 'free' || usuario?.status_assinatura === 'ativa');
 
   if (temAcesso) {
-    // Se 'children' existir (como no caso do ModoPalco), renderiza-o.
-    // Caso contrário, renderiza o <Outlet /> para as rotas aninhadas (Dashboard, etc.).
     return children ? children : <Outlet />;
   }
 
