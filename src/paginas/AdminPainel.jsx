@@ -1,13 +1,12 @@
 // src/paginas/AdminPainel.jsx
-import React from 'react';
+import React, { memo } from 'react'; // Importado memo
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import { People as PeopleIcon, LibraryMusic as LibraryMusicIcon, Announcement as AnnouncementIcon, History as HistoryIcon } from '@mui/icons-material';
 
 
-// --- COMPONENTE AdminCard ATUALIZADO ---
-// Agora ele não é mais um Grid item e controla o seu próprio tamanho no Flexbox
-const AdminCard = React.memo(({ title, description, icon, linkTo }) => {
+// O componente agora está envolvido com React.memo
+const AdminCard = memo(({ title, description, icon, linkTo }) => {
   const navigate = useNavigate();
   return (
     <Box sx={{ flex: '1 1 300px', minWidth: '280px' }}>
@@ -38,6 +37,7 @@ const AdminCard = React.memo(({ title, description, icon, linkTo }) => {
     </Box>
   );
 });
+AdminCard.displayName = 'AdminCard'; // Adicionado displayName
 
 function AdminPainel() {
   return (
@@ -51,7 +51,6 @@ function AdminPainel() {
         </Typography>
       </Box>
 
-      {/* --- LAYOUT ATUALIZADO PARA USAR FLEXBOX --- */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
         <AdminCard
           title="Gerenciar Usuários"

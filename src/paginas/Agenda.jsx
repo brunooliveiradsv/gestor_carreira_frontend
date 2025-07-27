@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback, useContext } from "react"; // 1. Adicionar useContext
+import { useState, useEffect, useCallback, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import apiClient from "../apiClient.js";
 import { useNotificacao } from "../contextos/NotificationContext.jsx";
-import { AuthContext } from "../contextos/AuthContext.jsx"; // 2. Importar AuthContext
-import { useUpgradeDialog } from "../contextos/UpgradeDialogContext.jsx"; // 3. Importar o hook do diálogo
+import { AuthContext } from "../contextos/AuthContext.jsx";
+import { useUpgradeDialog } from "../contextos/UpgradeDialogContext.jsx";
 import useApi from "../hooks/useApi";
 
 import {
   Box, Button, Typography, CircularProgress, Card, CardContent, CardActions,
   Chip, IconButton, Paper, Dialog, DialogTitle, DialogContent, Tooltip,
-  useTheme, DialogActions, DialogContentText
+  useTheme, DialogActions, DialogContentText, Alert // Adicionado Alert
 } from "@mui/material";
 import {
   Edit as EditIcon, Delete as DeleteIcon, Info as InfoIcon,
@@ -20,19 +20,20 @@ import {
 
 import FormularioCompromisso from "../componentes/FormularioCompromisso.jsx";
 import FormularioContrato from '../componentes/FormularioContrato';
-import Anuncio from '../componentes/Anuncio'; // 1. Importar o componente de anúncio
+import Anuncio from '../componentes/Anuncio';
 
 function Agenda() {
   const { mostrarNotificacao } = useNotificacao();
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const { usuario } = useContext(AuthContext); // 4. Obter o utilizador
-  const { abrirDialogoDeUpgrade } = useUpgradeDialog(); // 5. Obter a função do diálogo
+  const { usuario } = useContext(AuthContext);
+  const { abrirDialogoDeUpgrade } = useUpgradeDialog();
 
   const {
     data: compromissos,
     carregando,
+    erro, // 1. Usar o estado de erro do hook
     refetch: buscarCompromissos,
   } = useApi("/api/compromissos");
 
@@ -43,7 +44,8 @@ function Agenda() {
   const [compromissoParaApagar, setCompromissoParaApagar] = useState(null);
   const [dialogoContratoAberto, setDialogoContratoAberto] = useState(false);
   const [carregandoContrato, setCarregandoContrato] = useState(false);
-
+  
+  // (O resto das funções permanece igual)
   useEffect(() => {
     if (location.state?.abrirFormulario) {
       handleAbrirFormulario();
@@ -97,8 +99,7 @@ function Agenda() {
     setCompromissoSelecionado(null);
     setDialogoDetalhesAberto(false);
   };
-
-  // --- 6. LÓGICA ATUALIZADA ---
+  
   const handleAbrirDialogoContrato = (compromisso) => {
     if (usuario?.plano !== 'premium') {
       abrirDialogoDeUpgrade('Gerar contratos é uma funcionalidade exclusiva do plano Premium.');
@@ -140,7 +141,6 @@ function Agenda() {
     }
   };
 
-  // ... (funções getStatusColor e getTipoIcon permanecem iguais)
   const getStatusColor = (status) => {
     switch (status) {
       case "Realizado": return "success";
@@ -166,6 +166,15 @@ function Agenda() {
         <CircularProgress color="inherit" />
       </Box>
     );
+  }
+  
+  // 2. Renderização condicional para o estado de erro
+  if (erro) {
+      return (
+          <Alert severity="error" sx={{ mt: 4 }}>
+              {erro} - Não foi possível carregar a sua agenda. Por favor, tente recarregar a página.
+          </Alert>
+      )
   }
 
   return (
@@ -264,7 +273,6 @@ function Agenda() {
                   </Box>
                 </CardContent>
                 <CardActions sx={{ justifyContent: "flex-end", borderTop: `1px solid ${theme.palette.divider}` }}>
-                  {/* --- 7. BOTÃO ATUALIZADO --- */}
                   <Tooltip title="Gerar Contrato (Funcionalidade Premium)">
                     <span>
                       <IconButton onClick={() => handleAbrirDialogoContrato(c)} disabled={c.status !== 'Agendado'}>
