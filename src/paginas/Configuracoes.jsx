@@ -30,7 +30,6 @@ function Configuracoes() {
   const { abrirDialogoDeUpgrade } = useUpgradeDialog();
   const navigate = useNavigate();
 
-  // --- ESTADO UNIFICADO PARA DADOS DO PERFIL ---
   const [dadosPerfil, setDadosPerfil] = useState({ nome: "", email: "" });
   const [dadosSenha, setDadosSenha] = useState({ senhaAtual: "", novaSenha: "", confirmarNovaSenha: "" });
   
@@ -61,12 +60,10 @@ function Configuracoes() {
     setDadosPerfil(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // --- FUNÇÃO DE SALVAR UNIFICADA ---
   const handleSalvarPerfil = async (e) => {
     e.preventDefault();
     setCarregando(prev => ({ ...prev, perfil: true }));
     try {
-      // Usa a nova rota PUT /perfil
       const { data } = await apiClient.put('/api/usuarios/perfil', dadosPerfil);
       setUsuario(data);
       mostrarNotificacao(`Perfil atualizado com sucesso!`, "success");
@@ -139,12 +136,30 @@ function Configuracoes() {
   
   const fecharDialogoSenha = () => setDialogoSenhaAberto(false);
 
+  // --- INÍCIO DA ALTERAÇÃO ---
   const handleGerirAssinatura = async () => {
+    setCarregando(prev => ({ ...prev, portal: true }));
+    
+    // Se o utilizador for Free, inicia o checkout para o plano Padrão Mensal
     if (usuario.plano === 'free' || usuario.status_assinatura === 'inativa' || usuario.status_assinatura === 'cancelada') {
-        navigate('/assinatura');
+        try {
+            // ID do plano Padrão Mensal do seu ficheiro .env
+            const priceId = import.meta.env.VITE_STRIPE_PRICE_ID_PADRAO_MENSAL;
+            if (!priceId) {
+                mostrarNotificacao("A configuração de planos não foi encontrada. Contacte o suporte.", "error");
+                setCarregando(prev => ({ ...prev, portal: false }));
+                return;
+            }
+            const resposta = await apiClient.post('/api/assinatura/criar-sessao-checkout', { planoId: priceId });
+            window.location.href = resposta.data.url;
+        } catch (error) {
+            mostrarNotificacao(error.response?.data?.mensagem || "Não foi possível iniciar o pagamento.", "error");
+            setCarregando(prev => ({ ...prev, portal: false }));
+        }
         return;
     }
-    setCarregando(prev => ({ ...prev, portal: true }));
+
+    // Se o utilizador já for assinante, abre o portal do Stripe
     try {
         const resposta = await apiClient.post('/api/assinatura/criar-sessao-portal');
         window.location.href = resposta.data.url;
@@ -153,6 +168,7 @@ function Configuracoes() {
         setCarregando(prev => ({ ...prev, portal: false }));
     }
   };
+  // --- FIM DA ALTERAÇÃO ---
 
   const capitalizar = (texto) => {
     if (!texto) return '';
