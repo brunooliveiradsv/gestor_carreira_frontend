@@ -2,41 +2,54 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../apiClient';
 import { useNotificacao } from '../contextos/NotificationContext';
-import { Box, Typography, Paper, Button, LinearProgress, useTheme } from '@mui/material';
+import { useFanAuth } from '../contextos/FanAuthContext'; // 1. Importar o hook de autenticação de fã
+import { Box, Typography, Paper, Button, LinearProgress } from '@mui/material';
 
 function EnqueteShowcase({ enquete }) {
-  const [votado, setVotado] = useState(null); // Guarda o ID da opção votada
+  const [votado, setVotado] = useState(null);
   const [opcoes, setOpcoes] = useState(enquete.opcoes || []);
   const { mostrarNotificacao } = useNotificacao();
-  const theme = useTheme();
+  const { fa } = useFanAuth(); // 2. Obter o estado do fã logado
 
-  // Verifica no localStorage se o utilizador já votou nesta enquete
   useEffect(() => {
-    const votoGuardado = localStorage.getItem(`voto_enquete_${enquete.id}`);
-    if (votoGuardado) {
-      setVotado(parseInt(votoGuardado, 10));
+    // Agora, a verificação no localStorage também depende do ID do fã
+    if (fa) {
+      const votoGuardado = localStorage.getItem(`voto_enquete_${enquete.id}_fa_${fa.id}`);
+      if (votoGuardado) {
+        setVotado(parseInt(votoGuardado, 10));
+      }
+    } else {
+        // Se o fã não estiver logado, garante que o estado "votado" seja limpo
+        setVotado(null);
     }
-  }, [enquete.id]);
+  }, [enquete.id, fa]);
 
   const handleVotar = async (idOpcao) => {
+    // 3. Adicionar verificação de login
+    if (!fa) {
+        mostrarNotificacao('Faça o login como fã para poder votar na enquete!', 'info');
+        return;
+    }
     if (votado) return; // Não permite votar novamente
 
-    // Atualização otimista da UI para uma melhor experiência
     setVotado(idOpcao);
     setOpcoes(opcoesAtuais =>
       opcoesAtuais.map(opt =>
         opt.id === idOpcao ? { ...opt, votos: opt.votos + 1 } : opt
       )
     );
-    localStorage.setItem(`voto_enquete_${enquete.id}`, idOpcao);
+    // Guarda o voto associado ao ID do fã
+    localStorage.setItem(`voto_enquete_${enquete.id}_fa_${fa.id}`, idOpcao);
 
     try {
+      // IMPORTANTE: A chamada à API agora está autenticada com o token do fã
+      // (graças à configuração no FanAuthContext)
       await apiClient.post(`/api/vitrine/enquetes/votar/${idOpcao}`);
       mostrarNotificacao('O seu voto foi registado. Obrigado!', 'success');
     } catch (error) {
-      mostrarNotificacao('Ocorreu um erro ao registar o seu voto.', 'error');
+      mostrarNotificacao(error.response?.data?.mensagem || 'Ocorreu um erro ao registar o seu voto.', 'error');
       // Reverte a UI em caso de erro
-      localStorage.removeItem(`voto_enquete_${enquete.id}`);
+      localStorage.removeItem(`voto_enquete_${enquete.id}_fa_${fa.id}`);
       setVotado(null);
       setOpcoes(enquete.opcoes);
     }
@@ -57,7 +70,6 @@ function EnqueteShowcase({ enquete }) {
           return (
             <Box key={opcao.id}>
               {votado ? (
-                // --- VISTA DOS RESULTADOS (APÓS VOTAR) ---
                 <>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                     <Typography fontWeight={isVotadoNesta ? 'bold' : 'normal'}>
@@ -75,7 +87,6 @@ function EnqueteShowcase({ enquete }) {
                   />
                 </>
               ) : (
-                // --- VISTA DE VOTAÇÃO ---
                 <Button
                   fullWidth
                   variant="outlined"
@@ -87,6 +98,11 @@ function EnqueteShowcase({ enquete }) {
             </Box>
           );
         })}
+        {!fa && !votado && (
+            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', mt: 1}}>
+                Faça o login com Google para votar.
+            </Typography>
+        )}
       </Box>
     </Paper>
   );
