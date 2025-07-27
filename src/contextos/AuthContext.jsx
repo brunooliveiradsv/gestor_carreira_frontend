@@ -1,14 +1,15 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../apiClient';
-import { useAuthActions } from '../hooks/useAuthActions'; // Importar o hook
+import { useNotificacao } from './NotificationContext';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [usuario, setUsuario] = useState(null);
     const [carregando, setCarregando] = useState(true);
-    // As ações agora vêm do hook, mantendo este componente mais limpo
-    const { login, registrar, logout } = useAuthActions(); 
+    const { mostrarNotificacao } = useNotificacao();
+    const navigate = useNavigate();
 
     const carregarUsuarioPeloToken = useCallback(async () => {
         const token = localStorage.getItem('token');
@@ -30,11 +31,59 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         carregarUsuarioPeloToken();
     }, [carregarUsuarioPeloToken]);
+
+    // A lógica de login, registrar e logout foi movida para aqui,
+    // resolvendo a dependência circular.
+    const login = async (email, senha) => {
+        try {
+            const { data } = await apiClient.post('/api/usuarios/login', { email, senha });
+            localStorage.setItem('token', data.token);
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+            
+            setUsuario(data.usuario);
+            mostrarNotificacao(data.mensagem || 'Login bem-sucedido!', 'success');
+
+            const user = data.usuario;
+            if (user.plano === 'padrao' || user.plano === 'premium') {
+                navigate('/');
+            } else {
+                navigate('/assinatura');
+            }
+            
+            return true;
+        } catch (error) {
+            mostrarNotificacao(error.response?.data?.mensagem || 'Falha no login.', 'error');
+            return false;
+        }
+    };
     
-    // O valor do contexto agora inclui setUsuario para o hook e as ações
+    const registrar = async (nome, email, senha) => {
+        try {
+            const { data } = await apiClient.post('/api/usuarios/registrar', { nome, email, senha });
+            localStorage.setItem('token', data.token);
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+            
+            setUsuario(data.usuario);
+            mostrarNotificacao(data.mensagem || 'Cadastro realizado com sucesso!', 'success');
+            navigate('/assinatura'); 
+            
+            return true;
+        } catch (error) {
+            mostrarNotificacao(error.response?.data?.mensagem || 'Falha no cadastro.', 'error');
+            return false;
+        }
+    };
+
+    const logout = () => {
+        localStorage.removeItem('token');
+        delete apiClient.defaults.headers.common['Authorization'];
+        setUsuario(null);
+        navigate('/login');
+    };
+
     const valorDoContexto = {
         usuario,
-        setUsuario, // Exportar o setUsuario para o hook usar
+        setUsuario,
         logado: !!usuario,
         carregando,
         login,
