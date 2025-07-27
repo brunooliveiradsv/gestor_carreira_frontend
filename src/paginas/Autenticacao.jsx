@@ -2,6 +2,7 @@
 import { useState, useContext } from "react";
 import { useNavigate, Navigate, Link as RouterLink } from "react-router-dom";
 import { AuthContext } from "../contextos/AuthContext";
+import { useAuthActions } from "../hooks/useAuthActions"; // Pode usar o hook diretamente aqui também
 
 import {
   Button, TextField, Box, Typography, Paper, CircularProgress, Alert,
@@ -19,10 +20,10 @@ function Autenticacao() {
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState(""); // Mantemos o erro local para feedback imediato no form
+  const [erro, setErro] = useState("");
   
-  // Apenas as funções necessárias são importadas do contexto
-  const { login, registrar, logado } = useContext(AuthContext);
+  // As funções continuam a vir do contexto, que agora as obtém do hook.
+  const { login, registrar, logado } = useContext(AuthContext); 
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -57,11 +58,7 @@ function Autenticacao() {
     }
     
     setCarregando(false);
-
-    if (sucesso) {
-      navigate("/"); // A navegação acontece se a função do contexto retornar true
-    }
-    // Se não for sucesso, a notificação de erro já foi exibida pelo contexto
+    // A navegação continua a ser gerida dentro das funções de login/registrar no hook
   };
 
   return (
