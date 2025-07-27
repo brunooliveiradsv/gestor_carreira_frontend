@@ -29,7 +29,6 @@ import LinkIcon from '@mui/icons-material/Link';
 import ThumbUp from '@mui/icons-material/ThumbUp';
 import ThumbDown from '@mui/icons-material/ThumbDown';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
-import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 
 import EnqueteShowcase from '../componentes/EnqueteShowcase';
 
@@ -63,6 +62,7 @@ const LoginParaFas = () => {
     );
 };
 
+// --- ALTERAÇÃO 2: ESTADO DOS "GOSTOS" É RECEBIDO POR PROPS ---
 const SetlistDialog = ({ open, onClose, setlist, musicasCurtidas, onLikeMusica }) => {
     const { fa } = useFanAuth();
     const { mostrarNotificacao } = useNotificacao();
@@ -72,7 +72,7 @@ const SetlistDialog = ({ open, onClose, setlist, musicasCurtidas, onLikeMusica }
             mostrarNotificacao('Faça login como fã para curtir músicas!', 'info');
             return;
         }
-        onLikeMusica(musicaId);
+        onLikeMusica(musicaId); // Chama a função do componente pai
     };
     
     return (
