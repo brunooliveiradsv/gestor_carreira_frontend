@@ -366,6 +366,15 @@ const ShowCaseContent = () => {
   const fallbackCapa = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80';
   const videoDestaqueId = getYoutubeVideoId(artista.video_destaque_url);
 
+  const youtubePlayerOptions = {
+      height: '100%',
+      width: '100%',
+      playerVars: {
+          // Adiciona a origem da sua aplicação para resolver os erros de Cross-Origin
+          origin: window.location.origin 
+      }
+  };
+
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
       <Box sx={{ position: 'relative', height: { xs: '30vh', md: '50vh' }, bgcolor: '#000' }}>
