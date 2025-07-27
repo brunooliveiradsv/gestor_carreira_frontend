@@ -63,43 +63,16 @@ const LoginParaFas = () => {
     );
 };
 
-const SetlistDialog = ({ open, onClose, setlist }) => {
+const SetlistDialog = ({ open, onClose, setlist, musicasCurtidas, onLikeMusica }) => {
     const { fa } = useFanAuth();
     const { mostrarNotificacao } = useNotificacao();
-    const [musicasCurtidas, setMusicasCurtidas] = useState(new Set());
-
-    const handleLikeMusica = async (musicaId) => {
+    
+    const handleLikeClick = (musicaId) => {
         if (!fa) {
             mostrarNotificacao('Faça login como fã para curtir músicas!', 'info');
             return;
         }
-        
-        const jaCurtiu = musicasCurtidas.has(musicaId);
-        
-        setMusicasCurtidas(prev => {
-            const novoSet = new Set(prev);
-            if (jaCurtiu) {
-                novoSet.delete(musicaId);
-            } else {
-                novoSet.add(musicaId);
-            }
-            return novoSet;
-        });
-
-        try {
-            await apiClient.post(`/api/vitrine/musicas/${musicaId}/like`);
-        } catch (error) {
-            mostrarNotificacao('Erro ao registar o seu gosto.', 'error');
-            setMusicasCurtidas(prev => {
-                const novoSet = new Set(prev);
-                if (jaCurtiu) {
-                    novoSet.add(musicaId);
-                } else {
-                    novoSet.delete(musicaId);
-                }
-                return novoSet;
-            });
-        }
+        onLikeMusica(musicaId);
     };
     
     return (
@@ -112,7 +85,7 @@ const SetlistDialog = ({ open, onClose, setlist }) => {
                         <ListItem key={musica.id} secondaryAction={
                             <Tooltip title="Curtir música">
                                 <span>
-                                    <IconButton size="small" onClick={() => handleLikeMusica(musica.id)} disabled={!fa}>
+                                    <IconButton size="small" onClick={() => handleLikeClick(musica.id)} disabled={!fa}>
                                         <FavoriteIcon fontSize="small" color={musicasCurtidas.has(musica.id) ? 'error' : 'action'} />
                                     </IconButton>
                                 </span>
@@ -136,7 +109,7 @@ const StatCard = ({ icon, value, label }) => (
     </Box>
 );
 
-const VitrineHeader = ({ artista, handleAplaudir, jaAplaudido }) => {
+const VitrineHeader = ({ artista, estatisticas, handleAplaudir, jaAplaudido }) => {
     const { fa } = useFanAuth();
     let fotoUrlCompleta = null;
     if (artista.foto_url) {
@@ -174,9 +147,9 @@ const VitrineHeader = ({ artista, handleAplaudir, jaAplaudido }) => {
                 </Box>
                 <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }} />
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, justifyContent: 'space-around', width: { xs: '100%', md: 'auto' }, gap: 2, p: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
-                    <StatCard icon={<MicIcon color="primary" />} value={artista.estatisticas?.shows} label="Shows"/>
-                    <StatCard icon={<LibraryMusicIcon color="primary" />} value={artista.estatisticas?.musicas} label="Músicas"/>
-                    <StatCard icon={<EmojiEventsIcon color="primary" />} value={artista.estatisticas?.conquistas} label="Conquistas"/>
+                    <StatCard icon={<MicIcon color="primary" />} value={estatisticas?.shows} label="Shows"/>
+                    <StatCard icon={<LibraryMusicIcon color="primary" />} value={estatisticas?.musicas} label="Músicas"/>
+                    <StatCard icon={<EmojiEventsIcon color="primary" />} value={estatisticas?.conquistas} label="Conquistas"/>
                 </Box>
             </Box>
         </Paper>
@@ -295,6 +268,7 @@ const ShowCaseContent = () => {
   const [dialogoSetlist, setDialogoSetlist] = useState({ open: false, setlist: null });
   const [indiceCapa, setIndiceCapa] = useState(0);
   const [jaAplaudido, setJaAplaudido] = useState(false);
+  const [musicasCurtidas, setMusicasCurtidas] = useState(new Set()); // Estado para as músicas curtidas
 
   const { fa } = useFanAuth();
   const { mostrarNotificacao } = useNotificacao();
@@ -321,7 +295,9 @@ const ShowCaseContent = () => {
   }, [url_unica]);
 
   useEffect(() => {
-    if (url_unica) buscarDadosVitrine();
+    if (url_unica) {
+        buscarDadosVitrine();
+    }
   }, [url_unica, buscarDadosVitrine]);
 
   useEffect(() => {
@@ -383,6 +359,26 @@ const ShowCaseContent = () => {
     }
   };
 
+  const handleLikeMusica = async (musicaId) => {
+    const jaCurtiu = musicasCurtidas.has(musicaId);
+    setMusicasCurtidas(prev => {
+        const novoSet = new Set(prev);
+        jaCurtiu ? novoSet.delete(musicaId) : novoSet.add(musicaId);
+        return novoSet;
+    });
+
+    try {
+        await apiClient.post(`/api/vitrine/musicas/${musicaId}/like`);
+    } catch (error) {
+        mostrarNotificacao('Erro ao registar o seu gosto.', 'error');
+        setMusicasCurtidas(prev => {
+            const novoSet = new Set(prev);
+            jaCurtiu ? novoSet.add(musicaId) : novoSet.delete(musicaId);
+            return novoSet;
+        });
+    }
+  };
+
   if (carregando) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
   if (erro) return (
       <Container sx={{ textAlign: 'center', mt: 8 }}>
@@ -392,7 +388,7 @@ const ShowCaseContent = () => {
     );
   if (!vitrine) return null;
 
-  const { artista, proximosShows, contatoPublico, postsRecentes, enqueteAtiva } = vitrine;
+  const { artista, proximosShows, contatoPublico, postsRecentes, enqueteAtiva, estatisticas } = vitrine;
   const fallbackCapa = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80';
   const videoDestaqueId = getYoutubeVideoId(artista.video_destaque_url);
 
@@ -412,7 +408,7 @@ const ShowCaseContent = () => {
       </Box>
       
       <Container maxWidth="lg" sx={{ pb: 5 }}>
-        <VitrineHeader artista={artista} estatisticas={vitrine.estatisticas} handleAplaudir={handleAplaudir} jaAplaudido={jaAplaudido} totalAplausos={vitrine.artista.aplausos} />
+        <VitrineHeader artista={artista} estatisticas={estatisticas} handleAplaudir={handleAplaudir} jaAplaudido={jaAplaudido} />
         
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4 }}>
           <Box sx={{ flex: '2 1 60%', display: 'flex', flexDirection: 'column', gap: 4, order: { xs: 2, lg: 1 } }}>
@@ -478,6 +474,8 @@ const ShowCaseContent = () => {
         open={dialogoSetlist.open} 
         onClose={() => setDialogoSetlist({ open: false, setlist: null })}
         setlist={dialogoSetlist.setlist}
+        musicasCurtidas={musicasCurtidas}
+        onLikeMusica={handleLikeMusica}
       />
     </Box>
   );
