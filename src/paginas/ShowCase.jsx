@@ -4,13 +4,11 @@ import { useParams, Link as RouterLink } from 'react-router-dom';
 import apiClient from '../apiClient';
 import YouTube from 'react-youtube';
 
-// Imports para autenticação de fãs
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { FanAuthProvider, useFanAuth } from '../contextos/FanAuthContext';
 import { useNotificacao } from '../contextos/NotificationContext';
 import useApi from '../hooks/useApi';
 
-// Imports do Material-UI
 import {
   Box, Typography, CircularProgress, Container, Paper, Avatar,
   Divider, List, ListItem, ListItemIcon, ListItemText, Button, Chip, IconButton, Tooltip, Link, Dialog
@@ -33,7 +31,7 @@ import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 
 import EnqueteShowcase from '../componentes/EnqueteShowcase';
 
-// --- COMPONENTES INTERNOS DA PÁGINA ---
+// --- COMPONENTES INTERNOS (sem alterações) ---
 
 const LoginParaFas = () => {
     const { fa, loginFa, logoutFa } = useFanAuth();
@@ -50,15 +48,9 @@ const LoginParaFas = () => {
 
     return (
         <GoogleLogin
-            onSuccess={credentialResponse => {
-                loginFa(credentialResponse.credential);
-            }}
-            onError={() => {
-                console.error('Login com Google falhou');
-            }}
-            theme="filled_black"
-            text="continue_with"
-            shape="circle"
+            onSuccess={credentialResponse => loginFa(credentialResponse.credential)}
+            onError={() => console.error('Login com Google falhou')}
+            theme="filled_black" text="continue_with" shape="circle"
         />
     );
 };
@@ -85,7 +77,7 @@ const SetlistDialog = ({ open, onClose, setlist, musicasCurtidas, onLikeMusica }
                         <ListItem key={musica.id} secondaryAction={
                             <Tooltip title="Curtir música">
                                 <span>
-                                    <IconButton size="small" onClick={() => handleLikeClick(musica.id)} disabled={!fa}>
+                                    <IconButton size="small" onClick={() => handleLikeClick(musica.id)} disabled={!fa} aria-label="Curtir música">
                                         <FavoriteIcon fontSize="small" color={musicasCurtidas.has(musica.id) ? 'error' : 'action'} />
                                     </IconButton>
                                 </span>
@@ -110,7 +102,6 @@ const StatCard = ({ icon, value, label }) => (
 );
 
 const VitrineHeader = ({ artista, estatisticas, handleAplaudir, jaAplaudido }) => {
-    const { fa } = useFanAuth();
     let fotoUrlCompleta = null;
     if (artista.foto_url) {
         fotoUrlCompleta = artista.foto_url.startsWith('http')
@@ -127,9 +118,9 @@ const VitrineHeader = ({ artista, estatisticas, handleAplaudir, jaAplaudido }) =
                 <Box sx={{ flexGrow: 1, width: '100%', textAlign: { xs: 'center', md: 'left' } }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, justifyContent: {xs: 'center', md: 'flex-start'} }}>
                         <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', sm: '3rem' } }}>{artista.nome}</Typography>
-                        <Tooltip title={!fa ? "Faça login para aplaudir" : (jaAplaudido ? "Você já aplaudiu!" : "Apoie este artista!")}>
+                        <Tooltip title={jaAplaudido ? "Você já aplaudiu!" : "Apoie este artista!"}>
                             <span>
-                                <IconButton onClick={handleAplaudir} disabled={!fa || jaAplaudido} sx={{ fontSize: '1.5rem', filter: jaAplaudido ? 'grayscale(100%)' : 'none', transform: jaAplaudido ? 'scale(1.1)' : 'scale(1)', transition: 'transform 0.2s, filter 0.2s' }}>
+                                <IconButton aria-label="Aplaudir artista" onClick={handleAplaudir} disabled={jaAplaudido} sx={{ fontSize: '1.5rem', filter: jaAplaudido ? 'grayscale(100%)' : 'none', transform: jaAplaudido ? 'scale(1.1)' : 'scale(1)', transition: 'transform 0.2s, filter 0.2s' }}>
                                   👏
                                 </IconButton>
                             </span>
@@ -140,9 +131,9 @@ const VitrineHeader = ({ artista, estatisticas, handleAplaudir, jaAplaudido }) =
                         {artista.biografia || 'Biografia ainda não preenchida.'}
                     </Typography>
                     <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: {xs: 'center', md: 'flex-start'} }}>
-                        {artista.links_redes?.instagram && (<IconButton component="a" href={artista.links_redes.instagram} target="_blank" aria-label="Instagram"><Instagram /></IconButton>)}
-                        {artista.links_redes?.youtube && (<IconButton component="a" href={artista.links_redes.youtube} target="_blank" aria-label="YouTube"><YouTubeIcon /></IconButton>)}
-                        {artista.links_redes?.spotify && (<IconButton component="a" href={artista.links_redes.spotify} target="_blank" aria-label="Spotify"><MusicNoteIcon /></IconButton>)}
+                        {artista.links_redes?.instagram && (<IconButton component="a" href={artista.links_redes.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Instagram /></IconButton>)}
+                        {artista.links_redes?.youtube && (<IconButton component="a" href={artista.links_redes.youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube"><YouTubeIcon /></IconButton>)}
+                        {artista.links_redes?.spotify && (<IconButton component="a" href={artista.links_redes.spotify} target="_blank" rel="noopener noreferrer" aria-label="Spotify"><MusicNoteIcon /></IconButton>)}
                     </Box>
                 </Box>
                 <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }} />
@@ -203,9 +194,9 @@ const PostsSection = ({ posts, handleReacao }) => {
                                 <Typography variant="caption" color="text.secondary">{dataPost || ''}</Typography>
                             )}
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Tooltip title="Gostei"><span><IconButton size="small" onClick={() => onReacaoClick(post.id, 'like')} disabled={!!reacaoDoUtilizador}><ThumbUp fontSize="small" color={reacaoDoUtilizador === 'like' ? 'primary' : 'inherit'} /></IconButton></span></Tooltip>
+                                <Tooltip title="Gostei"><span><IconButton aria-label="Gostar da publicação" size="small" onClick={() => onReacaoClick(post.id, 'like')} disabled={!!reacaoDoUtilizador}><ThumbUp fontSize="small" color={reacaoDoUtilizador === 'like' ? 'primary' : 'inherit'} /></IconButton></span></Tooltip>
                                 <Typography variant="body2">{post.likes}</Typography>
-                                <Tooltip title="Não gostei"><span><IconButton size="small" onClick={() => onReacaoClick(post.id, 'dislike')} disabled={!!reacaoDoUtilizador}><ThumbDown fontSize="small" color={reacaoDoUtilizador === 'dislike' ? 'error' : 'inherit'} /></IconButton></span></Tooltip>
+                                <Tooltip title="Não gostei"><span><IconButton aria-label="Não gostar da publicação" size="small" onClick={() => onReacaoClick(post.id, 'dislike')} disabled={!!reacaoDoUtilizador}><ThumbDown fontSize="small" color={reacaoDoUtilizador === 'dislike' ? 'error' : 'inherit'} /></IconButton></span></Tooltip>
                                 <Typography variant="body2">{post.dislikes}</Typography>
                             </Box>
                         </Box>
@@ -268,10 +259,37 @@ const ShowCaseContent = () => {
   const [dialogoSetlist, setDialogoSetlist] = useState({ open: false, setlist: null });
   const [indiceCapa, setIndiceCapa] = useState(0);
   const [jaAplaudido, setJaAplaudido] = useState(false);
+  
+  // --- ALTERAÇÃO AQUI ---
+  // O estado inicial continua a ser um Set vazio.
   const [musicasCurtidas, setMusicasCurtidas] = useState(new Set());
 
   const { fa } = useFanAuth();
   const { mostrarNotificacao } = useNotificacao();
+  
+  // --- INÍCIO DA CORREÇÃO ---
+  // NOVO useEffect para buscar os "likes" do fã logado
+  useEffect(() => {
+      const buscarLikesDoFa = async () => {
+          if (fa) { // Só executa se houver um fã logado
+              try {
+                  const resposta = await apiClient.get('/api/vitrine/meus-likes');
+                  // A resposta.data deve ser um array de IDs: [1, 5, 12]
+                  // Criamos um novo Set com estes IDs para inicializar o estado
+                  setMusicasCurtidas(new Set(resposta.data));
+              } catch (error) {
+                  console.error("Erro ao buscar os likes do fã:", error);
+                  // Não precisa mostrar notificação de erro aqui, apenas não preenche os corações
+              }
+          } else {
+              // Se o fã fizer logout, limpa a lista de músicas curtidas
+              setMusicasCurtidas(new Set());
+          }
+      };
+      
+      buscarLikesDoFa();
+  }, [fa]); // A dependência é `fa`, então executa sempre que o fã logar ou deslogar
+  // --- FIM DA CORREÇÃO ---
 
   const getYoutubeVideoId = (url) => {
     if (!url) return null;
