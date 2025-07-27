@@ -75,9 +75,14 @@ const SetlistDialog = ({ open, onClose, setlist }) => {
         }
         
         const jaCurtiu = musicasCurtidas.has(musicaId);
+        
         setMusicasCurtidas(prev => {
             const novoSet = new Set(prev);
-            jaCurtiu ? novoSet.delete(musicaId) : novoSet.add(musicaId);
+            if (jaCurtiu) {
+                novoSet.delete(musicaId);
+            } else {
+                novoSet.add(musicaId);
+            }
             return novoSet;
         });
 
@@ -87,7 +92,11 @@ const SetlistDialog = ({ open, onClose, setlist }) => {
             mostrarNotificacao('Erro ao registar o seu gosto.', 'error');
             setMusicasCurtidas(prev => {
                 const novoSet = new Set(prev);
-                jaCurtiu ? novoSet.add(musicaId) : novoSet.delete(musicaId);
+                if (jaCurtiu) {
+                    novoSet.add(musicaId);
+                } else {
+                    novoSet.delete(musicaId);
+                }
                 return novoSet;
             });
         }
@@ -127,7 +136,7 @@ const StatCard = ({ icon, value, label }) => (
     </Box>
 );
 
-const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, handleAplaudir }) => {
+const VitrineHeader = ({ artista, handleAplaudir, jaAplaudido }) => {
     const { fa } = useFanAuth();
     let fotoUrlCompleta = null;
     if (artista.foto_url) {
@@ -147,18 +156,12 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
                         <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', sm: '3rem' } }}>{artista.nome}</Typography>
                         <Tooltip title={!fa ? "Faça login para aplaudir" : (jaAplaudido ? "Você já aplaudiu!" : "Apoie este artista!")}>
                             <span>
-                                {/* --- ALTERAÇÃO 1: ÍCONE E ESTILO DO APLAUSO --- */}
-                                <IconButton onClick={handleAplaudir} disabled={!fa || jaAplaudido} sx={{
-                                    fontSize: '1.5rem', // Aumenta o tamanho do emoji
-                                    filter: jaAplaudido ? 'grayscale(100%)' : 'none', // Fica cinzento depois de clicado
-                                    transform: jaAplaudido ? 'scale(1.2)' : 'scale(1)',
-                                    transition: 'transform 0.2s, filter 0.2s'
-                                }}>
+                                <IconButton onClick={handleAplaudir} disabled={!fa || jaAplaudido} sx={{ fontSize: '1.5rem', filter: jaAplaudido ? 'grayscale(100%)' : 'none', transform: jaAplaudido ? 'scale(1.1)' : 'scale(1)', transition: 'transform 0.2s, filter 0.2s' }}>
                                   👏
                                 </IconButton>
                             </span>
                         </Tooltip>
-                        <Typography variant="h6" color="text.secondary">{totalAplausos}</Typography>
+                        <Typography variant="h6" color="text.secondary">{artista.aplausos}</Typography>
                     </Box>
                     <Typography variant="body1" color="text.secondary" sx={{ mt: 1, whiteSpace: 'pre-wrap' }}>
                         {artista.biografia || 'Biografia ainda não preenchida.'}
@@ -171,15 +174,14 @@ const VitrineHeader = ({ artista, estatisticas, jaAplaudido, totalAplausos, hand
                 </Box>
                 <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }} />
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, justifyContent: 'space-around', width: { xs: '100%', md: 'auto' }, gap: 2, p: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
-                    <StatCard icon={<MicIcon color="primary" />} value={estatisticas?.shows} label="Shows"/>
-                    <StatCard icon={<LibraryMusicIcon color="primary" />} value={estatisticas?.musicas} label="Músicas"/>
-                    <StatCard icon={<EmojiEventsIcon color="primary" />} value={estatisticas?.conquistas} label="Conquistas"/>
+                    <StatCard icon={<MicIcon color="primary" />} value={artista.estatisticas?.shows} label="Shows"/>
+                    <StatCard icon={<LibraryMusicIcon color="primary" />} value={artista.estatisticas?.musicas} label="Músicas"/>
+                    <StatCard icon={<EmojiEventsIcon color="primary" />} value={artista.estatisticas?.conquistas} label="Conquistas"/>
                 </Box>
             </Box>
         </Paper>
     );
 };
-
 
 const PostsSection = ({ posts, handleReacao }) => {
     const { fa } = useFanAuth();
@@ -293,50 +295,77 @@ const ShowCaseContent = () => {
   const [dialogoSetlist, setDialogoSetlist] = useState({ open: false, setlist: null });
   const [indiceCapa, setIndiceCapa] = useState(0);
   const [jaAplaudido, setJaAplaudido] = useState(false);
-  const [reacoesPosts, setReacoesPosts] = useState({});
 
   const { fa } = useFanAuth();
   const { mostrarNotificacao } = useNotificacao();
-  
-  const buscarDadosVitrine = useCallback(async () => { /* ... código sem alterações ... */ });
+
+  const getYoutubeVideoId = (url) => {
+    if (!url) return null;
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const buscarDadosVitrine = useCallback(async () => {
+      try {
+        setCarregando(true);
+        const { data } = await apiClient.get(`/api/vitrine/${url_unica}`);
+        setVitrine(data);
+        setErro('');
+      } catch (err) {
+        setErro(err.response?.data?.mensagem || 'Artista não encontrado.');
+        setVitrine(null);
+      } finally {
+        setCarregando(false);
+      }
+  }, [url_unica]);
 
   useEffect(() => {
-    if (url_unica) {
-      buscarDadosVitrine();
-      const aplausoGuardado = localStorage.getItem(`aplauso_${url_unica}`);
-      if (aplausoGuardado) setJaAplaudido(true);
-    }
+    if (url_unica) buscarDadosVitrine();
   }, [url_unica, buscarDadosVitrine]);
 
+  useEffect(() => {
+    if (fa && url_unica) {
+      const aplausoGuardado = localStorage.getItem(`aplauso_${fa.id}_${url_unica}`);
+      setJaAplaudido(!!aplausoGuardado);
+    }
+  }, [fa, url_unica]);
+  
+  const capas = vitrine?.artista?.foto_capa_url || [];
+  useEffect(() => {
+    if (capas.length > 1) {
+      const timer = setInterval(() => {
+        setIndiceCapa(prev => (prev + 1) % capas.length);
+      }, 5000);
+      return () => clearInterval(timer);
+    }
+  }, [capas.length]);
+  
   const handleAplaudir = async () => {
     if (!fa) {
-        mostrarNotificacao('Faça login como fã para aplaudir!', 'info');
-        return;
+      mostrarNotificacao('Faça login como fã para aplaudir!', 'info');
+      return;
     }
-    if (jaAplaudido) return;
+    const chaveAplauso = `aplauso_${fa.id}_${url_unica}`;
+    if (localStorage.getItem(chaveAplauso)) return;
     
-    // Atualização Otimista
-    setVitrine(prev => ({ ...prev, artista: { ...prev.artista, aplausos: prev.artista.aplausos + 1 } }));
+    setVitrine(prev => ({...prev, artista: {...prev.artista, aplausos: prev.artista.aplausos + 1}}));
     setJaAplaudido(true);
-    localStorage.setItem(`aplauso_${url_unica}`, 'true');
+    localStorage.setItem(chaveAplauso, 'true');
 
     try {
-        await apiClient.post(`/api/vitrine/${url_unica}/aplaudir`);
+      await apiClient.post(`/api/vitrine/${url_unica}/aplaudir`);
     } catch (error) {
-        mostrarNotificacao('Erro ao registar aplauso. Tente novamente.', 'error');
-        // Reverte em caso de erro
-        setVitrine(prev => ({ ...prev, artista: { ...prev.artista, aplausos: prev.artista.aplausos - 1 } }));
-        setJaAplaudido(false);
-        localStorage.removeItem(`aplauso_${url_unica}`);
+      mostrarNotificacao('Erro ao registar aplauso. Tente novamente.', 'error');
+      localStorage.removeItem(chaveAplauso);
+      buscarDadosVitrine();
     }
   };
   
-  // --- ALTERAÇÃO 2: LIKE/DISLIKE SEM RECARREGAR A PÁGINA ---
   const handleReacao = async (postId, tipo) => {
     const chaveReacao = `reacao_post_${postId}`;
     if (localStorage.getItem(chaveReacao)) return;
 
-    // Atualização Otimista da UI
     setVitrine(prev => ({
         ...prev,
         postsRecentes: prev.postsRecentes.map(p => 
@@ -346,11 +375,9 @@ const ShowCaseContent = () => {
     localStorage.setItem(chaveReacao, tipo);
 
     try {
-        // Apenas envia a reação para o backend, sem esperar por uma nova busca de dados.
         await apiClient.post(`/api/vitrine/posts/${postId}/reacao`, { tipo });
     } catch (error) {
         mostrarNotificacao('Erro ao registar reação.', 'error');
-        // Se a chamada à API falhar, reverte a UI para o estado original
         localStorage.removeItem(chaveReacao);
         buscarDadosVitrine(); 
     }
@@ -385,7 +412,7 @@ const ShowCaseContent = () => {
       </Box>
       
       <Container maxWidth="lg" sx={{ pb: 5 }}>
-        <VitrineHeader artista={artista} estatisticas={vitrine.estatisticas} handleAplaudir={handleAplaudir} />
+        <VitrineHeader artista={artista} estatisticas={vitrine.estatisticas} handleAplaudir={handleAplaudir} jaAplaudido={jaAplaudido} totalAplausos={vitrine.artista.aplausos} />
         
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4 }}>
           <Box sx={{ flex: '2 1 60%', display: 'flex', flexDirection: 'column', gap: 4, order: { xs: 2, lg: 1 } }}>
@@ -398,7 +425,7 @@ const ShowCaseContent = () => {
             {postsRecentes && postsRecentes.length > 0 && (
               <PostsSection posts={postsRecentes} handleReacao={handleReacao} />
             )}
-
+            
             {enqueteAtiva && (<EnqueteShowcase enquete={enqueteAtiva} />)}
           </Box>
           
@@ -430,7 +457,6 @@ const ShowCaseContent = () => {
               ) : ( <Typography color="text.secondary">Nenhum show agendado no momento.</Typography> )}
             </Paper>
 
-            {/* --- CORREÇÃO DE LAYOUT AQUI --- */}
             <RankingFas url_unica={url_unica} />
             <MusicasMaisCurtidas url_unica={url_unica} />
 
@@ -452,7 +478,6 @@ const ShowCaseContent = () => {
         open={dialogoSetlist.open} 
         onClose={() => setDialogoSetlist({ open: false, setlist: null })}
         setlist={dialogoSetlist.setlist}
-        artistaId={artista.id}
       />
     </Box>
   );
