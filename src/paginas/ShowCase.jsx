@@ -363,7 +363,7 @@ const ShowCaseContent = () => {
     );
   if (!vitrine) return null;
 
-  const { artista, proximosShows, contatoPublico, postsRecentes, enqueteAtiva, estatisticas } = vitrine;
+  const { artista, proximosShows, contatoPublico, postsRecentes, enqueteAtiva, estatisticas, feedbacksRecentes } = vitrine;
   const fallbackCapa = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80';
   const videoDestaqueId = getYoutubeVideoId(artista.video_destaque_url);
 
@@ -439,7 +439,7 @@ const ShowCaseContent = () => {
 
             <RankingFas url_unica={url_unica} />
             <MusicasMaisCurtidas url_unica={url_unica} />
-            <FeedbackShowcase artistaId={artista.id} url_unica={url_unica} />
+            <FeedbackShowcase artistaId={artista.id} url_unica={url_unica} feedbacksRecentes={feedbacksRecentes} />
 
 
             {contatoPublico && (
