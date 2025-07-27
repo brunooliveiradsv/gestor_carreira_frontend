@@ -419,8 +419,6 @@ const ShowCaseContent = () => {
             {postsRecentes && postsRecentes.length > 0 && (
               <PostsSection posts={postsRecentes} handleReacao={handleReacao} />
             )}
-            
-            {enqueteAtiva && (<EnqueteShowcase enquete={enqueteAtiva} />)}
           </Box>
           
           <Box sx={{ flex: '1 1 30%', display: 'flex', flexDirection: 'column', gap: 4, order: { xs: 1, lg: 2 } }}>
@@ -450,6 +448,8 @@ const ShowCaseContent = () => {
                 </List>
               ) : ( <Typography color="text.secondary">Nenhum show agendado no momento.</Typography> )}
             </Paper>
+
+            {enqueteAtiva && (<EnqueteShowcase enquete={enqueteAtiva} />)}
 
             <RankingFas url_unica={url_unica} />
             <MusicasMaisCurtidas url_unica={url_unica} />
