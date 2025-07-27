@@ -102,6 +102,7 @@ const StatCard = ({ icon, value, label }) => (
 );
 
 const VitrineHeader = ({ artista, estatisticas, handleAplaudir, jaAplaudido }) => {
+    const { fa } = useFanAuth();
     let fotoUrlCompleta = null;
     if (artista.foto_url) {
         fotoUrlCompleta = artista.foto_url.startsWith('http')
@@ -118,9 +119,9 @@ const VitrineHeader = ({ artista, estatisticas, handleAplaudir, jaAplaudido }) =
                 <Box sx={{ flexGrow: 1, width: '100%', textAlign: { xs: 'center', md: 'left' } }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, justifyContent: {xs: 'center', md: 'flex-start'} }}>
                         <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', sm: '3rem' } }}>{artista.nome}</Typography>
-                        <Tooltip title={jaAplaudido ? "Você já aplaudiu!" : "Apoie este artista!"}>
+                        <Tooltip title={!fa ? "Faça login para aplaudir" : (jaAplaudido ? "Você já aplaudiu!" : "Apoie este artista!")}>
                             <span>
-                                <IconButton aria-label="Aplaudir artista" onClick={handleAplaudir} disabled={jaAplaudido} sx={{ fontSize: '1.5rem', filter: jaAplaudido ? 'grayscale(100%)' : 'none', transform: jaAplaudido ? 'scale(1.1)' : 'scale(1)', transition: 'transform 0.2s, filter 0.2s' }}>
+                                <IconButton aria-label="Aplaudir artista" onClick={handleAplaudir} disabled={!fa || jaAplaudido} sx={{ fontSize: '1.5rem', filter: jaAplaudido ? 'grayscale(100%)' : 'none', transform: jaAplaudido ? 'scale(1.1)' : 'scale(1)', transition: 'transform 0.2s, filter 0.2s' }}>
                                   👏
                                 </IconButton>
                             </span>
@@ -260,36 +261,11 @@ const ShowCaseContent = () => {
   const [indiceCapa, setIndiceCapa] = useState(0);
   const [jaAplaudido, setJaAplaudido] = useState(false);
   
-  // --- ALTERAÇÃO AQUI ---
-  // O estado inicial continua a ser um Set vazio.
-  const [musicasCurtidas, setMusicasCurtidas] = useState(new Set());
-
-  const { fa } = useFanAuth();
+  // 1. O estado e a função para curtir agora vêm do contexto
+  const { fa, musicasCurtidas, handleLikeMusica } = useFanAuth(); 
   const { mostrarNotificacao } = useNotificacao();
-  
-  // --- INÍCIO DA CORREÇÃO ---
-  // NOVO useEffect para buscar os "likes" do fã logado
-  useEffect(() => {
-      const buscarLikesDoFa = async () => {
-          if (fa) { // Só executa se houver um fã logado
-              try {
-                  const resposta = await apiClient.get('/api/vitrine/meus-likes');
-                  // A resposta.data deve ser um array de IDs: [1, 5, 12]
-                  // Criamos um novo Set com estes IDs para inicializar o estado
-                  setMusicasCurtidas(new Set(resposta.data));
-              } catch (error) {
-                  console.error("Erro ao buscar os likes do fã:", error);
-                  // Não precisa mostrar notificação de erro aqui, apenas não preenche os corações
-              }
-          } else {
-              // Se o fã fizer logout, limpa a lista de músicas curtidas
-              setMusicasCurtidas(new Set());
-          }
-      };
-      
-      buscarLikesDoFa();
-  }, [fa]); // A dependência é `fa`, então executa sempre que o fã logar ou deslogar
-  // --- FIM DA CORREÇÃO ---
+
+  // 2. O useEffect que buscava os likes foi REMOVIDO daqui.
 
   const getYoutubeVideoId = (url) => {
     if (!url) return null;
@@ -375,25 +351,7 @@ const ShowCaseContent = () => {
     }
   };
 
-  const handleLikeMusica = async (musicaId) => {
-    const jaCurtiu = musicasCurtidas.has(musicaId);
-    setMusicasCurtidas(prev => {
-        const novoSet = new Set(prev);
-        jaCurtiu ? novoSet.delete(musicaId) : novoSet.add(musicaId);
-        return novoSet;
-    });
-
-    try {
-        await apiClient.post(`/api/vitrine/musicas/${musicaId}/like`);
-    } catch (error) {
-        mostrarNotificacao('Erro ao registar o seu gosto.', 'error');
-        setMusicasCurtidas(prev => {
-            const novoSet = new Set(prev);
-            jaCurtiu ? novoSet.add(musicaId) : novoSet.delete(musicaId);
-            return novoSet;
-        });
-    }
-  };
+  // 3. A função local handleLikeMusica foi REMOVIDA.
 
   if (carregando) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
   if (erro) return (
