@@ -30,6 +30,7 @@ import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 
 import EnqueteShowcase from '../componentes/EnqueteShowcase';
+import FeedbackShowcase from '../componentes/FeedbackShowcase';
 
 // --- COMPONENTES INTERNOS (sem alterações) ---
 
@@ -438,6 +439,8 @@ const ShowCaseContent = () => {
 
             <RankingFas url_unica={url_unica} />
             <MusicasMaisCurtidas url_unica={url_unica} />
+            <FeedbackShowcase artistaId={artista.id} url_unica={url_unica} />
+
 
             {contatoPublico && (
               <Paper sx={{ p: 3 }}>
