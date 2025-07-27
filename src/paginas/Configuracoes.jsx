@@ -1,6 +1,6 @@
 // src/paginas/Configuracoes.jsx
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import apiClient from '../apiClient';
 import { useNotificacao } from "../contextos/NotificationContext";
 import { AuthContext } from "../contextos/AuthContext";
@@ -25,10 +25,11 @@ const FormCard = ({ title, children, component = "div", ...props }) => (
 );
 
 function Configuracoes() {
-  const { usuario, setUsuario, logout } = useContext(AuthContext);
+  const { usuario, setUsuario, logout, recarregarUsuario } = useContext(AuthContext);
   const { mostrarNotificacao } = useNotificacao();
   const { abrirDialogoDeUpgrade } = useUpgradeDialog();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [dadosPerfil, setDadosPerfil] = useState({ nome: "", email: "" });
   const [dadosSenha, setDadosSenha] = useState({ senhaAtual: "", novaSenha: "", confirmarNovaSenha: "" });
@@ -40,6 +41,17 @@ function Configuracoes() {
   const [dialogoUrlAberto, setDialogoUrlAberto] = useState(false);
   const [urlImagem, setUrlImagem] = useState("");
   const fileInputRef = useRef();
+
+  // Efeito para recarregar os dados do utilizador após um pagamento bem-sucedido
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.get('pagamento') === 'sucesso') {
+      mostrarNotificacao('Pagamento bem-sucedido! O seu plano foi atualizado.', 'success');
+      recarregarUsuario();
+      // Limpa o URL para evitar que a mensagem apareça novamente
+      navigate('/configuracoes', { replace: true });
+    }
+  }, [location, navigate, mostrarNotificacao, recarregarUsuario]);
 
   useEffect(() => {
     if (usuario) {
@@ -136,15 +148,12 @@ function Configuracoes() {
   
   const fecharDialogoSenha = () => setDialogoSenhaAberto(false);
 
-  // --- INÍCIO DA ALTERAÇÃO ---
   const handleGerirAssinatura = async () => {
-    // Se o utilizador for Free ou tiver uma assinatura inativa, navega para a página de planos
     if (usuario.plano === 'free' || usuario.status_assinatura === 'inativa' || usuario.status_assinatura === 'cancelada') {
         navigate('/assinatura');
         return;
     }
 
-    // Se o utilizador já for assinante, abre o portal do Stripe para gestão
     setCarregando(prev => ({ ...prev, portal: true }));
     try {
         const resposta = await apiClient.post('/api/assinatura/criar-sessao-portal');
@@ -154,7 +163,6 @@ function Configuracoes() {
         setCarregando(prev => ({ ...prev, portal: false }));
     }
   };
-  // --- FIM DA ALTERAÇÃO ---
 
   const capitalizar = (texto) => {
     if (!texto) return '';
