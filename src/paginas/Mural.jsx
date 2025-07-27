@@ -194,7 +194,7 @@ function GerirCapas({ usuario, setUsuario, mostrarNotificacao }) {
                               <Box {...provided.dragHandleProps} sx={{ position: 'absolute', top: 4, left: 4, bgcolor: 'rgba(0,0,0,0.5)', borderRadius: '50%', display: 'flex', cursor: 'grab' }}>
                                   <DragIndicatorIcon sx={{ color: 'white' }} />
                               </Box>
-                              <IconButton onClick={() => handleRemoverCapa(index)} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'white' }}>
+                              <IconButton onClick={() => handleRemoverCapa(index)} aria-label={`Remover capa ${index + 1}`} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'white' }}>
                                   <DeleteIcon fontSize="small" />
                               </IconButton>
                           </Paper>
@@ -261,7 +261,6 @@ function Mural() {
   const [dialogoEnqueteAberto, setDialogoEnqueteAberto] = useState(false);
   const [salvandoEnquete, setSalvandoEnquete] = useState(false);
 
-  // --- Novos estados para os diálogos de confirmação de exclusão ---
   const [dialogoConfirmacaoPostAberto, setDialogoConfirmacaoPostAberto] = useState(false);
   const [postParaExcluir, setPostParaExcluir] = useState(null);
   const [dialogoConfirmacaoEnqueteAberto, setDialogoConfirmacaoEnqueteAberto] = useState(false);
@@ -315,7 +314,6 @@ function Mural() {
     }
   };
 
-  // --- Funções para o diálogo de confirmação de exclusão de Post ---
   const handleAbrirDialogoConfirmacaoPost = (postId) => {
     setPostParaExcluir(postId);
     setDialogoConfirmacaoPostAberto(true);
@@ -332,12 +330,11 @@ function Mural() {
       await apiClient.delete(`/api/posts/${postParaExcluir}`);
       mostrarNotificacao("Publicação apagada com sucesso.", "success");
       handleFecharDialogoConfirmacaoPost();
-      buscarPosts(); // Atualiza a lista de posts
+      buscarPosts();
     } catch (error) {
       mostrarNotificacao("Erro ao apagar a publicação.", "error");
     }
   };
-  // Fim das funções de Post
 
   const handleSalvarEnquete = async (dadosEnquete) => {
     setSalvandoEnquete(true);
@@ -363,7 +360,6 @@ function Mural() {
     }
   };
 
-  // --- Funções para o diálogo de confirmação de exclusão de Enquete ---
   const handleAbrirDialogoConfirmacaoEnquete = (enqueteId) => {
     setEnqueteParaExcluir(enqueteId);
     setDialogoConfirmacaoEnqueteAberto(true);
@@ -380,12 +376,11 @@ function Mural() {
       await apiClient.delete(`/api/enquetes/${enqueteParaExcluir}`);
       mostrarNotificacao('Enquete apagada com sucesso.', 'success');
       handleFecharDialogoConfirmacaoEnquete();
-      buscarEnquetes(); // Atualiza a lista de enquetes
+      buscarEnquetes();
     } catch (error) {
       mostrarNotificacao(error.response?.data?.mensagem || 'Erro ao apagar enquete.', 'error');
     }
   };
-  // Fim das funções de Enquete
 
   if (!usuario) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
@@ -423,14 +418,13 @@ function Mural() {
                                 <Box>
                                     <Tooltip title="Ativar esta enquete no Showcase (desativa as outras)">
                                         <span>
-                                            <IconButton onClick={() => handleAtivarEnquete(enquete.id)} disabled={enquete.ativa} color="success">
+                                            <IconButton aria-label="Ativar enquete" onClick={() => handleAtivarEnquete(enquete.id)} disabled={enquete.ativa} color="success">
                                                 <CheckCircleIcon />
                                             </IconButton>
                                         </span>
                                     </Tooltip>
                                     <Tooltip title="Apagar Enquete">
-                                        {/* ALTERADO: Abre o diálogo de confirmação */}
-                                        <IconButton onClick={() => handleAbrirDialogoConfirmacaoEnquete(enquete.id)} color="error">
+                                        <IconButton aria-label="Apagar enquete" onClick={() => handleAbrirDialogoConfirmacaoEnquete(enquete.id)} color="error">
                                             <DeleteIcon />
                                         </IconButton>
                                     </Tooltip>
@@ -465,8 +459,7 @@ function Mural() {
                     key={post.id}
                     secondaryAction={
                     <Tooltip title="Apagar Publicação">
-                        {/* ALTERADO: Abre o diálogo de confirmação */}
-                        <IconButton edge="end" color="error" onClick={() => handleAbrirDialogoConfirmacaoPost(post.id)}>
+                        <IconButton aria-label="Apagar publicação" edge="end" color="error" onClick={() => handleAbrirDialogoConfirmacaoPost(post.id)}>
                         <DeleteIcon />
                         </IconButton>
                     </Tooltip>
@@ -533,7 +526,6 @@ function Mural() {
         carregando={salvandoEnquete}
       />
 
-      {/* --- Diálogo de Confirmação para Excluir Publicação --- */}
       <Dialog
         open={dialogoConfirmacaoPostAberto}
         onClose={handleFecharDialogoConfirmacaoPost}
@@ -554,7 +546,6 @@ function Mural() {
         </DialogActions>
       </Dialog>
 
-      {/* --- Diálogo de Confirmação para Excluir Enquete --- */}
       <Dialog
         open={dialogoConfirmacaoEnqueteAberto}
         onClose={handleFecharDialogoConfirmacaoEnquete}
