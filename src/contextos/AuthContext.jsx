@@ -32,8 +32,6 @@ export const AuthProvider = ({ children }) => {
         carregarUsuarioPeloToken();
     }, [carregarUsuarioPeloToken]);
 
-    // A lógica de login, registrar e logout foi movida para aqui,
-    // resolvendo a dependência circular.
     const login = async (email, senha) => {
         try {
             const { data } = await apiClient.post('/api/usuarios/login', { email, senha });
@@ -43,6 +41,7 @@ export const AuthProvider = ({ children }) => {
             setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Login bem-sucedido!', 'success');
 
+            // --- ESTA É A LINHA CORRIGIDA ---
             // Redireciona para /dashboard em vez de /
             navigate('/dashboard'); 
             
@@ -61,7 +60,6 @@ export const AuthProvider = ({ children }) => {
             
             setUsuario(data.usuario);
             mostrarNotificacao(data.mensagem || 'Cadastro realizado com sucesso!', 'success');
-            // Mantém o redirecionamento para a assinatura após o registo
             navigate('/assinatura'); 
             
             return true;
@@ -75,7 +73,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         delete apiClient.defaults.headers.common['Authorization'];
         setUsuario(null);
-        navigate('/login');
+        // Ao fazer logout, redireciona para a nova landing page
+        navigate('/');
     };
 
     const valorDoContexto = {
