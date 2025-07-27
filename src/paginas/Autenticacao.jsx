@@ -93,7 +93,7 @@ function Autenticacao() {
           alignItems: "center",
           width: "100%",
           maxWidth: 450,
-          borderRadius: 4,
+          borderRadius: 2,
           // --- INÍCIO DA ALTERAÇÃO ---
           // Efeito de "vidro fosco" para o formulário
           border: `1px solid ${theme.palette.divider}`,

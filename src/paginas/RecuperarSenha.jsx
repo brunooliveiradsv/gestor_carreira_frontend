@@ -28,7 +28,7 @@ function RecuperarSenha() {
 
   const [email, setEmail] = useState('');
   const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState(''); // Erro não está sendo usado, mas mantido para futuras implementações
+  const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
 
   const handleSolicitarNovaSenha = async (e) => {
@@ -41,7 +41,6 @@ function RecuperarSenha() {
       setSucesso('Se o e-mail estiver registado no nosso sistema, um link para redefinição de senha foi enviado. Verifique a sua caixa de entrada e spam.');
     } catch (err) {
       console.error("Falha na solicitação de recuperação:", err);
-      // Por segurança, mesmo em caso de erro, mostramos a mesma mensagem de sucesso.
       setSucesso('Se o e-mail estiver registado no nosso sistema, um link para redefinição de senha foi enviado. Verifique a sua caixa de entrada e spam.');
     } finally {
       setCarregando(false);
@@ -56,20 +55,30 @@ function RecuperarSenha() {
         width: '100vw',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'background.default'
+        // --- INÍCIO DA ALTERAÇÃO ---
+        // Adicionado o mesmo fundo da Landing Page
+        background: `linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.9)), url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        // --- FIM DA ALTERAÇÃO ---
       }}
     >
         <Paper
             elevation={0}
             sx={{
-            p: { xs: 3, sm: 4, md: 5 },
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-            maxWidth: 450,
-            border: `1px solid ${theme.palette.divider}`,
-            bgcolor: 'background.paper'
+              p: { xs: 3, sm: 4, md: 5 },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '100%',
+              maxWidth: 450,
+              borderRadius: 2,
+              // --- INÍCIO DA ALTERAÇÃO ---
+              // Efeito de "vidro fosco" para o formulário
+              border: `1px solid ${theme.palette.divider}`,
+              bgcolor: 'rgba(30, 30, 30, 0.85)', // Fundo semi-transparente
+              backdropFilter: 'blur(10px)',     // Efeito de desfoque
+              // --- FIM DA ALTERAÇÃO ---
             }}
         >
           <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
